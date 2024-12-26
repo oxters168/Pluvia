@@ -64,7 +64,9 @@ fun FloatingActionMenu(
             exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
         ) {
             Column(
-                modifier = Modifier.offset(x = (-4).dp).padding(start = 4.dp),
+                modifier = Modifier
+                    .offset(x = (-4).dp)
+                    .padding(start = 4.dp),
                 content = content,
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(0.dp),
@@ -85,12 +87,13 @@ fun FloatingActionMenu(
                     }
                 }
             },
-        ) {
-            Icon(
-                imageVector = if (state.isOpen && closeImageVector != null) closeImageVector else imageVector,
-                contentDescription = if (state.isOpen) "Close menu" else "Open menu",
-            )
-        }
+            content = {
+                Icon(
+                    imageVector = if (state.isOpen && closeImageVector != null) closeImageVector else imageVector,
+                    contentDescription = if (state.isOpen) "Close menu" else "Open menu",
+                )
+            },
+        )
     }
 }
 
