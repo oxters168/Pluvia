@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
@@ -30,8 +32,10 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,6 +55,7 @@ import com.OxGames.Pluvia.ui.enums.FabFilter
 import com.OxGames.Pluvia.ui.internal.fakeAppInfo
 import com.OxGames.Pluvia.ui.model.LibraryViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun HomeLibraryScreen(
@@ -84,10 +89,21 @@ private fun LibraryScreenContent(
 ) {
     val snackbarHost = remember { SnackbarHostState() }
     val navigator = rememberListDetailPaneScaffoldNavigator<Int>()
+    val listState = rememberLazyListState()
 
     // Pretty much the same as 'NavigableListDetailPaneScaffold'
     BackHandler(navigator.canNavigateBack(BackNavigationBehavior.PopUntilContentChange)) {
         navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+    }
+
+    // Would be nice to use interactionSource.
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .collectLatest { isScrolling ->
+                if (fabState.isOpen) {
+                    fabState.close()
+                }
+            }
     }
 
     ListDetailPaneScaffold(
@@ -134,9 +150,14 @@ private fun LibraryScreenContent(
                     },
                 ) { paddingValues ->
                     LibraryListPane(
+                        listState = listState,
                         paddingValues = paddingValues,
                         list = vmState.appInfoList,
                         onItemClick = { item ->
+                            if (fabState.isOpen) {
+                                fabState.close()
+                            }
+
                             navigator.navigateTo(
                                 pane = ListDetailPaneScaffoldRole.Detail,
                                 content = item,
@@ -164,6 +185,7 @@ private fun LibraryScreenContent(
 
 @Composable
 private fun LibraryListPane(
+    listState: LazyListState = rememberLazyListState(),
     paddingValues: PaddingValues,
     list: List<AppInfo>,
     onItemClick: (Int) -> Unit,
@@ -172,6 +194,7 @@ private fun LibraryListPane(
         modifier = Modifier
             .padding(paddingValues)
             .fillMaxSize(),
+        state = listState,
         contentPadding = PaddingValues(bottom = 72.dp), // Extra space for fab
     ) {
         items(list, key = { it.appId }) { item ->
