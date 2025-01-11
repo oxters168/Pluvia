@@ -30,6 +30,7 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -59,12 +60,22 @@ fun HomeLibraryScreen(
     onSettings: () -> Unit,
     onLogout: () -> Unit,
 ) {
+    val snackbarHost = remember { SnackbarHostState() }
+
     val vmState by viewModel.state.collectAsStateWithLifecycle()
     val fabState = rememberFloatingActionMenuState()
+
+    LaunchedEffect(vmState.snackbarMessage) {
+        vmState.snackbarMessage?.let {
+            snackbarHost.showSnackbar(it)
+            viewModel.clearSnackbar()
+        }
+    }
 
     LibraryScreenContent(
         vmState = vmState,
         fabState = fabState,
+        snackbarHost = snackbarHost,
         onFabFilter = viewModel::onFabFilter,
         onClickPlay = onClickPlay,
         onSettings = onSettings,
@@ -77,12 +88,12 @@ fun HomeLibraryScreen(
 private fun LibraryScreenContent(
     vmState: LibraryState,
     fabState: FloatingActionMenuState,
+    snackbarHost: SnackbarHostState,
     onFabFilter: (FabFilter) -> Unit,
     onClickPlay: (Int, Boolean) -> Unit,
     onSettings: () -> Unit,
     onLogout: () -> Unit,
 ) {
-    val snackbarHost = remember { SnackbarHostState() }
     val navigator = rememberListDetailPaneScaffoldNavigator<Int>()
 
     // Pretty much the same as 'NavigableListDetailPaneScaffold'
@@ -223,6 +234,7 @@ private fun Preview_LibraryScreenContent() {
                 appInfoList = List(15) { fakeAppInfo(it).copy(appId = it) },
             ),
             fabState = rememberFloatingActionMenuState(FloatingActionMenuValue.Open),
+            snackbarHost = SnackbarHostState(),
             onFabFilter = {},
             onClickPlay = { _, _ -> },
             onSettings = {},

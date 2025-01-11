@@ -66,7 +66,6 @@ import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.data.UserLoginState
 import com.OxGames.Pluvia.ui.model.UserLoginViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun UserLoginScreen(

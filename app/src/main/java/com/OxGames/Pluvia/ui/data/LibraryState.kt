@@ -7,4 +7,6 @@ data class LibraryState(
     val searchAlphabetic: Boolean = false,
     val searchInstalled: Boolean = false,
     val appInfoList: List<AppInfo> = listOf(),
+
+    val snackbarMessage: String? = null,
 )

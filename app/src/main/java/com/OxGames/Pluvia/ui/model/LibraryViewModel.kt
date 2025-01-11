@@ -39,7 +39,7 @@ class LibraryViewModel : ViewModel() {
             when (filter) {
                 FabFilter.SEARCH -> {
                     Timber.w("Search not implemented!")
-                    currentValue.copy()
+                    currentValue.copy(snackbarMessage = "Search not implemented yet!")
                 }
 
                 FabFilter.INSTALLED -> currentValue.copy(searchInstalled = !currentValue.searchInstalled)
@@ -48,6 +48,10 @@ class LibraryViewModel : ViewModel() {
         }
 
         getAppList()
+    }
+
+    fun clearSnackbar() {
+        _state.update { it.copy(snackbarMessage = null) }
     }
 
     private fun getAppList() {
