@@ -60,6 +60,7 @@ import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientObjects
 import `in`.dragonbra.javasteam.rpc.service.Chat
 import `in`.dragonbra.javasteam.steam.authentication.AuthPollResult
 import `in`.dragonbra.javasteam.steam.authentication.AuthSessionDetails
+import `in`.dragonbra.javasteam.steam.authentication.AuthenticationException
 import `in`.dragonbra.javasteam.steam.authentication.IAuthenticator
 import `in`.dragonbra.javasteam.steam.authentication.IChallengeUrlChanged
 import `in`.dragonbra.javasteam.steam.authentication.QrAuthSession
@@ -132,6 +133,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -362,7 +364,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                                             SplitInstallSessionStatus.INSTALLING,
                                             SplitInstallSessionStatus.DOWNLOADED,
                                             SplitInstallSessionStatus.DOWNLOADING,
-                                            -> {
+                                                -> {
                                                 if (!isActive) {
                                                     splitManager.cancelInstall(moduleInstallSessionId)
                                                     break
@@ -1552,37 +1554,62 @@ class SteamService : Service(), IChallengeUrlChanged {
         ) {
             Timber.i("Logging in via credentials.")
 
-            CoroutineScope(Dispatchers.IO).launch {
-                val steamClient = instance!!._steamClient
+            CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                supervisorScope {
+                    try {
+                        val steamClient = instance!!._steamClient
+                        if (steamClient == null) {
+                            Timber.e("Could not logon: Failed to connect to Steam")
+                            PluviaApp.events.emit(SteamEvent.LogonEnded(username, LoginResult.Failed))
+                            return@supervisorScope
+                        }
 
-                if (steamClient != null) {
-                    val authDetails = AuthSessionDetails().apply {
-                        this.username = username.trim()
-                        this.password = password.trim()
-                        this.persistentSession = shouldRememberPassword
-                        this.authenticator = authenticator
-                        this.deviceFriendlyName = SteamUtils.getMachineName(instance!!)
+                        val authDetails = AuthSessionDetails().apply {
+                            this.username = username.trim()
+                            this.password = password.trim()
+                            this.persistentSession = shouldRememberPassword
+                            this.authenticator = authenticator
+                            this.deviceFriendlyName = SteamUtils.getMachineName(instance!!)
+                        }
+
+                        val authSession = steamClient.authentication.beginAuthSessionViaCredentials(authDetails, this).await()
+                        PluviaApp.events.emit(SteamEvent.LogonStarted(username))
+
+                        val pollResult = authSession.pollingWaitForResult().await()
+
+                        if (pollResult.accountName.isNotEmpty() && pollResult.refreshToken.isNotEmpty()) {
+                            login(
+                                clientId = authSession.clientID,
+                                username = pollResult.accountName,
+                                accessToken = pollResult.accessToken,
+                                refreshToken = pollResult.refreshToken,
+                                shouldRememberPassword = shouldRememberPassword,
+                            )
+                        }
+                    } catch (e: Exception) {
+                        val authException = when {
+                            e is AuthenticationException -> e
+                            e.cause is AuthenticationException -> e.cause as AuthenticationException
+                            else -> null
+                        }
+
+                        if (authException != null) {
+                            Timber.w(authException, "Authentication failed with result ${authException.result}")
+                            PluviaApp.events.emit(SteamEvent.LogonEnded(username, LoginResult.Failed, authException.result!!.name))
+                        } else {
+                            Timber.e(e, "Login failed")
+                            val msg = "Login failed: ${e.message ?: e.javaClass.name}"
+                            PluviaApp.events.emit(
+                                SteamEvent.LogonEnded(
+                                    username = username,
+                                    loginResult = LoginResult.Failed,
+                                    failMessage = msg,
+                                ),
+                            )
+                        }
+
+                        return@supervisorScope
                     }
-
-                    val authSession = steamClient.authentication.beginAuthSessionViaCredentials(authDetails, this).await()
-
-                    PluviaApp.events.emit(SteamEvent.LogonStarted(username))
-
-                    val pollResult = authSession.pollingWaitForResult().await()
-
-                    if (pollResult.accountName.isNotEmpty() && pollResult.refreshToken.isNotEmpty()) {
-                        login(
-                            clientId = authSession.clientID,
-                            username = pollResult.accountName,
-                            accessToken = pollResult.accessToken,
-                            refreshToken = pollResult.refreshToken,
-                            shouldRememberPassword = shouldRememberPassword,
-                        )
-                    }
-                } else {
-                    Timber.e("Could not logon: Failed to connect to Steam")
-
-                    PluviaApp.events.emit(SteamEvent.LogonEnded(username, LoginResult.Failed))
                 }
             }
         }

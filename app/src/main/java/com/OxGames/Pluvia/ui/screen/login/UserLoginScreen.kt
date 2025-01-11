@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -34,10 +35,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,8 +57,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.SteamService
 import com.OxGames.Pluvia.enums.LoginResult
@@ -64,33 +66,43 @@ import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.data.UserLoginState
 import com.OxGames.Pluvia.ui.model.UserLoginViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun UserLoginScreen(
     viewModel: UserLoginViewModel,
-    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
 ) {
-    val userLoginState by viewModel.loginState.collectAsState()
+    val snackbarHost = remember { SnackbarHostState() }
+
+    val state by viewModel.loginState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.snackbarMessage) {
+        state.snackbarMessage?.let {
+            snackbarHost.showSnackbar(it)
+            viewModel.clearSnackbar()
+        }
+    }
 
     UserLoginScreenContent(
-        userLoginState = userLoginState,
+        userLoginState = state,
+        snackbarHost = snackbarHost,
         onUsername = viewModel::setUsername,
         onPassword = viewModel::setPassword,
         onShowLoginScreen = viewModel::setShowLoginScreen,
         onRememberPassword = viewModel::setRememberPass,
         onCredentialLogin = {
-            if (userLoginState.username.isNotEmpty() &&
-                userLoginState.password.isNotEmpty()
+            if (state.username.isNotEmpty() &&
+                state.password.isNotEmpty()
             ) {
                 SteamService.startLoginWithCredentials(
-                    username = userLoginState.username,
-                    password = userLoginState.password,
-                    shouldRememberPassword = userLoginState.rememberPass,
+                    username = state.username,
+                    password = state.password,
+                    shouldRememberPassword = state.rememberPass,
                     authenticator = viewModel.authenticator,
                 )
             }
         },
-        onTwoFacorLogin = viewModel::submit,
+        onTwoFactorLogin = viewModel::submit,
         onRetry = viewModel::onRetry,
         onSetTwoFactor = viewModel::setTwoFactorCode,
     )
@@ -100,16 +112,19 @@ fun UserLoginScreen(
 @Composable
 private fun UserLoginScreenContent(
     userLoginState: UserLoginState,
+    snackbarHost: SnackbarHostState,
     onUsername: (String) -> Unit,
     onPassword: (String) -> Unit,
     onShowLoginScreen: (LoginScreen) -> Unit,
     onRememberPassword: (Boolean) -> Unit,
     onCredentialLogin: () -> Unit,
-    onTwoFacorLogin: () -> Unit,
+    onTwoFactorLogin: () -> Unit,
     onRetry: () -> Unit,
     onSetTwoFactor: (String) -> Unit,
 ) {
     Scaffold(
+        modifier = Modifier.imePadding(),
+        snackbarHost = { SnackbarHost(snackbarHost) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -121,8 +136,8 @@ private fun UserLoginScreenContent(
                         onClick = {
                             uriHandler.openUri("https://github.com/oxters168/Pluvia/tree/master/PrivacyPolicy")
                         },
-
-                    ) { Icon(imageVector = Icons.Filled.PrivacyTip, contentDescription = "Privacy policy") }
+                        content = { Icon(imageVector = Icons.Filled.PrivacyTip, contentDescription = "Privacy policy") },
+                    )
                 },
             )
         },
@@ -213,7 +228,7 @@ private fun UserLoginScreenContent(
                                     else -> ""
                                 },
                                 onSetTwoFactor = onSetTwoFactor,
-                                onLogin = onTwoFacorLogin,
+                                onLogin = onTwoFactorLogin,
                             )
                         }
 
@@ -327,11 +342,12 @@ private fun Preview_UserLoginScreen(
         Surface {
             UserLoginScreenContent(
                 userLoginState = state,
+                snackbarHost = SnackbarHostState(),
                 onUsername = { },
                 onPassword = { },
                 onRememberPassword = { },
                 onCredentialLogin = { },
-                onTwoFacorLogin = { },
+                onTwoFactorLogin = { },
                 onRetry = { },
                 onSetTwoFactor = { },
                 onShowLoginScreen = { },

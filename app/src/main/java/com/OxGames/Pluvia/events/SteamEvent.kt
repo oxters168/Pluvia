@@ -6,7 +6,7 @@ import com.OxGames.Pluvia.enums.LoginResult
 sealed interface SteamEvent<T> : Event<T> {
     data class Connected(val isAutoLoggingIn: Boolean) : SteamEvent<Unit>
     data class LoggedOut(val username: String?) : SteamEvent<Unit>
-    data class LogonEnded(val username: String?, val loginResult: LoginResult) : SteamEvent<Unit>
+    data class LogonEnded(val username: String?, val loginResult: LoginResult, val failMessage: String? = null) : SteamEvent<Unit>
     data class LogonStarted(val username: String?) : SteamEvent<Unit>
     data class PersonaStateReceived(val persona: SteamFriend?) : SteamEvent<Unit>
     data class QrAuthEnded(val success: Boolean) : SteamEvent<Unit>

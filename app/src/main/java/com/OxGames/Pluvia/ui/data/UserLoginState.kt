@@ -22,4 +22,6 @@ data class UserLoginState(
 
     val qrCode: String? = null,
     val isQrFailed: Boolean = false,
+
+    val snackbarMessage: String? = null
 )

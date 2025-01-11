@@ -110,16 +110,19 @@ class UserLoginViewModel : ViewModel() {
     }
 
     private val onLogonEnded: (SteamEvent.LogonEnded) -> Unit = {
-        Timber.i("Received login result: ${it.loginResult}")
+        Timber.i("Received login result: ${it.loginResult} / ${it.failMessage}")
+
         _loginState.update { currentState ->
             currentState.copy(
                 isLoggingIn = false,
                 loginResult = it.loginResult,
+                snackbarMessage = it.failMessage,
             )
         }
-        if (it.loginResult != LoginResult.Success) {
-            SteamService.startLoginWithQr()
-        }
+
+        // if (it.loginResult != LoginResult.Success) {
+        //     SteamService.startLoginWithQr()
+        // }
     }
 
     private val onBackPressed: (AndroidEvent.BackPressed) -> Unit = {
@@ -235,5 +238,9 @@ class UserLoginViewModel : ViewModel() {
         _loginState.update { currentState ->
             currentState.copy(twoFactorCode = twoFactorCode)
         }
+    }
+
+    fun clearSnackbar() {
+        _loginState.update { it.copy(snackbarMessage = null) }
     }
 }
