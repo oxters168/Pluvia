@@ -2,6 +2,7 @@ package com.OxGames.Pluvia.ui.screen.library
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.displayCutoutPadding
@@ -35,7 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,7 +55,6 @@ import com.OxGames.Pluvia.ui.enums.FabFilter
 import com.OxGames.Pluvia.ui.internal.fakeAppInfo
 import com.OxGames.Pluvia.ui.model.LibraryViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun HomeLibraryScreen(
@@ -90,20 +89,17 @@ private fun LibraryScreenContent(
     val snackbarHost = remember { SnackbarHostState() }
     val navigator = rememberListDetailPaneScaffoldNavigator<Int>()
     val listState = rememberLazyListState()
+    val isDragging = listState.interactionSource.collectIsDraggedAsState()
 
     // Pretty much the same as 'NavigableListDetailPaneScaffold'
     BackHandler(navigator.canNavigateBack(BackNavigationBehavior.PopUntilContentChange)) {
         navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
     }
 
-    // Would be nice to use interactionSource.
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrollInProgress }
-            .collectLatest { isScrolling ->
-                if (fabState.isOpen) {
-                    fabState.close()
-                }
-            }
+    LaunchedEffect(isDragging.value) {
+        if (isDragging.value && fabState.isOpen) {
+            fabState.close()
+        }
     }
 
     ListDetailPaneScaffold(
