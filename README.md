@@ -22,6 +22,10 @@ Pluvia currently provides these features:
 
 See the [Wiki](https://github.com/oxters168/Pluvia/wiki) for more information
 
+## Compatiblity
+
+See the repo create by [Belligerently](https://github.com/belligerently) for game compatibility: [pluvia-compatibility](https://github.com/belligerently/pluvia-compatibility)
+
 ## Development
 Want to contribute? 
 
