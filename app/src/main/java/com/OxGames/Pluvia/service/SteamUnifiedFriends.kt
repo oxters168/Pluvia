@@ -36,9 +36,16 @@ import timber.log.Timber
 //  FriendMsgEchoCallback ?
 //  EmoticonListCallback ?
 
-typealias AckMessageNotification = SteammessagesFriendmessagesSteamclient.CFriendMessages_AckMessage_Notification.Builder
+typealias AckMessageNotification = SteammessagesFriendmessagesSteamclient.CFriendMessages_AckMessage_Notification
+typealias AckMessageNotificationBuilder = SteammessagesFriendmessagesSteamclient.CFriendMessages_AckMessage_Notification.Builder
+typealias FriendNicknameChangedBuilder = SteammessagesPlayerSteamclient.CPlayer_FriendNicknameChanged_Notification.Builder
+typealias FriendPersonaStatesRequest = SteammessagesChatSteamclient.CChat_RequestFriendPersonaStates_Request
+typealias GetActiveMessageSessionsRequest = SteammessagesFriendmessagesSteamclient.CFriendsMessages_GetActiveMessageSessions_Request
+typealias GetOwnedGamesRequest = SteammessagesPlayerSteamclient.CPlayer_GetOwnedGames_Request
+typealias GetRecentMessagesRequest = SteammessagesFriendmessagesSteamclient.CFriendMessages_GetRecentMessages_Request
 typealias IncomingMessageNotification = SteammessagesFriendmessagesSteamclient.CFriendMessages_IncomingMessage_Notification.Builder
-typealias FriendNicknameChanged = SteammessagesPlayerSteamclient.CPlayer_FriendNicknameChanged_Notification.Builder
+typealias SendMessageRequest = SteammessagesFriendmessagesSteamclient.CFriendMessages_SendMessage_Request
+typealias UpdateMessageReactionRequest = SteammessagesFriendmessagesSteamclient.CFriendMessages_UpdateMessageReaction_Request
 
 class SteamUnifiedFriends(
     private val service: SteamService,
@@ -52,6 +59,8 @@ class SteamUnifiedFriends(
 
     private var friendMessages: FriendMessages? = null
 
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     init {
         unifiedMessages = service.steamClient!!.getHandler<SteamUnifiedMessages>()
 
@@ -64,8 +73,8 @@ class SteamUnifiedFriends(
         with(service.callbackManager!!) {
             with(service.callbackSubscriptions) {
                 add(subscribeServiceNotification<FriendMessagesClient, IncomingMessageNotification>(::onIncomingMessage))
-                add(subscribeServiceNotification<FriendMessages, AckMessageNotification>(::onAckMessage))
-                add(subscribeServiceNotification<PlayerClient, FriendNicknameChanged>(::onNickNameChanged))
+                add(subscribeServiceNotification<FriendMessages, AckMessageNotificationBuilder>(::onAckMessage))
+                add(subscribeServiceNotification<PlayerClient, FriendNicknameChangedBuilder>(::onNickNameChanged))
             }
         }
     }
@@ -81,7 +90,8 @@ class SteamUnifiedFriends(
      * Request a fresh state of Friend's PersonaStates
      */
     fun refreshPersonaStates() {
-        val request = SteammessagesChatSteamclient.CChat_RequestFriendPersonaStates_Request.newBuilder().build()
+        val request = FriendPersonaStatesRequest.newBuilder().build()
+        // Does not return anything.
         chat?.requestFriendPersonaStates(request)
     }
 
@@ -91,9 +101,14 @@ class SteamUnifiedFriends(
     suspend fun getRecentMessages(friendID: Long) {
         Timber.i("Getting Recent messages for: $friendID")
 
-        val userSteamID = SteamService.userSteamId!!
+        val userSteamID = SteamService.userSteamId
 
-        val request = SteammessagesFriendmessagesSteamclient.CFriendMessages_GetRecentMessages_Request.newBuilder().apply {
+        if (userSteamID == null) {
+            Timber.w("Unable to get recent messages, userSteamID is null")
+            return
+        }
+
+        val request = GetRecentMessagesRequest.newBuilder().apply {
             steamid1 = userSteamID.convertToUInt64() // You
             steamid2 = friendID // Friend
             // The rest here and below is what steam has looking at NHA2
@@ -105,10 +120,10 @@ class SteamUnifiedFriends(
             ordinalLast = 0
         }.build()
 
-        val response = friendMessages!!.getRecentMessages(request).await()
+        val response = friendMessages?.getRecentMessages(request)?.await()
 
-        if (response.result != EResult.OK) {
-            Timber.w("Failed to get message history for friend: $friendID, ${response.result}")
+        if (response == null || response.result != EResult.OK) {
+            Timber.w("Failed to get message history for friend: $friendID, result: ${response?.result}")
             return
         }
 
@@ -135,15 +150,15 @@ class SteamUnifiedFriends(
      */
     suspend fun setIsTyping(friendID: Long) {
         Timber.i("Sending 'is typing' to $friendID")
-        val request = SteammessagesFriendmessagesSteamclient.CFriendMessages_SendMessage_Request.newBuilder().apply {
+        val request = SendMessageRequest.newBuilder().apply {
             steamid = friendID
             chatEntryType = EChatEntryType.Typing.code()
         }.build()
 
-        val response = friendMessages!!.sendMessage(request).await()
+        val response = friendMessages?.sendMessage(request)?.await()
 
-        if (response.result != EResult.OK) {
-            Timber.w("Failed to send typing message to friend: $friendID, ${response.result}")
+        if (response == null || response.result != EResult.OK) {
+            Timber.w("Failed to send typing message to friend: $friendID. Result: ${response?.result}")
             return
         }
 
@@ -156,14 +171,12 @@ class SteamUnifiedFriends(
      */
     suspend fun sendMessage(friendID: Long, chatMessage: String) {
         Timber.i("Sending chat message to $friendID")
-        val trimmedMessage = chatMessage.trim()
-
-        if (trimmedMessage.isEmpty()) {
+        val trimmedMessage = chatMessage.trim().ifEmpty {
             Timber.w("Trying to send an empty message.")
             return
         }
 
-        val request = SteammessagesFriendmessagesSteamclient.CFriendMessages_SendMessage_Request.newBuilder().apply {
+        val request = SendMessageRequest.newBuilder().apply {
             chatEntryType = EChatEntryType.ChatMsg.code()
             message = trimmedMessage
             steamid = friendID
@@ -172,10 +185,10 @@ class SteamUnifiedFriends(
             lowPriority = false
         }.build()
 
-        val response = friendMessages!!.sendMessage(request).await()
+        val response = friendMessages?.sendMessage(request)?.await()
 
-        if (response.result != EResult.OK) {
-            Timber.w("Failed to send chat message to friend: $friendID, ${response.result}")
+        if (response == null || response.result != EResult.OK) {
+            Timber.w("Failed to send chat message to friend: $friendID. Result: ${response?.result}")
             return
         }
 
@@ -198,13 +211,13 @@ class SteamUnifiedFriends(
      */
     fun ackMessage(friendID: Long) {
         Timber.d("Ack-ing message for friend: $friendID")
-        val request = SteammessagesFriendmessagesSteamclient.CFriendMessages_AckMessage_Notification.newBuilder().apply {
+        val request = AckMessageNotification.newBuilder().apply {
             steamidPartner = friendID
-            timestamp = System.currentTimeMillis().div(1000).toInt()
+            timestamp = System.currentTimeMillis().div(1000).toInt() // TODO verify arg.
         }.build()
 
         // This does not return anything.
-        friendMessages!!.ackMessage(request)
+        friendMessages?.ackMessage(request) ?: Timber.w("Unable to ack message")
     }
 
     /**
@@ -213,15 +226,15 @@ class SteamUnifiedFriends(
     suspend fun getActiveMessageSessions() {
         Timber.i("Get Active message sessions")
 
-        val request = SteammessagesFriendmessagesSteamclient.CFriendsMessages_GetActiveMessageSessions_Request.newBuilder().apply {
+        val request = GetActiveMessageSessionsRequest.newBuilder().apply {
             lastmessageSince = 0
             onlySessionsWithMessages = true
         }.build()
 
-        val response = friendMessages!!.getActiveMessageSessions(request).await()
+        val response = friendMessages?.getActiveMessageSessions(request)?.await()
 
-        if (response.result != EResult.OK) {
-            Timber.w("Failed to get active message sessions, ${response.result}")
+        if (response == null || response.result != EResult.OK) {
+            Timber.w("Failed to get active message sessions. Result: ${response?.result}")
             return
         }
 
@@ -244,19 +257,16 @@ class SteamUnifiedFriends(
      * TODO
      */
     suspend fun updateMessageReaction(
-        friendID: SteamID,
+        friendID: Long,
         serverTimestamp: Int,
         reactionType: SteammessagesFriendmessagesSteamclient.EMessageReactionType,
         reaction: String,
         isAdd: Boolean,
     ) {
-        Timber.i(
-            "Update message reaction: ${friendID.convertToUInt64()}, timestamp: $serverTimestamp, " +
-                "type: $reactionType, reaction: $reaction, isAdd: $isAdd ",
-        )
+        Timber.d("Reaction: $friendID, timestamp: $serverTimestamp, type: $reactionType, reaction: $reaction, isAdd: $isAdd")
 
-        val request = SteammessagesFriendmessagesSteamclient.CFriendMessages_UpdateMessageReaction_Request.newBuilder().apply {
-            this.steamid = friendID.convertToUInt64()
+        val request = UpdateMessageReactionRequest.newBuilder().apply {
+            this.steamid = friendID
             this.serverTimestamp = serverTimestamp
             this.ordinal = 0
             this.reactionType = reactionType
@@ -264,10 +274,10 @@ class SteamUnifiedFriends(
             this.isAdd = isAdd
         }.build()
 
-        val response = friendMessages!!.updateMessageReaction(request).await()
+        val response = friendMessages?.updateMessageReaction(request)?.await()
 
-        if (response.result != EResult.OK) {
-            Timber.w("Failed to get message reaction, ${response.result}")
+        if (response == null || response.result != EResult.OK) {
+            Timber.w("Failed to get message reaction. Result: ${response?.result}")
             return
         }
 
@@ -280,7 +290,7 @@ class SteamUnifiedFriends(
      * Gets a list of games that the user owns. If the library is private, it will be empty.
      */
     suspend fun getOwnedGames(steamID: Long): List<OwnedGames> {
-        val request = SteammessagesPlayerSteamclient.CPlayer_GetOwnedGames_Request.newBuilder().apply {
+        val request = GetOwnedGamesRequest.newBuilder().apply {
             steamid = steamID
             includePlayedFreeGames = true
             includeFreeSub = true
@@ -291,7 +301,7 @@ class SteamUnifiedFriends(
         val result = player?.getOwnedGames(request)?.await()
 
         if (result == null || result.result != EResult.OK) {
-            Timber.w("Unable to get owned games!")
+            Timber.w("Unable to get owned games! Result: ${result?.result}")
             return emptyList()
         }
 
@@ -316,13 +326,14 @@ class SteamUnifiedFriends(
     /**
      * Another steam client (logged into the same account) has opened up chat to acknowledge the message(s).
      */
-    private fun onAckMessage(notification: ServiceMethodNotification<AckMessageNotification>) {
-        val friendID = notification.body.steamidPartner
-        Timber.i("Ack-ing Message for $friendID")
-        CoroutineScope(Dispatchers.IO).launch {
+    private fun onAckMessage(notification: ServiceMethodNotification<AckMessageNotificationBuilder>) {
+        scope.launch {
+            val friendID = notification.body.steamidPartner
+            Timber.i("Ack-ing Message for $friendID")
             service.db.withTransaction {
-                val friend = service.friendDao.findFriend(friendID)
-                friend?.let { service.friendDao.update(friend.copy(unreadMessageCount = 0)) }
+                service.friendDao.findFriend(friendID)?.let { friend ->
+                    service.friendDao.update(friend.copy(unreadMessageCount = 0))
+                }
             }
         }
     }
@@ -330,14 +341,18 @@ class SteamUnifiedFriends(
     /**
      * Someone has changed their nickname.
      */
-    private fun onNickNameChanged(notification: ServiceMethodNotification<FriendNicknameChanged>) {
-        CoroutineScope(Dispatchers.IO).launch {
+    private fun onNickNameChanged(notification: ServiceMethodNotification<FriendNicknameChangedBuilder>) {
+        scope.launch {
             Timber.i("Nickname Changed for ${notification.body.accountid} -> ${notification.body.nickname}")
-            val friendID = SteamID(notification.body.accountid.toLong(), EUniverse.Public, EAccountType.Individual)
 
-            service.db.withTransaction {
-                service.friendDao.findFriend(friendID.convertToUInt64())?.let {
-                    service.friendDao.update(it.copy(nickname = notification.body.nickname))
+            // Convert from a steamID3 number
+            val friendID = SteamID(notification.body.accountid.toLong(), EUniverse.Public, EAccountType.Individual).convertToUInt64()
+
+            with(service) {
+                db.withTransaction {
+                    friendDao.findFriend(friendID)?.let { friend ->
+                        friendDao.update(friend.copy(nickname = notification.body.nickname))
+                    }
                 }
             }
         }
@@ -351,46 +366,35 @@ class SteamUnifiedFriends(
         Timber.i("Incoming Message form $steamIDFriend")
 
         when (notification.body.chatEntryType) {
-            EChatEntryType.Typing.code() -> {
-                CoroutineScope(Dispatchers.IO).launch {
-                    service.db.withTransaction {
-                        val friend = service.friendDao.findFriend(steamIDFriend)
-
-                        if (friend == null) {
-                            Timber.w("Unable to find friend $steamIDFriend")
-                            return@withTransaction
-                        }
-
-                        service.friendDao.update(friend.copy(isTyping = true))
+            EChatEntryType.Typing.code() -> scope.launch {
+                with(service) {
+                    db.withTransaction {
+                        friendDao.findFriend(steamIDFriend)?.let { friend ->
+                            friendDao.update(friend.copy(isTyping = true))
+                        } ?: Timber.w("Unable to find friend $steamIDFriend")
                     }
                 }
             }
 
-            EChatEntryType.ChatMsg.code() -> {
-                CoroutineScope(Dispatchers.IO).launch {
-                    service.db.withTransaction {
-                        val friend = service.friendDao.findFriend(steamIDFriend)
-
-                        if (friend == null) {
-                            Timber.w("Unable to find friend $steamIDFriend")
-                            return@withTransaction
-                        }
-
-                        service.friendDao.update(friend.copy(isTyping = false))
-
-                        val chatMsg = FriendMessage(
-                            steamIDFriend = steamIDFriend,
-                            fromLocal = false,
-                            message = notification.body.message,
-                            timestamp = notification.body.rtime32ServerTimestamp,
-                        )
-
-                        service.messagesDao.insertMessage(chatMsg)
+            EChatEntryType.ChatMsg.code() -> scope.launch {
+                with(service) {
+                    db.withTransaction {
+                        friendDao.findFriend(steamIDFriend)?.let { friend ->
+                            friendDao.update(friend.copy(isTyping = false))
+                            messagesDao.insertMessage(
+                                FriendMessage(
+                                    steamIDFriend = steamIDFriend,
+                                    fromLocal = false,
+                                    message = notification.body.message,
+                                    timestamp = notification.body.rtime32ServerTimestamp,
+                                ),
+                            )
+                        } ?: Timber.w("Unable to find friend $steamIDFriend")
                     }
                 }
             }
 
-            else -> Timber.w("Unknown incoming message, ${EChatEntryType.from(notification.body.chatEntryType)}")
+            else -> Timber.w("Unknown incoming message: ${EChatEntryType.from(notification.body.chatEntryType)}")
         }
     }
 }
