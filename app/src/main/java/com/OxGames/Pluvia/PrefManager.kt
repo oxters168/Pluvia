@@ -389,7 +389,13 @@ object PrefManager {
     var friendsListHeader: Set<String>
         get() {
             val value = getPref(FRIENDS_LIST_HEADER, "[]")
-            return Json.decodeFromString<Set<String>>(value)
+            return try {
+                Json.decodeFromString<Set<String>>(value)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to decode friends list header, resetting with empty list")
+                setPref(FRIENDS_LIST_HEADER, "[]")
+                emptySet()
+            }
         }
         set(value) {
             setPref(FRIENDS_LIST_HEADER, Json.encodeToString(value))
