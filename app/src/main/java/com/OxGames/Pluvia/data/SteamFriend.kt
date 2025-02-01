@@ -90,14 +90,10 @@ data class SteamFriend(
         get() = if (isOnline) gameAppID > 0 || gameName.isEmpty().not() else false
 
     val isPlayingGameName: String
-        get() = if (isPlayingGame) {
-            gameName.ifEmpty { "Playing game id: $gameAppID" }
-        } else {
-            if (isBlocked) {
-                relation.name
-            } else {
-                state.name
-            }
+        get() = when {
+            isBlocked -> relation.name
+            isPlayingGame -> gameName.takeIf { it.isNotEmpty() } ?: "Playing game id: $gameAppID"
+            else -> state.name
         }
 
     val isAwayOrSnooze: Boolean
