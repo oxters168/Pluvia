@@ -60,13 +60,6 @@ class ChatViewModel @Inject constructor(
             }
 
             launch {
-                emoticonDao.getAll().collect { list ->
-                    Timber.tag("ChatViewModel").d("Got Emotes: ${list.size}")
-                    _chatState.update { it.copy(emoticons = list) }
-                }
-            }
-
-            launch {
                 friendDao.findFriendFlow(id).collect { friend ->
                     if (friend == null) {
                         throw RuntimeException("Friend is null and cannot proceed")
