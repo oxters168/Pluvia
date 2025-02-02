@@ -6,5 +6,4 @@ import com.OxGames.Pluvia.data.SteamFriend
 data class ChatState(
     val friend: SteamFriend = SteamFriend(0),
     val messages: List<FriendMessage> = listOf(),
-    val isLoading: Boolean = true,
 )

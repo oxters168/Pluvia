@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.OxGames.Pluvia.db.dao.EmoticonDao
 import com.OxGames.Pluvia.db.dao.FriendMessagesDao
 import com.OxGames.Pluvia.db.dao.SteamFriendDao
 import com.OxGames.Pluvia.service.SteamService
@@ -26,7 +25,6 @@ import timber.log.Timber
 class ChatViewModel @Inject constructor(
     private val friendDao: SteamFriendDao,
     private val messagesDao: FriendMessagesDao,
-    private val emoticonDao: EmoticonDao,
 ) : ViewModel() {
 
     private val _chatState = MutableStateFlow(ChatState())
