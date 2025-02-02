@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Badge
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -66,10 +67,19 @@ fun FriendItem(
                 image = { friend.avatarHash.getAvatarURL() },
             )
         },
+        trailingContent = {
+            friend.unreadMessageCount.takeIf { it > 0 }?.let { count ->
+                Badge(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    content = { Text(text = if (count <= 99) "$count" else "99+") },
+                )
+            }
+        },
     )
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
 @Composable
 private fun Preview_FriendItem() {
     val friendData = mapOf(
@@ -96,6 +106,7 @@ private fun Preview_FriendItem() {
                             state = entry.value,
                             stateFlags = EPersonaStateFlag.from(256.times(index + 1)),
                             isTyping = index == 1,
+                            unreadMessageCount = if (index == 1) 999 else 0,
                         ),
                         onClick = { },
                         onLongClick = { },
