@@ -2,6 +2,7 @@ package com.OxGames.Pluvia.ui.component.text
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Icon
@@ -10,6 +11,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
@@ -18,7 +21,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import `in`.dragonbra.javasteam.enums.EPersonaStateFlag
@@ -32,10 +35,14 @@ import java.util.EnumSet
 fun StatusIconText(
     friend: SteamFriend,
     style: TextStyle = LocalTextStyle.current,
+    fontSize: TextUnit = TextUnit.Unspecified,
 ) {
+    val effectiveFontSize = fontSize.takeIf { it != TextUnit.Unspecified } ?: style.fontSize
+
     Text(
         style = style,
         maxLines = 1,
+        fontSize = fontSize,
         overflow = TextOverflow.Ellipsis,
         text = buildAnnotatedString {
             append(friend.nameOrNickname)
@@ -43,7 +50,7 @@ fun StatusIconText(
                 withStyle(
                     style = SpanStyle(
                         color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 14.sp,
+                        fontSize = effectiveFontSize.div(1.25),
                     ),
                 ) {
                     append(" * ")
@@ -56,13 +63,14 @@ fun StatusIconText(
         inlineContent = mapOf(
             "icon" to InlineTextContent(
                 Placeholder(
-                    width = style.fontSize.value.sp,
-                    height = style.fontSize.value.sp,
+                    width = effectiveFontSize,
+                    height = effectiveFontSize,
                     placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
                 ),
                 children = {
                     friend.statusIcon?.let {
                         Icon(
+                            modifier = Modifier.size(with(LocalDensity.current) { effectiveFontSize.toDp() }),
                             imageVector = it,
                             tint = MaterialTheme.colorScheme.onSurface,
                             contentDescription = it.name,

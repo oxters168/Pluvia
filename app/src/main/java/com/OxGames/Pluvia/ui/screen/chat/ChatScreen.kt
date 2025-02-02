@@ -53,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -66,6 +65,7 @@ import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.data.FriendMessage
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.component.text.StatusIconText
+import com.OxGames.Pluvia.ui.component.text.TypingIndicator
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.data.ChatState
 import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
@@ -291,15 +291,23 @@ private fun ChatTopBar(
                             platformStyle = PlatformTextStyle(includeFontPadding = false),
                         ),
                     ) {
-                        StatusIconText(friend = steamFriend)
-
-                        Text(
-                            text = steamFriend.isPlayingGameName,
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            color = LocalContentColor.current.copy(alpha = .75f),
+                        StatusIconText(
+                            friend = steamFriend,
+                            fontSize = 18.sp,
                         )
+
+                        if (steamFriend.isTyping) {
+                            TypingIndicator(
+                                color = LocalContentColor.current.copy(alpha = .75f),
+                                fontSize = 14.sp,
+                            )
+                        } else {
+                            Text(
+                                text = steamFriend.isPlayingGameName,
+                                color = LocalContentColor.current.copy(alpha = .75f),
+                                fontSize = 14.sp,
+                            )
+                        }
                     }
                 }
             }

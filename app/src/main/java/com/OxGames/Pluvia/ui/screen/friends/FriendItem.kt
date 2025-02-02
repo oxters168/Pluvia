@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.component.text.StatusIconText
+import com.OxGames.Pluvia.ui.component.text.TypingIndicator
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.util.ListItemImage
 import com.OxGames.Pluvia.utils.getAvatarURL
@@ -53,7 +54,11 @@ fun FriendItem(
         },
         supportingContent = {
             // TODO get game names
-            Text(text = friend.isPlayingGameName)
+            if (friend.isTyping) {
+                TypingIndicator()
+            } else {
+                Text(text = friend.isPlayingGameName)
+            }
         },
         leadingContent = {
             ListItemImage(
@@ -69,6 +74,7 @@ fun FriendItem(
 private fun Preview_FriendItem() {
     val friendData = mapOf(
         "Friend Online" to EPersonaState.Online,
+        "Friend Typing" to EPersonaState.Online,
         "Friend Away" to EPersonaState.Away,
         "Friend Offline" to EPersonaState.Offline,
         "Friend In Game" to EPersonaState.Online,
@@ -81,14 +87,15 @@ private fun Preview_FriendItem() {
                 friendData.onEachIndexed { index, entry ->
                     FriendItem(
                         friend = SteamFriend(
+                            id = index.toLong(),
                             gameAppID = if (index < 3) 0 else index,
                             gameName = if (index < 3) "" else "Team Fortress 2",
-                            id = index.toLong(),
                             name = entry.key,
                             nickname = if (index < 3) "" else entry.key,
                             relation = EFriendRelationship.Friend,
                             state = entry.value,
                             stateFlags = EPersonaStateFlag.from(256.times(index + 1)),
+                            isTyping = index == 1,
                         ),
                         onClick = { },
                         onLongClick = { },
