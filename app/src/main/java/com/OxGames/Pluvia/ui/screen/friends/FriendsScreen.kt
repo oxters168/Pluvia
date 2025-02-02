@@ -94,6 +94,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
+import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.SteamFriend
@@ -111,7 +112,6 @@ import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
 import com.OxGames.Pluvia.ui.model.FriendsViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.utils.getAvatarURL
-import com.OxGames.Pluvia.utils.getProfileUrl
 import com.materialkolor.ktx.isLight
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
@@ -576,7 +576,7 @@ private fun ProfileDetailsScreen(
                     icon = Icons.Outlined.Person,
                     text = "Profile",
                     onClick = {
-                        uriHandler.openUri(state.profileFriend.id.getProfileUrl())
+                        uriHandler.openUri(Constants.Persona.PROFILE_URL + state.profileFriend.id)
                     },
                 )
                 Spacer(modifier = Modifier.width(16.dp))
