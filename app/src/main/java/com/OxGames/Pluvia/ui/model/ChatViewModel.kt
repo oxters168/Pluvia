@@ -43,6 +43,7 @@ class ChatViewModel @Inject constructor(
         Timber.d("onCleared")
 
         chatJob?.cancel()
+        SteamService.setCurrentChat(0L)
     }
 
     fun setFriend(id: Long) {
@@ -55,6 +56,7 @@ class ChatViewModel @Inject constructor(
                 SteamService.getEmoticonList()
                 SteamService.getRecentMessages(id)
                 SteamService.ackMessage(id)
+                SteamService.setCurrentChat(id)
             }
 
             launch {

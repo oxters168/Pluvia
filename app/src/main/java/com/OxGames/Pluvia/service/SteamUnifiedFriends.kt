@@ -22,6 +22,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -61,7 +62,7 @@ typealias UpdateMessageReactionRequest = SteammessagesFriendmessagesSteamclient.
 
 class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
 
-    private val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val typingTimeouts = mutableMapOf<Long, Job>()
 
@@ -228,6 +229,14 @@ class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
 
         // This does not return anything.
         friendMessages?.ackMessage(request) ?: Timber.w("Unable to ack message")
+
+        scope.launch {
+            service.db.withTransaction {
+                service.friendDao.findFriend(friendID)?.let { friend ->
+                    service.friendDao.update(friend.copy(unreadMessageCount = 0))
+                }
+            }
+        }
     }
 
     /**
@@ -340,9 +349,11 @@ class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
         scope.launch {
             val friendID = notification.body.steamidPartner
             Timber.i("Ack-ing Message for $friendID")
-            service.db.withTransaction {
-                service.friendDao.findFriend(friendID)?.let { friend ->
-                    service.friendDao.update(friend.copy(unreadMessageCount = 0))
+            with(service) {
+                db.withTransaction {
+                    friendDao.findFriend(friendID)?.let { friend ->
+                        friendDao.update(friend.copy(unreadMessageCount = 0))
+                    }
                 }
             }
         }
@@ -368,6 +379,25 @@ class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
         }
     }
 
+    // The coolest 'is typing' timeout you've ever seen.
+    private fun setTypingTimeout(steamIDFriend: Long) {
+        typingTimeouts[steamIDFriend] = scope.launch {
+            try {
+                delay(12.seconds)
+            } finally {
+                Timber.d("Cancelling $steamIDFriend typing timeout")
+                with(service) {
+                    db.withTransaction {
+                        friendDao.findFriend(steamIDFriend)?.let { friend ->
+                            friendDao.update(friend.copy(isTyping = false))
+                        }
+                    }
+                }
+                typingTimeouts.remove(steamIDFriend)
+            }
+        }
+    }
+
     /**
      * We're receiving information that someone is either typing a message or sent a message.
      */
@@ -375,13 +405,12 @@ class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
         val steamIDFriend = notification.body.steamidFriend
         Timber.i("Incoming Message form $steamIDFriend")
 
+        // Cancel any jobs if active for the friend.
+        typingTimeouts[steamIDFriend]?.cancel()
+
         when (notification.body.chatEntryType) {
             EChatEntryType.Typing.code() -> scope.launch {
-                // Cancel any jobs if active for the friend.
-                typingTimeouts[steamIDFriend]?.let { job ->
-                    job.cancel()
-                    typingTimeouts.remove(steamIDFriend)
-                }
+                setTypingTimeout(steamIDFriend)
 
                 with(service) {
                     db.withTransaction {
@@ -391,18 +420,6 @@ class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
                             Timber.w("Unable to find friend $steamIDFriend")
                             return@withTransaction
                         }
-
-                        // The coolest 'is typing' timeout you've ever seen.
-                        typingTimeouts[steamIDFriend] = scope.launch {
-                            try {
-                                delay(12.seconds)
-                                friendDao.findFriend(steamIDFriend)?.let { friend ->
-                                    friendDao.update(friend.copy(isTyping = false))
-                                }
-                            } finally {
-                                typingTimeouts.remove(steamIDFriend)
-                            }
-                        }
                     }
                 }
             }
@@ -411,11 +428,6 @@ class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
                 with(service) {
                     db.withTransaction {
                         friendDao.findFriend(steamIDFriend)?.let { friend ->
-                            typingTimeouts[steamIDFriend]?.cancel()
-                            typingTimeouts.remove(steamIDFriend)
-
-                            friendDao.update(friend.copy(isTyping = false))
-
                             messagesDao.insertMessage(
                                 FriendMessage(
                                     steamIDFriend = steamIDFriend,
@@ -424,6 +436,13 @@ class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
                                     timestamp = notification.body.rtime32ServerTimestamp,
                                 ),
                             )
+
+                            // We cannot have two `updates` in a transaction.
+                            if (SteamService.currentChat != steamIDFriend) {
+                                friendDao.update(friend.copy(unreadMessageCount = friend.unreadMessageCount + 1, isTyping = false))
+                            } else {
+                                friendDao.update(friend.copy(isTyping = false))
+                            }
                         } ?: Timber.w("Unable to find friend $steamIDFriend")
                     }
                 }

@@ -209,6 +209,11 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         private var syncInProgress: Boolean = false
 
+        /* The current friend we're chatting with */
+        @Volatile
+        var currentChat: Long = 0L
+            private set
+
         var isConnecting: Boolean = false
             private set
         var isStopping: Boolean = false
@@ -1066,6 +1071,11 @@ class SteamService : Service(), IChallengeUrlChanged {
         suspend fun setNickName(friendID: Long, value: String) = withContext(Dispatchers.IO) {
             val friend = SteamID(friendID)
             instance?._steamFriends!!.setFriendNickname(friend, value)
+        }
+
+        fun setCurrentChat(friendID: Long): Long {
+            currentChat = friendID
+            return currentChat
         }
     }
 
