@@ -2,6 +2,7 @@ package com.OxGames.Pluvia.ui.internal
 
 import com.OxGames.Pluvia.data.SteamFriend
 import `in`.dragonbra.javasteam.enums.EPersonaState
+import `in`.dragonbra.javasteam.enums.EPersonaStateFlag
 import kotlin.random.Random
 
 fun fakeSteamFriends(
@@ -9,11 +10,11 @@ fun fakeSteamFriends(
     online: Boolean = true,
     inGame: Boolean = true,
 ): List<SteamFriend> {
-    return List(5) { item ->
+    return List(5) { index ->
         SteamFriend(
-            id = item + id,
-            name = "Friend $item",
-            avatarHash = when (item) {
+            id = index + id,
+            name = "Friend $index",
+            avatarHash = when (index) {
                 0 -> "eb59deb3b9282854064421f7c43f4c79bceaf6d8"
                 1 -> "59d19880457012c47ea57bc29f599a4d2f663a35"
                 2 -> "df3be70187c6d900600796c86963e3e3a1376deb"
@@ -22,6 +23,7 @@ fun fakeSteamFriends(
                 else -> ""
             },
             state = if (online) EPersonaState.Online else EPersonaState.Offline,
+            stateFlags = EPersonaStateFlag.from(256.times(index + 1)),
             gameAppID = if (inGame) Random.nextInt(1, 1000) else 0,
         )
     }

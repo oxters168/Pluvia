@@ -97,11 +97,12 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.SteamFriend
-import com.OxGames.Pluvia.ui.component.BBCodeText
 import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.component.dialog.GamesListDialog
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
+import com.OxGames.Pluvia.ui.component.text.BBCodeText
+import com.OxGames.Pluvia.ui.component.text.StatusIconText
 import com.OxGames.Pluvia.ui.component.topbar.AccountButton
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.data.FriendsState
@@ -545,10 +546,8 @@ private fun ProfileDetailsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = state.profileFriend!!.nameOrNickname,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            StatusIconText(
+                friend = state.profileFriend!!,
                 style = MaterialTheme.typography.headlineLarge,
             )
 
@@ -768,7 +767,7 @@ private fun Preview_FriendsScreenContent(
                         "Online" to fakeSteamFriends(id = 5, inGame = false),
                         "Offline" to fakeSteamFriends(id = 10, online = false, inGame = false),
                     ),
-                    profileFriend = fakeSteamFriends()[1],
+                    profileFriend = fakeSteamFriends()[2],
                     profileFriendInfo = ProfileInfoCallback(
                         result = EResult.OK,
                         steamID = SteamID(123L),

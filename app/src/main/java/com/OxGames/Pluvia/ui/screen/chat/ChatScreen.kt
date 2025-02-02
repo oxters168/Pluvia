@@ -25,8 +25,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -52,12 +50,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -71,6 +65,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.data.FriendMessage
 import com.OxGames.Pluvia.data.SteamFriend
+import com.OxGames.Pluvia.ui.component.text.StatusIconText
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.data.ChatState
 import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
@@ -296,32 +291,7 @@ private fun ChatTopBar(
                             platformStyle = PlatformTextStyle(includeFontPadding = false),
                         ),
                     ) {
-                        Text(
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 20.sp,
-                            maxLines = 1,
-                            text = buildAnnotatedString {
-                                append(steamFriend.nameOrNickname)
-                                if (steamFriend.statusIcon != null) {
-                                    append(" ")
-                                    appendInlineContent("icon", "[icon]")
-                                }
-                            },
-                            inlineContent = mapOf(
-                                "icon" to InlineTextContent(
-                                    Placeholder(
-                                        width = 16.sp,
-                                        height = 16.sp,
-                                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                                    ),
-                                    children = {
-                                        steamFriend.statusIcon?.let {
-                                            Icon(imageVector = it, tint = Color.LightGray, contentDescription = it.name)
-                                        }
-                                    },
-                                ),
-                            ),
-                        )
+                        StatusIconText(friend = steamFriend)
 
                         Text(
                             text = steamFriend.isPlayingGameName,

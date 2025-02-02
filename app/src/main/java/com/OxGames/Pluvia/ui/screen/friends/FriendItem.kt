@@ -5,9 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -16,14 +13,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
 import com.OxGames.Pluvia.data.SteamFriend
+import com.OxGames.Pluvia.ui.component.text.StatusIconText
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.util.ListItemImage
 import com.OxGames.Pluvia.utils.getAvatarURL
@@ -57,50 +49,11 @@ fun FriendItem(
             supportingColor = if (isLight) MaterialTheme.colorScheme.onSurfaceVariant else friend.statusColor,
         ),
         headlineContent = {
-            Text(
-                text = buildAnnotatedString {
-                    append(friend.nameOrNickname)
-                    if (friend.nickname.isNotEmpty()) {
-                        withStyle(
-                            style = SpanStyle(
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 14.sp,
-                            ),
-                        ) {
-                            append(" * ")
-                        }
-                    } else {
-                        append(" ")
-                    }
-                    appendInlineContent("icon", "[icon]")
-                },
-                inlineContent = mapOf(
-                    "icon" to InlineTextContent(
-                        Placeholder(
-                            width = 14.sp,
-                            height = 14.sp,
-                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
-                        ),
-                        children = {
-                            friend.statusIcon?.let {
-                                Icon(
-                                    imageVector = it,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    contentDescription = it.name,
-                                )
-                            }
-                        },
-                    ),
-                ),
-            )
+            StatusIconText(friend = friend)
         },
         supportingContent = {
-            if (friend.isPlayingGame) {
-                // TODO get game names
-                Text(text = friend.gameName.ifEmpty { "Playing game id: ${friend.gameAppID}" })
-            } else {
-                Text(text = friend.state.name)
-            }
+            // TODO get game names
+            Text(text = friend.isPlayingGameName)
         },
         leadingContent = {
             ListItemImage(
@@ -135,7 +88,7 @@ private fun Preview_FriendItem() {
                             nickname = if (index < 3) "" else entry.key,
                             relation = EFriendRelationship.Friend,
                             state = entry.value,
-                            stateFlags = EPersonaStateFlag.from(512.times(index + 1)),
+                            stateFlags = EPersonaStateFlag.from(256.times(index + 1)),
                         ),
                         onClick = { },
                         onLongClick = { },

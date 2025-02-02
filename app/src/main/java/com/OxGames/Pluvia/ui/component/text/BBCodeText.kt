@@ -1,4 +1,4 @@
-package com.OxGames.Pluvia.ui.component
+package com.OxGames.Pluvia.ui.component.text
 
 import android.content.res.Configuration
 import androidx.compose.foundation.gestures.detectTapGestures
