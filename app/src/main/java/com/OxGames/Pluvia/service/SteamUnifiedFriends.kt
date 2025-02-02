@@ -18,8 +18,11 @@ import `in`.dragonbra.javasteam.rpc.service.PlayerClient
 import `in`.dragonbra.javasteam.steam.handlers.steamunifiedmessages.SteamUnifiedMessages
 import `in`.dragonbra.javasteam.steam.handlers.steamunifiedmessages.callback.ServiceMethodNotification
 import `in`.dragonbra.javasteam.types.SteamID
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -31,10 +34,19 @@ import timber.log.Timber
 // https://github.com/LossyDragon/Vapulla
 
 // TODO
-//  Implement Reactions
-//  OfflineMessageNotificationCallback ?
-//  FriendMsgEchoCallback ?
+//  Chat slash commands.
 //  EmoticonListCallback ?
+//  Favorite / UnFavorite friends
+//  FriendMsgEchoCallback ?
+//  Implement Reactions
+//  Message echos (aka bypass notifications/indications if using another client)
+//  Notifications of a chat message
+//  Observing that a friend is typing...
+//  OfflineMessageNotificationCallback ?
+//  Per friend notification settings.
+//  Recent message sessions (automatically list recent chats on top of the list)
+//  Unread message indications
+//  View blocked (but still) friends.
 
 typealias AckMessageNotification = SteammessagesFriendmessagesSteamclient.CFriendMessages_AckMessage_Notification
 typealias AckMessageNotificationBuilder = SteammessagesFriendmessagesSteamclient.CFriendMessages_AckMessage_Notification.Builder
@@ -47,29 +59,18 @@ typealias IncomingMessageNotification = SteammessagesFriendmessagesSteamclient.C
 typealias SendMessageRequest = SteammessagesFriendmessagesSteamclient.CFriendMessages_SendMessage_Request
 typealias UpdateMessageReactionRequest = SteammessagesFriendmessagesSteamclient.CFriendMessages_UpdateMessageReaction_Request
 
-class SteamUnifiedFriends(
-    private val service: SteamService,
-) : AutoCloseable {
-
-    private var unifiedMessages: SteamUnifiedMessages? = null
-
-    private var chat: Chat? = null
-
-    private var player: Player? = null
-
-    private var friendMessages: FriendMessages? = null
+class SteamUnifiedFriends(private val service: SteamService) : AutoCloseable {
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
+    private val typingTimeouts = mutableMapOf<Long, Job>()
+
+    private var unifiedMessages: SteamUnifiedMessages? = service.steamClient!!.getHandler<SteamUnifiedMessages>()
+    private var chat: Chat? = unifiedMessages!!.createService(Chat::class.java)
+    private var friendMessages: FriendMessages? = unifiedMessages!!.createService(FriendMessages::class.java)
+    private var player: Player? = unifiedMessages!!.createService(Player::class.java)
+
     init {
-        unifiedMessages = service.steamClient!!.getHandler<SteamUnifiedMessages>()
-
-        chat = unifiedMessages!!.createService(Chat::class.java)
-
-        player = unifiedMessages!!.createService(Player::class.java)
-
-        friendMessages = unifiedMessages!!.createService(FriendMessages::class.java)
-
         with(service.callbackManager!!) {
             with(service.callbackSubscriptions) {
                 add(subscribeServiceNotification<FriendMessagesClient, IncomingMessageNotification>(::onIncomingMessage))
@@ -84,6 +85,8 @@ class SteamUnifiedFriends(
         chat = null
         player = null
         friendMessages = null
+        typingTimeouts.forEach { (_, job) -> job.cancel() }
+        typingTimeouts.clear()
     }
 
     /**
@@ -93,6 +96,13 @@ class SteamUnifiedFriends(
         val request = FriendPersonaStatesRequest.newBuilder().build()
         // Does not return anything.
         chat?.requestFriendPersonaStates(request)
+
+        // Clear any stale typing values.
+        scope.launch {
+            service.db.withTransaction {
+                service.friendDao.clearAllTypingStatus()
+            }
+        }
     }
 
     /**
@@ -367,11 +377,32 @@ class SteamUnifiedFriends(
 
         when (notification.body.chatEntryType) {
             EChatEntryType.Typing.code() -> scope.launch {
+                // Cancel any jobs if active for the friend.
+                typingTimeouts[steamIDFriend]?.let { job ->
+                    job.cancel()
+                    typingTimeouts.remove(steamIDFriend)
+                }
+
                 with(service) {
                     db.withTransaction {
                         friendDao.findFriend(steamIDFriend)?.let { friend ->
                             friendDao.update(friend.copy(isTyping = true))
-                        } ?: Timber.w("Unable to find friend $steamIDFriend")
+                        } ?: run {
+                            Timber.w("Unable to find friend $steamIDFriend")
+                            return@withTransaction
+                        }
+
+                        // The coolest 'is typing' timeout you've ever seen.
+                        typingTimeouts[steamIDFriend] = scope.launch {
+                            try {
+                                delay(12.seconds)
+                                friendDao.findFriend(steamIDFriend)?.let { friend ->
+                                    friendDao.update(friend.copy(isTyping = false))
+                                }
+                            } finally {
+                                typingTimeouts.remove(steamIDFriend)
+                            }
+                        }
                     }
                 }
             }
@@ -380,7 +411,11 @@ class SteamUnifiedFriends(
                 with(service) {
                     db.withTransaction {
                         friendDao.findFriend(steamIDFriend)?.let { friend ->
+                            typingTimeouts[steamIDFriend]?.cancel()
+                            typingTimeouts.remove(steamIDFriend)
+
                             friendDao.update(friend.copy(isTyping = false))
+
                             messagesDao.insertMessage(
                                 FriendMessage(
                                     steamIDFriend = steamIDFriend,

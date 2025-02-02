@@ -32,9 +32,6 @@ interface SteamFriendDao {
     @Query("UPDATE steam_friend SET nickname = :newNickname WHERE id = :friendId")
     suspend fun updateNicknameInternal(friendId: Long, newNickname: String)
 
-    @Query("UPDATE steam_friend SET nickname = ''")
-    suspend fun clearAllNicknames()
-
     @Query("SELECT * FROM steam_friend ORDER BY name ASC")
     fun getAllFriendsFlow(): Flow<List<SteamFriend>>
 
@@ -49,4 +46,10 @@ interface SteamFriendDao {
 
     @Query("DELETE FROM steam_friend WHERE id = :friendId")
     suspend fun remove(friendId: Long)
+
+    @Query("UPDATE steam_friend SET nickname = ''")
+    suspend fun clearAllNicknames()
+
+    @Query("UPDATE steam_friend SET chat_entry_type = 0")
+    suspend fun clearAllTypingStatus()
 }
