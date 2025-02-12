@@ -246,17 +246,23 @@ class SteamService : Service(), IChallengeUrlChanged {
         private val serverListPath: String
             get() = Paths.get(instance!!.cacheDir.path, "server_list.bin").pathString
 
+        val defaultSteamPath: String
+            get() = Paths.get(instance!!.dataDir.path, "Steam").pathString
+
         private val depotManifestsPath: String
-            get() = Paths.get(instance!!.dataDir.path, "Steam", "depot_manifests.zip").pathString
+            get() = Paths.get(defaultSteamPath, "depot_manifests.zip").pathString
 
-        val defaultAppInstallPath: String
-            get() = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "common").pathString
+        val appInstallPath: String
+            get() = Paths.get(defaultSteamPath, "steamapps", "common").pathString
 
-        val defaultAppStagingPath: String
-            get() = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "staging").pathString
+        val appStagingPath: String
+            get() = Paths.get(defaultSteamPath, "steamapps", "staging").pathString
 
         val userSteamId: SteamID?
             get() = instance?.steamClient?.steamID
+
+        val userDataPath: String
+            get() = Paths.get(defaultSteamPath, "userdata", userSteamId!!.accountID.toULong().toString()).pathString
 
         suspend fun setPersonaState(state: EPersonaState) = withContext(Dispatchers.IO) {
             PrefManager.personaState = state
@@ -1269,8 +1275,8 @@ class SteamService : Service(), IChallengeUrlChanged {
         isRequestingPkgInfo = false
         isRequestingAppInfo = false
 
-        PrefManager.appInstallPath = defaultAppInstallPath
-        PrefManager.appStagingPath = defaultAppStagingPath
+        PrefManager.appInstallPath = appInstallPath
+        PrefManager.appStagingPath = appStagingPath
 
         steamClient = null
         _steamUser = null

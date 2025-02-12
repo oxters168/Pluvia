@@ -5,6 +5,7 @@ import com.OxGames.Pluvia.service.SteamService
 import com.winlator.xenvironment.ImageFs
 import java.nio.file.Paths
 import timber.log.Timber
+import kotlin.io.path.pathString
 
 enum class PathType {
     GameInstall,
@@ -18,6 +19,7 @@ enum class PathType {
     LinuxXdgConfigHome,
     MacHome,
     MacAppSupport,
+    UserData,
     None,
     ;
 
@@ -65,6 +67,11 @@ enum class PathType {
                 ImageFs.USER,
                 "Saved Games/",
             ).toString()
+            UserData -> Paths.get(
+                SteamService.userDataPath,
+                appId.toUInt().toString(),
+                "remote",
+            ).pathString
             else -> {
                 Timber.e("Did not recognize or unsupported path type $this")
                 SteamService.getAppDirPath(appId)
@@ -81,6 +88,7 @@ enum class PathType {
             WinAppDataLocalLow,
             WinAppDataRoaming,
             WinSavedGames,
+            UserData,
             -> true
             else -> false
         }
@@ -121,6 +129,9 @@ enum class PathType {
                 "%${MacAppSupport.name.lowercase()}%",
                 MacAppSupport.name.lowercase(),
                 -> MacAppSupport
+                "%${UserData.name.lowercase()}%",
+                UserData.name.lowercase(),
+                -> UserData
                 else -> {
                     if (keyValue != null) {
                         Timber.w("Could not identify $keyValue as PathType")

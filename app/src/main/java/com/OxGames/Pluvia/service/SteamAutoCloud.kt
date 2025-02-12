@@ -84,6 +84,10 @@ object SteamAutoCloud {
 
                 pathTypePairs.forEach {
                     modified = modified.replace(it.first, it.second)
+                    // if (modified == prefix) {
+                    //     // there was no path placeholder (%something%) so set in userdata
+                    //     modified = Paths.get(SteamService.userDataPath, appInfo.id.toUInt().toString(), "remote", modified).pathString
+                    // }
                 }
 
                 modified
@@ -94,7 +98,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(fileList.pathPrefixes[file.pathPrefixIndex]).pathString
             } else {
-                Paths.get("%${PathType.GameInstall.name}%").pathString
+                Paths.get("%${PathType.UserData.name}%").pathString
             }
         }
 
@@ -108,7 +112,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(convertedPrefixes[file.pathPrefixIndex], file.filename)
             } else {
-                Paths.get(getAppDirPath(appInfo.id), file.filename)
+                Paths.get(SteamService.userDataPath, appInfo.id.toUInt().toString(), "remote", file.filename)
             }
         }
 
@@ -213,7 +217,7 @@ object SteamAutoCloud {
                     root = if (it.pathPrefixIndex < pathTypePairs.size) {
                         PathType.from(pathTypePairs[it.pathPrefixIndex].first)
                     } else {
-                        PathType.GameInstall
+                        PathType.UserData
                     },
                     path = if (it.pathPrefixIndex < pathTypePairs.size) {
                         appFileListChange.pathPrefixes[it.pathPrefixIndex]

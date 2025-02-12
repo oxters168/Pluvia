@@ -299,14 +299,14 @@ object PrefManager {
 
     private val APP_INSTALL_PATH = stringPreferencesKey("app_install_path")
     var appInstallPath: String
-        get() = getPref(APP_INSTALL_PATH, SteamService.defaultAppInstallPath)
+        get() = getPref(APP_INSTALL_PATH, SteamService.appInstallPath)
         set(value) {
             setPref(APP_INSTALL_PATH, value)
         }
 
     private val APP_STAGING_PATH = stringPreferencesKey("app_staging_path")
     var appStagingPath: String
-        get() = getPref(APP_STAGING_PATH, SteamService.defaultAppStagingPath)
+        get() = getPref(APP_STAGING_PATH, SteamService.appStagingPath)
         set(value) {
             setPref(APP_STAGING_PATH, value)
         }
