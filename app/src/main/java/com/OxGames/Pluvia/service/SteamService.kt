@@ -1779,7 +1779,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                     appDao.insert(*filteredApps)
                 }
 
-                PluviaApp.events.emit(SteamEvent.AppInfoReceived)
+                // PluviaApp.events.emit(SteamEvent.AppInfoReceived)
             }
         }
     }
