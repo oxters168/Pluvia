@@ -44,4 +44,26 @@ data class SteamLicense(
     val purchaseCode: String,
     @ColumnInfo("master_package_id")
     val masterPackageID: Int,
-)
+) {
+    override fun toString(): String {
+        return "SteamLicense(" +
+            "id=$id, " +
+            "ownerAccountId=$ownerAccountId, " +
+            "lastChangeNumber=$lastChangeNumber, " +
+            "accessToken=$accessToken, " +
+            "territoryCode=$territoryCode, " +
+            "licenseFlags=$licenseFlags, " +
+            "licenseType=$licenseType, " +
+            "paymentMethod=$paymentMethod, " +
+            "purchaseCountryCode='$purchaseCountryCode', " +
+            "appIds=$appIds, " +
+            "depotIds=$depotIds, " +
+            "timeCreated=$timeCreated, " +
+            "timeNextProcess=$timeNextProcess, " +
+            "minuteLimit=$minuteLimit, " +
+            "minutesUsed=$minutesUsed, " +
+            "purchaseCode='$purchaseCode', " +
+            "masterPackageID=$masterPackageID" +
+            ")"
+    }
+}

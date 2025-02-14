@@ -58,6 +58,7 @@ import `in`.dragonbra.javasteam.enums.EPersonaState
 import `in`.dragonbra.javasteam.enums.EResult
 import `in`.dragonbra.javasteam.networking.steam3.ProtocolTypes
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientObjects.ECloudPendingRemoteOperation
+import `in`.dragonbra.javasteam.rpc.service.FamilyGroups
 import `in`.dragonbra.javasteam.steam.authentication.AuthPollResult
 import `in`.dragonbra.javasteam.steam.authentication.AuthSessionDetails
 import `in`.dragonbra.javasteam.steam.authentication.AuthenticationException
@@ -84,6 +85,7 @@ import `in`.dragonbra.javasteam.steam.handlers.steamfriends.callback.ProfileInfo
 import `in`.dragonbra.javasteam.steam.handlers.steamgameserver.SteamGameServer
 import `in`.dragonbra.javasteam.steam.handlers.steammasterserver.SteamMasterServer
 import `in`.dragonbra.javasteam.steam.handlers.steamscreenshots.SteamScreenshots
+import `in`.dragonbra.javasteam.steam.handlers.steamunifiedmessages.SteamUnifiedMessages
 import `in`.dragonbra.javasteam.steam.handlers.steamuser.ChatMode
 import `in`.dragonbra.javasteam.steam.handlers.steamuser.LogOnDetails
 import `in`.dragonbra.javasteam.steam.handlers.steamuser.SteamUser
@@ -177,6 +179,7 @@ class SteamService : Service(), IChallengeUrlChanged {
     private var _steamApps: SteamApps? = null
     private var _steamFriends: SteamFriends? = null
     private var _steamCloud: SteamCloud? = null
+    private var _steamFamilyGroups: FamilyGroups? = null
 
     private var _loginResult: LoginResult = LoginResult.Failed
 
@@ -189,6 +192,9 @@ class SteamService : Service(), IChallengeUrlChanged {
 
     private val dbScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    // The current shared family group the logged in user is joined to.
+    private var familyGroupId: Long = Long.MAX_VALUE
 
     companion object {
         const val MAX_SIMULTANEOUS_PICS_REQUESTS = 50
@@ -1007,6 +1013,12 @@ class SteamService : Service(), IChallengeUrlChanged {
         private fun clearUserData() {
             PrefManager.clearPreferences()
 
+            clearDatabase()
+
+            isLoggingIn = false
+        }
+
+        fun clearDatabase() {
             with(instance!!) {
                 dbScope.launch {
                     db.withTransaction {
@@ -1020,8 +1032,6 @@ class SteamService : Service(), IChallengeUrlChanged {
                     }
                 }
             }
-
-            isLoggingIn = false
         }
 
         private fun performLogOffDuties() {
@@ -1154,6 +1164,7 @@ class SteamService : Service(), IChallengeUrlChanged {
             _steamCloud = steamClient!!.getHandler(SteamCloud::class.java)
 
             _unifiedFriends = SteamUnifiedFriends(this)
+            _steamFamilyGroups = steamClient!!.getHandler<SteamUnifiedMessages>()!!.createService<FamilyGroups>()
 
             // subscribe to the callbacks we are interested in
             with(callbackSubscriptions) {
@@ -1371,6 +1382,35 @@ class SteamService : Service(), IChallengeUrlChanged {
                     requestUserPersona()
                 }
 
+                familyGroupId = callback.familyGroupId
+                Timber.d("Family ID: $familyGroupId")
+
+                // TODO remove when done testing.
+                // serviceScope.launch {
+                //     _steamFamilyGroups!!.getFamilyGroup(
+                //         SteammessagesFamilygroupsSteamclient.CFamilyGroups_GetFamilyGroup_Request.newBuilder().apply {
+                //             familyGroupid = callback.familyGroupId
+                //         }.build(),
+                //     ).await().let {
+                //         val resp = it.body
+                //         Timber.d("Name: ${resp.name}")
+                //         resp.membersList.forEach { member ->
+                //             Timber.d("-- Member -- ")
+                //             Timber.d("id: ${member.steamid}")
+                //             Timber.d("role: ${member.role}")
+                //             Timber.d("joined: ${member.timeJoined}")
+                //             Timber.d("cooldown: ${member.cooldownSecondsRemaining}")
+                //         }
+                //         Timber.d("Pending invites ${resp.pendingInvitesCount}")
+                //         Timber.d("Free Spots: ${resp.freeSpots}")
+                //         Timber.d("Country: ${resp.country}")
+                //         Timber.d("Slots cooldown remaining seconds: ${resp.slotCooldownRemainingSeconds}")
+                //         Timber.d("Former Members: ${resp.formerMembersCount}")
+                //         Timber.d("Slot cooldown overrides: ${resp.slotCooldownOverrides}")
+                //     }
+                // }
+
+                // TODO: Can this be moved to its own function?
                 // continuously check for pics changes
                 serviceScope.launch {
                     while (isLoggedIn) {
@@ -1428,6 +1468,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                     }
                 }
 
+                // TODO: Can this be moved to its own function?
                 // request app pics data when needed
                 serviceScope.launch {
                     appIdFlowReceiver
