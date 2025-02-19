@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.data.ContainerData
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
 import com.OxGames.Pluvia.ui.component.settings.SettingsCPUList
 import com.OxGames.Pluvia.ui.component.settings.SettingsCenteredLabel
@@ -67,7 +68,6 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import com.winlator.box86_64.Box86_64PresetManager
 import com.winlator.container.Container
-import com.OxGames.Pluvia.data.ContainerData
 import com.winlator.core.KeyValueSet
 import com.winlator.core.StringUtils
 import com.winlator.core.envvars.EnvVarInfo

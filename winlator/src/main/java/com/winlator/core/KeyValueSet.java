@@ -11,10 +11,6 @@ public class KeyValueSet implements Iterable<String[]> {
         this.data = data != null && !data.isEmpty() ? data : "";
     }
 
-    public String getData() {
-        return data;
-    }
-
     private int[] indexOfKey(String key) {
         int start = 0;
         int end = data.indexOf(",");

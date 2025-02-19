@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.kotlinter)
 }
 
 android {
@@ -17,7 +18,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -35,7 +36,10 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
 
-    implementation(libs.datastore.preferences)
+    // implementation(libs.datastore.preferences)
+    //noinspection UseTomlInstead
+    implementation("androidx.preference:preference-ktx:1.2.1")
+
     implementation(libs.timber)
     implementation(libs.bundles.winlator)
     implementation(libs.zstd.jni) { artifact { type = "aar" } }

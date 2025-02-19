@@ -1,164 +1,142 @@
-package com.winlator.alsaserver;
+package com.winlator.alsaserver
 
-import com.winlator.sysvshm.SysVSharedMemory;
+import com.winlator.sysvshm.SysVSharedMemory
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+class ALSAClient {
 
-public class ALSAClient {
-    public enum DataType {
-        U8(1), S16LE(2), S16BE(2), FLOATLE(4), FLOATBE(4);
-        public final byte byteCount;
+    enum class DataType(byteCount: Int) {
+        U8(1),
+        S16LE(2),
+        S16BE(2),
+        FLOATLE(4),
+        FLOATBE(4),
+        ;
 
-        DataType(int byteCount) {
-            this.byteCount = (byte)byteCount;
-        }
-    }
-    private DataType dataType = DataType.U8;
-    private byte channelCount = 2;
-    private int sampleRate = 0;
-    private int position;
-    private int bufferSize;
-    private int frameBytes;
-    private ByteBuffer sharedBuffer;
-    private boolean playing = false;
-    private long streamPtr = 0;
-
-    static {
-        System.loadLibrary("winlator");
+        val byteCount: Byte = byteCount.toByte()
     }
 
-    public void release() {
-        if (sharedBuffer != null) {
-            SysVSharedMemory.unmapSHMSegment(sharedBuffer, sharedBuffer.capacity());
-            sharedBuffer = null;
-        }
-
-        stop(streamPtr);
-        close(streamPtr);
-        playing = false;
-        streamPtr = 0;
-    }
-
-    public void prepare() {
-        position = 0;
-        frameBytes = channelCount * dataType.byteCount;
-        release();
-
-        if (!isValidBufferSize()) return;
-
-        streamPtr = create(dataType.ordinal(), channelCount, sampleRate, bufferSize);
-        if (streamPtr > 0) start();
-    }
-
-    public void start() {
-        if (streamPtr != 0 && !playing) {
-            start(streamPtr);
-            playing = true;
+    companion object {
+        init {
+            System.loadLibrary("winlator")
         }
     }
 
-    public void stop() {
+    var dataType: DataType = DataType.U8
+        internal set
+
+    var channelCount: Byte = 2
+        internal set
+
+    var sampleRate: Int = 0
+        internal set
+
+    private var position = 0
+
+    var bufferSize: Int = 0
+        internal set
+
+    private var frameBytes = 0
+
+    var sharedBuffer: ByteBuffer? = null
+        internal set
+
+    private var playing = false
+
+    private var streamPtr: Long = 0
+
+    fun release() {
+        sharedBuffer?.let { buffer ->
+            SysVSharedMemory.unmapSHMSegment(buffer, buffer.capacity().toLong())
+            sharedBuffer = null
+        }
+
+        stop(streamPtr)
+        close(streamPtr)
+
+        playing = false
+        streamPtr = 0
+    }
+
+    fun prepare() {
+        position = 0
+        frameBytes = channelCount * dataType.byteCount
+
+        release()
+
+        if (!isValidBufferSize()) return
+
+        streamPtr = create(dataType.ordinal, channelCount, sampleRate, bufferSize)
+
+        if (streamPtr > 0) start()
+    }
+
+    fun start() {
+        if (streamPtr > 0 && !playing) {
+            start(streamPtr)
+            playing = true
+        }
+    }
+
+    fun stop() {
         if (streamPtr > 0 && playing) {
-            stop(streamPtr);
-            playing = false;
+            stop(streamPtr)
+            playing = false
         }
     }
 
-    public void pause() {
+    fun pause() {
         if (streamPtr > 0) {
-            pause(streamPtr);
-            playing = false;
+            pause(streamPtr)
+            playing = false
         }
     }
 
-    public void drain() {
-        if (streamPtr > 0) flush(streamPtr);
+    fun drain() {
+        if (streamPtr > 0) flush(streamPtr)
     }
 
-    public void writeDataToStream(ByteBuffer data) {
+    fun writeDataToStream(data: ByteBuffer) {
         if (dataType == DataType.S16LE || dataType == DataType.FLOATLE) {
-            data.order(ByteOrder.LITTLE_ENDIAN);
-        }
-        else if (dataType == DataType.S16BE || dataType == DataType.FLOATBE) {
-            data.order(ByteOrder.BIG_ENDIAN);
+            data.order(ByteOrder.LITTLE_ENDIAN)
+        } else if (dataType == DataType.S16BE || dataType == DataType.FLOATBE) {
+            data.order(ByteOrder.BIG_ENDIAN)
         }
 
         if (playing) {
-            int numFrames = data.limit() / frameBytes;
-            int framesWritten = write(streamPtr, data, numFrames);
-            if (framesWritten > 0) position += framesWritten;
-            data.rewind();
+            val numFrames = data.limit() / frameBytes
+            val framesWritten = write(streamPtr, data, numFrames)
+
+            if (framesWritten > 0) position += framesWritten
+
+            data.rewind()
         }
     }
 
-    public int pointer() {
-        return position;
-    }
+    fun pointer(): Int = position
 
-    public void setDataType(DataType dataType) {
-        this.dataType = dataType;
-    }
+    fun getBufferSizeInBytes(): Int = bufferSize * frameBytes
 
-    public void setChannelCount(int channelCount) {
-        this.channelCount = (byte)channelCount;
-    }
+    fun computeLatencyMillis(): Int = ((bufferSize.toFloat() / sampleRate) * 1000).toInt()
 
-    public void setSampleRate(int sampleRate) {
-        this.sampleRate = sampleRate;
-    }
+    private fun isValidBufferSize(): Boolean = (getBufferSizeInBytes() % frameBytes == 0) && bufferSize > 0
 
-    public void setBufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
-    }
+    /**
+     * Native Calls
+     */
 
-    public ByteBuffer getSharedBuffer() {
-        return sharedBuffer;
-    }
+    private external fun create(format: Int, channelCount: Byte, sampleRate: Int, bufferSize: Int): Long
 
-    public void setSharedBuffer(ByteBuffer sharedBuffer) {
-        this.sharedBuffer = sharedBuffer;
-    }
+    private external fun write(streamPtr: Long, buffer: ByteBuffer?, numFrames: Int): Int
 
-    public DataType getDataType() {
-        return dataType;
-    }
+    private external fun start(streamPtr: Long)
 
-    public byte getChannelCount() {
-        return channelCount;
-    }
+    private external fun stop(streamPtr: Long)
 
-    public int getSampleRate() {
-        return sampleRate;
-    }
+    private external fun pause(streamPtr: Long)
 
-    public int getBufferSize() {
-        return bufferSize;
-    }
+    private external fun flush(streamPtr: Long)
 
-    public int getBufferSizeInBytes() {
-        return bufferSize * frameBytes;
-    }
-
-    private boolean isValidBufferSize() {
-        return (getBufferSizeInBytes() % frameBytes == 0) && bufferSize > 0;
-    }
-
-    public int computeLatencyMillis() {
-        return (int)(((float)bufferSize / sampleRate) * 1000);
-    }
-
-    private native long create(int format, byte channelCount, int sampleRate, int bufferSize);
-
-    private native int write(long streamPtr, ByteBuffer buffer, int numFrames);
-
-    private native void start(long streamPtr);
-
-    private native void stop(long streamPtr);
-
-    private native void pause(long streamPtr);
-
-    private native void flush(long streamPtr);
-
-    private native void close(long streamPtr);
+    private external fun close(streamPtr: Long)
 }

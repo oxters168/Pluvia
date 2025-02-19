@@ -1,28 +1,16 @@
-package com.winlator.box86_64;
+package com.winlator.box86_64
 
-import androidx.annotation.NonNull;
-
-public class Box86_64Preset {
-    public static final String STABILITY = "STABILITY";
-    public static final String COMPATIBILITY = "COMPATIBILITY";
-    public static final String INTERMEDIATE = "INTERMEDIATE";
-    public static final String PERFORMANCE = "PERFORMANCE";
-    public static final String CUSTOM = "CUSTOM";
-    public final String id;
-    public final String name;
-
-    public Box86_64Preset(String id, String name) {
-        this.id = id;
-        this.name = name;
+class Box86_64Preset(val id: String, val name: String) {
+    companion object {
+        const val STABILITY: String = "STABILITY"
+        const val COMPATIBILITY: String = "COMPATIBILITY"
+        const val INTERMEDIATE: String = "INTERMEDIATE"
+        const val PERFORMANCE: String = "PERFORMANCE"
+        const val CUSTOM: String = "CUSTOM"
     }
 
-    public boolean isCustom() {
-        return id.startsWith(CUSTOM);
-    }
+    val isCustom: Boolean
+        get() = id.startsWith(CUSTOM)
 
-    @NonNull
-    @Override
-    public String toString() {
-        return name;
-    }
+    override fun toString(): String = name
 }

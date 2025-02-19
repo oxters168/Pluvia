@@ -3,7 +3,6 @@ package com.winlator.renderer;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
-// import com.winlator.XrActivity;
 import com.winlator.xserver.Drawable;
 
 import java.nio.ByteBuffer;
@@ -36,7 +35,6 @@ public class Texture {
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, minFilter);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-        // if (XrActivity.isSupported()) XrActivity.getInstance().bindFramebuffer();
     }
 
     public int getWrapS() {
@@ -93,8 +91,7 @@ public class Texture {
 
         if (!isAllocated()) {
             allocateTexture(drawable.width, drawable.height, data);
-        }
-        else if (needsUpdate) {
+        } else if (needsUpdate) {
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
             GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, 0, 0, drawable.width, drawable.height, format, GLES20.GL_UNSIGNED_BYTE, data);
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);

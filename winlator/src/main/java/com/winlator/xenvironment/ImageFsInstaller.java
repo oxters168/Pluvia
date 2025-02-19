@@ -1,18 +1,16 @@
 package com.winlator.xenvironment;
 
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.util.Log;
 
-// import com.winlator.MainActivity;
-// import com.winlator.R;
-// import com.winlator.SettingsFragment;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.winlator.MainActivity;
+import com.winlator.R;
+import com.winlator.SettingsFragment;
 import com.winlator.container.Container;
 import com.winlator.container.ContainerManager;
-// import com.winlator.core.DownloadProgressDialog;
-import com.winlator.core.Callback;
+import com.winlator.core.AppUtils;
 import com.winlator.core.FileUtils;
-// import com.winlator.core.PreloaderDialog;
 import com.winlator.core.TarCompressorUtils;
 import com.winlator.core.WineInfo;
 
@@ -23,7 +21,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class ImageFsInstaller {
@@ -43,57 +40,43 @@ public abstract class ImageFsInstaller {
         }
     }
 
-    private static Future<Boolean> installFromAssetsFuture(final Context context, AssetManager assetManager, Callback<Integer> onProgress) {
-        // AppUtils.keepScreenOn(context);
-        ImageFs imageFs = ImageFs.find(context);
+    private static void installFromAssets(final MainActivity activity) {
+        AppUtils.keepScreenOn(activity);
+        ImageFs imageFs = ImageFs.find(activity);
         final File rootDir = imageFs.getRootDir();
 
-        // SettingsFragment.resetBox86_64Version(context);
+        SettingsFragment.resetBox86_64Version(activity);
 
-        // final DownloadProgressDialog dialog = new DownloadProgressDialog(context);
-        // dialog.show(R.string.installing_system_files);
-        return Executors.newSingleThreadExecutor().submit(() -> {
+        final DownloadProgressDialog dialog = new DownloadProgressDialog(activity);
+        dialog.show(R.string.installing_system_files);
+        Executors.newSingleThreadExecutor().execute(() -> {
             clearRootDir(rootDir);
             final byte compressionRatio = 22;
-            final long contentLength = (long)(FileUtils.getSize(assetManager, "imagefs.txz") * (100.0f / compressionRatio));
+            final long contentLength = (long)(FileUtils.getSize(activity, "imagefs.txz") * (100.0f / compressionRatio));
             AtomicLong totalSizeRef = new AtomicLong();
 
-            boolean success = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, assetManager, "imagefs.txz", rootDir, (file, size) -> {
+            boolean success = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, activity, "imagefs.txz", rootDir, (file, size) -> {
                 if (size > 0) {
                     long totalSize = totalSizeRef.addAndGet(size);
-                    if (onProgress != null) {
-                        final int progress = (int)(((float)totalSize / contentLength) * 100);
-                        onProgress.call(progress);
-                    }
+                    final int progress = (int)(((float)totalSize / contentLength) * 100);
+                    activity.runOnUiThread(() -> dialog.setProgress(progress));
                 }
                 return file;
             });
 
             if (success) {
                 imageFs.createImgVersionFile(LATEST_VERSION);
-                resetContainerImgVersions(context);
+                resetContainerImgVersions(activity);
             }
-            else {
-                Log.e("ImageFsInstaller", "Failed to install system files");
-                // AppUtils.showToast(context, R.string.unable_to_install_system_files);
-            }
-            return success;
-            // dialog.closeOnUiThread();
+            else AppUtils.showToast(activity, R.string.unable_to_install_system_files);
+
+            dialog.closeOnUiThread();
         });
     }
 
-
-    public static Future<Boolean> installIfNeededFuture(final Context context, AssetManager assetManager) {
-        return installIfNeededFuture(context, assetManager, null);
-    }
-    public static Future<Boolean> installIfNeededFuture(final Context context, AssetManager assetManager, Callback<Integer> onProgress) {
-        ImageFs imageFs = ImageFs.find(context);
-        if (!imageFs.isValid() || imageFs.getVersion() < LATEST_VERSION) {
-            return installFromAssetsFuture(context, assetManager, onProgress);
-        } else {
-            Log.d("ImageFsInstaller", "Image FS already valid and at latest version");
-            return Executors.newSingleThreadExecutor().submit(() -> true);
-        }
+    public static void installIfNeeded(final MainActivity activity) {
+        ImageFs imageFs = ImageFs.find(activity);
+        if (!imageFs.isValid() || imageFs.getVersion() < LATEST_VERSION) installFromAssets(activity);
     }
 
     private static void clearOptDir(File optDir) {
@@ -125,19 +108,19 @@ public abstract class ImageFsInstaller {
         else rootDir.mkdirs();
     }
 
-    public static void generateCompactContainerPattern(final Context context, AssetManager assetManager) {
-        // AppUtils.keepScreenOn(context);
-        // PreloaderDialog preloaderDialog = new PreloaderDialog(context);
-        // preloaderDialog.show(R.string.loading);
+    public static void generateCompactContainerPattern(final AppCompatActivity activity) {
+        AppUtils.keepScreenOn(activity);
+        PreloaderDialog preloaderDialog = new PreloaderDialog(activity);
+        preloaderDialog.show(R.string.loading);
         Executors.newSingleThreadExecutor().execute(() -> {
             File[] srcFiles, dstFiles;
-            File rootDir = ImageFs.find(context).getRootDir();
+            File rootDir = ImageFs.find(activity).getRootDir();
             File wineSystem32Dir = new File(rootDir, "/opt/wine/lib/wine/x86_64-windows");
             File wineSysWoW64Dir = new File(rootDir, "/opt/wine/lib/wine/i386-windows");
 
-            File containerPatternDir = new File(context.getCacheDir(), "container_pattern");
+            File containerPatternDir = new File(activity.getCacheDir(), "container_pattern");
             FileUtils.delete(containerPatternDir);
-            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, assetManager, "container_pattern.tzst", containerPatternDir);
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, activity, "container_pattern.tzst", containerPatternDir);
 
             File containerSystem32Dir = new File(containerPatternDir, ".wine/drive_c/windows/system32");
             File containerSysWoW64Dir = new File(containerPatternDir, ".wine/drive_c/windows/syswow64");
@@ -186,18 +169,16 @@ public abstract class ImageFsInstaller {
                 }
                 data.put("syswow64", syswow64JSONArray);
 
-                FileUtils.writeString(new File(context.getCacheDir(), "common_dlls.json"), data.toString());
+                FileUtils.writeString(new File(activity.getCacheDir(), "common_dlls.json"), data.toString());
 
-                File outputFile = new File(context.getCacheDir(), "container_pattern.tzst");
+                File outputFile = new File(activity.getCacheDir(), "container_pattern.tzst");
                 FileUtils.delete(outputFile);
                 TarCompressorUtils.compress(TarCompressorUtils.Type.ZSTD, new File(containerPatternDir, ".wine"), outputFile, 22);
 
                 FileUtils.delete(containerPatternDir);
-                // preloaderDialog.closeOnUiThread();
+                preloaderDialog.closeOnUiThread();
             }
-            catch (JSONException e) {
-                Log.e("ImageFsInstaller", "Failed to read JSON data: " + e);
-            }
+            catch (JSONException e) {}
         });
     }
 }

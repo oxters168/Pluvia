@@ -1,94 +1,83 @@
-package com.winlator.alsaserver;
+package com.winlator.alsaserver
 
-import android.util.Log;
+import com.winlator.sysvshm.SysVSharedMemory
+import com.winlator.xconnector.Client
+import com.winlator.xconnector.RequestHandler
+import com.winlator.xconnector.XConnectorEpoll
+import com.winlator.xconnector.XOutputStream
+import java.io.IOException
 
-import com.winlator.sysvshm.SysVSharedMemory;
-import com.winlator.xconnector.Client;
-import com.winlator.xconnector.RequestHandler;
-import com.winlator.xconnector.XConnectorEpoll;
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
+class ALSARequestHandler : RequestHandler {
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+    private var maxSHMemoryId = 0
 
-public class ALSARequestHandler implements RequestHandler {
-    private int maxSHMemoryId = 0;
+    @Throws(IOException::class)
+    override fun handleRequest(client: Client): Boolean {
+        val alsaClient = client.tag as ALSAClient
+        val inputStream = client.inputStream
+        val outputStream = client.outputStream
 
-    @Override
-    public boolean handleRequest(Client client) throws IOException {
-        ALSAClient alsaClient = (ALSAClient)client.getTag();
-        XInputStream inputStream = client.getInputStream();
-        XOutputStream outputStream = client.getOutputStream();
+        if (inputStream.available() < 5) return false
 
-        if (inputStream.available() < 5) return false;
-        byte requestCode = inputStream.readByte();
-        int requestLength = inputStream.readInt();
+        val requestCode = inputStream.readByte()
+        val requestLength = inputStream.readInt()
 
-        switch (requestCode) {
-            case RequestCodes.CLOSE:
-                Log.d("ALSARequestHandler", "Received request to close");
-                alsaClient.release();
-                break;
-            case RequestCodes.START:
-                alsaClient.start();
-                break;
-            case RequestCodes.STOP:
-                alsaClient.stop();
-                break;
-            case RequestCodes.PAUSE:
-                alsaClient.pause();
-                break;
-            case RequestCodes.PREPARE:
-                if (inputStream.available() < requestLength) return false;
+        when (requestCode) {
+            RequestCodes.CLOSE.code -> alsaClient.release()
+            RequestCodes.START.code -> alsaClient.start()
+            RequestCodes.STOP.code -> alsaClient.stop()
+            RequestCodes.PAUSE.code -> alsaClient.pause()
+            RequestCodes.PREPARE.code -> {
+                if (inputStream.available() < requestLength) return false
 
-                alsaClient.setChannelCount(inputStream.readByte());
-                alsaClient.setDataType(ALSAClient.DataType.values()[inputStream.readByte()]);
-                alsaClient.setSampleRate(inputStream.readInt());
-                alsaClient.setBufferSize(inputStream.readInt());
-                alsaClient.prepare();
+                alsaClient.channelCount = inputStream.readByte().toInt().toByte() // :^)
+                alsaClient.dataType = ALSAClient.DataType.entries.toTypedArray()[inputStream.readByte().toInt()]
 
-                createSharedMemory(alsaClient, outputStream);
-                break;
-            case RequestCodes.WRITE:
-                ByteBuffer buffer = alsaClient.getSharedBuffer();
+                alsaClient.sampleRate = inputStream.readInt()
+                alsaClient.bufferSize = inputStream.readInt()
+                alsaClient.prepare()
+
+                createSharedMemory(alsaClient, outputStream)
+            }
+
+            RequestCodes.WRITE.code -> {
+                val buffer = alsaClient.sharedBuffer
                 if (buffer != null) {
-                    buffer.limit(requestLength);
-                    alsaClient.writeDataToStream(buffer);
+                    buffer.limit(requestLength)
+                    alsaClient.writeDataToStream(buffer)
+                } else {
+                    if (inputStream.available() < requestLength) return false
+                    alsaClient.writeDataToStream(inputStream.readByteBuffer(requestLength))
                 }
-                else {
-                    if (inputStream.available() < requestLength) return false;
-                    alsaClient.writeDataToStream(inputStream.readByteBuffer(requestLength));
-                }
-                break;
-            case RequestCodes.DRAIN:
-                alsaClient.drain();
-                break;
-            case RequestCodes.POINTER:
-                try (XStreamLock lock = outputStream.lock()) {
-                    outputStream.writeInt(alsaClient.pointer());
-                }
-                break;
+            }
+
+            RequestCodes.DRAIN.code -> alsaClient.drain()
+            RequestCodes.POINTER.code -> outputStream.lock().use { lock ->
+                outputStream.writeInt(alsaClient.pointer())
+            }
         }
-        return true;
+
+        return true
     }
 
-    private void createSharedMemory(ALSAClient alsaClient, XOutputStream outputStream) throws IOException {
-        int size = alsaClient.getBufferSizeInBytes();
-        int fd = SysVSharedMemory.createMemoryFd("alsa-shm"+(++maxSHMemoryId), size);
+    @Throws(IOException::class)
+    private fun createSharedMemory(alsaClient: ALSAClient, outputStream: XOutputStream) {
+        val size = alsaClient.getBufferSizeInBytes()
+        val fd = SysVSharedMemory.createMemoryFd("alsa-shm" + (++maxSHMemoryId), size)
 
         if (fd >= 0) {
-            ByteBuffer buffer = SysVSharedMemory.mapSHMSegment(fd, size, 0, true);
-            if (buffer != null) alsaClient.setSharedBuffer(buffer);
+            SysVSharedMemory.mapSHMSegment(fd, size.toLong(), 0, true)?.let { buffer ->
+                alsaClient.sharedBuffer = buffer
+            }
         }
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte((byte)0);
-            outputStream.setAncillaryFd(fd);
-        }
-        finally {
-            if (fd >= 0) XConnectorEpoll.closeFd(fd);
+        try {
+            outputStream.lock().use { lock ->
+                outputStream.writeByte(0.toByte())
+                outputStream.setAncillaryFd(fd)
+            }
+        } finally {
+            if (fd >= 0) XConnectorEpoll.closeFd(fd)
         }
     }
 }

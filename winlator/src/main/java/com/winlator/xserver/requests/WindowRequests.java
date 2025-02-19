@@ -94,8 +94,8 @@ public abstract class WindowRequests {
 
             if (valueMask.isSet(WindowAttributes.FLAG_EVENT_MASK)) {
                 if (isClientCanSelectFor(Event.SUBSTRUCTURE_REDIRECT, window, client) &&
-                        isClientCanSelectFor(Event.RESIZE_REDIRECT, window, client) &&
-                        isClientCanSelectFor(Event.BUTTON_PRESS, window, client)) {
+                    isClientCanSelectFor(Event.RESIZE_REDIRECT, window, client) &&
+                    isClientCanSelectFor(Event.BUTTON_PRESS, window, client)) {
                     client.setEventListenerForWindow(window, window.attributes.getEventMask());
                 }
                 else throw new BadAccess();

@@ -2,10 +2,8 @@ package com.winlator.core;
 
 import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 
 import com.winlator.container.Container;
-import com.winlator.core.envvars.EnvVars;
 import com.winlator.xenvironment.ImageFs;
 import com.winlator.xenvironment.XEnvironment;
 import com.winlator.xenvironment.components.GuestProgramLauncherComponent;
@@ -231,9 +229,7 @@ public abstract class WineUtils {
                 }
             }
         }
-        catch (JSONException e) {
-            Log.e("WineUtils", "Failed to override win component dlls: " + e);
-        }
+        catch (JSONException e) {}
     }
 
     public static void setWinComponentRegistryKeys(File systemRegFile, String identifier, boolean useNative) {

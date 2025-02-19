@@ -7,7 +7,6 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
 import com.winlator.R;
-// import com.winlator.XrActivity;
 import com.winlator.math.Mathf;
 import com.winlator.math.XForm;
 import com.winlator.renderer.material.CursorMaterial;
@@ -58,10 +57,10 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         rootCursorDrawable = createRootCursorDrawable();
 
         quadVertices.put(new float[]{
-                0.0f, 0.0f,
-                0.0f, 1.0f,
-                1.0f, 0.0f,
-                1.0f, 1.0f
+            0.0f, 0.0f,
+            0.0f, 1.0f,
+            1.0f, 0.0f,
+            1.0f, 1.0f
         });
 
         xServer.windowManager.addOnWindowModificationListener(this);
@@ -85,19 +84,18 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        // if (XrActivity.isSupported()) {
-        //     XrActivity activity = XrActivity.getInstance();
-        //     activity.init();
-        //     width = activity.getWidth();
-        //     height = activity.getHeight();
-        //     GLES20.glViewport(0, 0, width, height);
-        //     magnifierEnabled = false;
-        // }
+        if (XrActivity.isSupported()) {
+            XrActivity activity = XrActivity.getInstance();
+            activity.init();
+            width = activity.getWidth();
+            height = activity.getHeight();
+            GLES20.glViewport(0, 0, width, height);
+            magnifierEnabled = false;
+        }
 
         surfaceWidth = width;
         surfaceHeight = height;
         viewTransformation.update(width, height, xServer.screenInfo.width, xServer.screenInfo.height);
-        viewportNeedsUpdate = true;
     }
 
     @Override
@@ -113,7 +111,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     private void drawFrame() {
         boolean xrFrame = false;
-        // if (XrActivity.isSupported()) xrFrame = XrActivity.getInstance().beginFrame(XrActivity.getImmersive(), XrActivity.getSBS());
+        if (XrActivity.isSupported()) xrFrame = XrActivity.getInstance().beginFrame(XrActivity.getImmersive(), XrActivity.getSBS());
 
         if (viewportNeedsUpdate && magnifierEnabled) {
             if (fullscreen) {
@@ -164,8 +162,8 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         if (!magnifierEnabled && !fullscreen) GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 
         if (xrFrame) {
-            // XrActivity.getInstance().endFrame();
-            // XrActivity.updateControllers();
+            XrActivity.getInstance().endFrame();
+            XrActivity.updateControllers();
             xServerView.requestRender();
         }
     }

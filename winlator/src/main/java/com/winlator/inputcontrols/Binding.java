@@ -3,7 +3,6 @@ package com.winlator.inputcontrols;
 import androidx.annotation.NonNull;
 
 import com.winlator.xserver.Pointer;
-import com.winlator.xserver.XKeycode;
 
 import java.util.ArrayList;
 

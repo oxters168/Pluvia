@@ -56,6 +56,7 @@ import androidx.core.net.toUri
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.data.ContainerData
 import com.OxGames.Pluvia.data.SteamApp
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.component.LoadingScreen
@@ -75,7 +76,6 @@ import com.OxGames.Pluvia.utils.StorageUtils
 import com.google.android.play.core.splitcompat.SplitCompat
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
-import com.OxGames.Pluvia.data.ContainerData
 import com.winlator.xenvironment.ImageFsInstaller
 import java.text.SimpleDateFormat
 import java.util.Date

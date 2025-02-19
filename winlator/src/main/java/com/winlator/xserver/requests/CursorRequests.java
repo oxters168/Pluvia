@@ -23,9 +23,9 @@ public abstract class CursorRequests {
 
         Pixmap maskPixmap = client.xServer.pixmapManager.getPixmap(maskPixmapId);
         if (maskPixmap != null && (
-                maskPixmap.drawable.visual.depth != 1 ||
-                        maskPixmap.drawable.width != sourcePixmap.drawable.width ||
-                        maskPixmap.drawable.height != sourcePixmap.drawable.height)) {
+            maskPixmap.drawable.visual.depth != 1 ||
+            maskPixmap.drawable.width != sourcePixmap.drawable.width ||
+            maskPixmap.drawable.height != sourcePixmap.drawable.height)) {
             throw new BadMatch();
         }
 
