@@ -4,7 +4,7 @@ import android.content.Context
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.service.SteamService
 import com.winlator.container.Container
-import com.winlator.container.ContainerData
+import com.OxGames.Pluvia.data.ContainerData
 import com.winlator.container.ContainerManager
 import com.winlator.core.FileUtils
 import com.winlator.core.WineRegistryEditor

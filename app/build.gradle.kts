@@ -133,10 +133,11 @@ android {
             useLegacyPackaging = true
         }
     }
-    dynamicFeatures += setOf(":ubuntufs")
+
+    //dynamicFeatures += setOf(":ubuntufs")
 
     kotlinter {
-        ignoreFormatFailures  = false
+        ignoreFormatFailures = false
     }
 
     // cmake on release builds a proot that fails to process ld-2.31.so
@@ -172,8 +173,7 @@ dependencies {
     implementation(libs.bundles.google)
 
     // Winlator
-    implementation(libs.bundles.winlator)
-    implementation(libs.zstd.jni) { artifact { type = "aar" } }
+    implementation(project(":winlator"))
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))

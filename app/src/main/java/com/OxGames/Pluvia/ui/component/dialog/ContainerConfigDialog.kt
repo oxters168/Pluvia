@@ -67,7 +67,7 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import com.winlator.box86_64.Box86_64PresetManager
 import com.winlator.container.Container
-import com.winlator.container.ContainerData
+import com.OxGames.Pluvia.data.ContainerData
 import com.winlator.core.KeyValueSet
 import com.winlator.core.StringUtils
 import com.winlator.core.envvars.EnvVarInfo

@@ -1,11 +1,15 @@
-package com.winlator.container
+package com.OxGames.Pluvia.data
 
 import androidx.compose.runtime.saveable.mapSaver
 import com.winlator.box86_64.Box86_64Preset
+import com.winlator.container.Container
 import com.winlator.core.DefaultVersion
 import com.winlator.core.WineThemeManager
-import kotlin.String
+import kotlin.text.get
 
+/**
+ * Helper for Winlator
+ */
 data class ContainerData(
     val name: String = "",
     val screenSize: String = Container.DEFAULT_SCREEN_SIZE,

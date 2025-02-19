@@ -31,11 +31,6 @@
     <string name="destination_friends">Friends</string>
 
     <!--Winlator-->
-    <string name="copy">Copy</string>
-    <string name="stability">Stability</string>
-    <string name="compatibility">Compatibility</string>
-    <string name="intermediate">Intermediate</string>
-    <string name="performance">Performance</string>
     <string name="title_ubuntufs">Ubuntu FS</string>
 
     <!-- Winlator: Win Components -->
