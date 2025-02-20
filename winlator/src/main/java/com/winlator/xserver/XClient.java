@@ -1,5 +1,6 @@
 package com.winlator.xserver;
 
+import androidx.annotation.Nullable;
 import androidx.collection.ArrayMap;
 
 import com.winlator.xconnector.XInputStream;
@@ -147,6 +148,10 @@ public class XClient implements XResourceManager.OnResourceLifecycleListener {
     public Bitmask getEventMaskForWindow(Window window) {
         EventListener eventListener = eventListeners.get(window);
         return eventListener != null ? eventListener.eventMask : new Bitmask();
+    }
+
+    @Override
+    public void onCreateResource(@Nullable XResource resource) {
     }
 
     @Override

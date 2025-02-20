@@ -1,63 +1,80 @@
-package com.winlator.core;
+package com.winlator.core
 
-import android.content.Context;
-import android.net.DhcpInfo;
-import android.net.wifi.WifiManager;
+import android.content.Context
+import android.net.wifi.WifiManager
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.net.SocketException
+import java.net.UnknownHostException
 
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+class NetworkHelper(context: Context) {
 
-public class NetworkHelper {
-    private final WifiManager wifiManager;
+    companion object {
+        fun formatIpAddress(ipAddress: Int): String {
+            return (ipAddress and 255).toString() + "." + ((ipAddress shr 8) and 255) + "." +
+                ((ipAddress shr 16) and 255) + "." + ((ipAddress shr 24) and 255)
+        }
 
-    public NetworkHelper(Context context) {
-        wifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
-    }
-
-    public int getIpAddress() {
-        return wifiManager != null ? wifiManager.getConnectionInfo().getIpAddress() : 0;
-    }
-
-    public int getNetmask() {
-        if (wifiManager == null) return 0;
-
-        DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
-        if (dhcpInfo == null) return 0;
-
-        int netmask = Integer.bitCount(dhcpInfo.netmask);
-        if (dhcpInfo.netmask < 8 || dhcpInfo.netmask > 32) {
-            try {
-                InetAddress inetAddress = InetAddress.getByName(formatIpAddress(getIpAddress()));
-                NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
-                if (networkInterface != null) {
-                    for (InterfaceAddress address : networkInterface.getInterfaceAddresses()) {
-                        if (inetAddress != null && inetAddress.equals(address.getAddress())) {
-                            netmask = address.getNetworkPrefixLength();
-                            break;
-                        }
+        fun formatNetmask(netmask: Int): String {
+            return if (netmask == 24) {
+                "255.255.255.0"
+            } else {
+                if (netmask == 16) {
+                    "255.255.0.0"
+                } else {
+                    if (netmask == 8) {
+                        "255.0.0.0"
+                    } else {
+                        "0.0.0.0"
                     }
                 }
             }
-            catch (SocketException | UnknownHostException ignored) {}
+        }
+    }
+
+    private val wifiManager: WifiManager? =
+        context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+
+    val ipAddress: Int
+        get() = wifiManager?.connectionInfo?.ipAddress ?: 0
+
+    val netmask: Int
+        get() {
+            if (wifiManager == null) {
+                return 0
+            }
+
+            val dhcpInfo = wifiManager.dhcpInfo ?: return 0
+
+            var netmask = Integer.bitCount(dhcpInfo.netmask)
+
+            if (dhcpInfo.netmask < 8 || dhcpInfo.netmask > 32) {
+                try {
+                    val inetAddress = InetAddress.getByName(formatIpAddress(ipAddress))
+                    val networkInterface = NetworkInterface.getByInetAddress(inetAddress)
+
+                    if (networkInterface != null) {
+                        for (address in networkInterface.interfaceAddresses) {
+                            if (inetAddress == address.address) {
+                                netmask = address.networkPrefixLength.toInt()
+                                break
+                            }
+                        }
+                    }
+                } catch (ignored: SocketException) {
+                } catch (ignored: UnknownHostException) {
+                }
+            }
+
+            return netmask
         }
 
-        return netmask;
-    }
+    val gateway: Int
+        get() {
+            if (wifiManager == null) {
+                return 0
+            }
 
-    public int getGateway() {
-        if (wifiManager == null) return 0;
-        DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
-        return dhcpInfo != null ? dhcpInfo.gateway : 0;
-    }
-
-    public static String formatIpAddress(int ipAddress) {
-        return (ipAddress & 255)+"."+((ipAddress >> 8) & 255)+"."+((ipAddress >> 16) & 255)+"."+((ipAddress >> 24) & 255);
-    }
-
-    public static String formatNetmask(int netmask) {
-        return netmask == 24 ? "255.255.255.0" : (netmask == 16 ? "255.255.0.0" : (netmask == 8 ? "255.0.0.0" : "0.0.0.0"));
-    }
+            return wifiManager.dhcpInfo?.gateway ?: 0
+        }
 }

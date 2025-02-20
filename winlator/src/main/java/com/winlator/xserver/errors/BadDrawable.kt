@@ -1,7 +1,3 @@
-package com.winlator.xserver.errors;
+package com.winlator.xserver.errors
 
-public class BadDrawable extends XRequestError {
-    public BadDrawable(int id) {
-        super(9, id);
-    }
-}
+class BadDrawable(id: Int) : XRequestError(9, id)

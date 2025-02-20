@@ -84,15 +84,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        if (XrActivity.isSupported()) {
-            XrActivity activity = XrActivity.getInstance();
-            activity.init();
-            width = activity.getWidth();
-            height = activity.getHeight();
-            GLES20.glViewport(0, 0, width, height);
-            magnifierEnabled = false;
-        }
-
         surfaceWidth = width;
         surfaceHeight = height;
         viewTransformation.update(width, height, xServer.screenInfo.width, xServer.screenInfo.height);
@@ -111,7 +102,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     private void drawFrame() {
         boolean xrFrame = false;
-        if (XrActivity.isSupported()) xrFrame = XrActivity.getInstance().beginFrame(XrActivity.getImmersive(), XrActivity.getSBS());
 
         if (viewportNeedsUpdate && magnifierEnabled) {
             if (fullscreen) {
@@ -162,8 +152,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         if (!magnifierEnabled && !fullscreen) GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 
         if (xrFrame) {
-            XrActivity.getInstance().endFrame();
-            XrActivity.updateControllers();
             xServerView.requestRender();
         }
     }

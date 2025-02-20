@@ -1,84 +1,81 @@
-package com.winlator.core;
+package com.winlator.core
 
-import androidx.annotation.NonNull;
+class EnvVars : Iterable<String?> {
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+    private val data = LinkedHashMap<String, String>()
 
-public class EnvVars implements Iterable<String> {
-    private final LinkedHashMap<String, String> data = new LinkedHashMap<>();
+    constructor()
 
-    public EnvVars() {}
-
-    public EnvVars(String values) {
-        putAll(values);
+    constructor(values: String?) {
+        putAll(values)
     }
 
-    public void put(String name, Object value) {
-        data.put(name, String.valueOf(value));
+    fun put(name: String, value: Any) {
+        data[name] = value.toString()
     }
 
-    public void putAll(String values) {
-        if (values == null || values.isEmpty()) return;
-        String[] parts = values.split(" ");
-        for (String part : parts) {
-            int index = part.indexOf("=");
-            String name = part.substring(0, index);
-            String value = part.substring(index+1);
-            data.put(name, value);
+    fun putAll(values: String?) {
+        if (values.isNullOrEmpty()) {
+            return
+        }
+
+        val parts = values.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+
+        for (part in parts) {
+            val index = part.indexOf("=")
+            val name = part.substring(0, index)
+            val value = part.substring(index + 1)
+            data[name] = value
         }
     }
 
-    public void putAll(EnvVars envVars) {
-        data.putAll(envVars.data);
+    fun putAll(envVars: EnvVars) {
+        data.putAll(envVars.data)
     }
 
-    public String get(String name) {
-        return data.getOrDefault(name, "");
+    fun get(name: String): String = data.getOrDefault(name, "")
+
+    fun remove(name: String) {
+        data.remove(name)
     }
 
-    public void remove(String name) {
-        data.remove(name);
+    fun has(name: String): Boolean = data.containsKey(name)
+
+    fun clear() {
+        data.clear()
     }
 
-    public boolean has(String name) {
-        return data.containsKey(name);
-    }
+    val isEmpty: Boolean
+        get() = data.isEmpty()
 
-    public void clear() {
-        data.clear();
-    }
+    override fun toString(): String = toStringArray().joinToString(" ")
 
-    public boolean isEmpty() {
-        return data.isEmpty();
-    }
+    fun toEscapedString(): String {
+        var result = ""
 
-    @NonNull
-    @Override
-    public String toString() {
-        return String.join(" ", toStringArray());
-    }
+        for (key in data.keys) {
+            if (result.isNotEmpty()) {
+                result += " "
+            }
 
-    public String toEscapedString() {
-        String result = "";
-        for (String key : data.keySet()) {
-            if (!result.isEmpty()) result += " ";
-            String value = data.get(key);
-            result += key+"="+value.replace(" ", "\\ ");
+            val value = data[key]
+
+            result += key + "=" + value!!.replace(" ", "\\ ")
         }
-        return result;
+
+        return result
     }
 
-    public String[] toStringArray() {
-        String[] stringArray = new String[data.size()];
-        int index = 0;
-        for (String key : data.keySet()) stringArray[index++] = key+"="+data.get(key);
-        return stringArray;
+    fun toStringArray(): Array<String?> {
+        val stringArray = arrayOfNulls<String>(data.size)
+        var index = 0
+
+        for (key in data.keys) {
+            stringArray[index++] = key + "=" + data[key]
+        }
+
+        return stringArray
     }
 
-    @NonNull
-    @Override
-    public Iterator<String> iterator() {
-        return data.keySet().iterator();
-    }
+    override fun iterator(): MutableIterator<String> = data.keys.iterator()
 }

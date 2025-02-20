@@ -1,172 +1,228 @@
-package com.winlator.core;
+package com.winlator.core
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import com.winlator.core.ArrayUtils.concat
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-public abstract class MSLink {
-    public static final byte SW_SHOWNORMAL = 1;
-    public static final byte SW_SHOWMAXIMIZED = 3;
-    public static final byte SW_SHOWMINNOACTIVE = 7;
-    private static final int HasLinkTargetIDList = 1<<0;
-    private static final int HasArguments = 1<<5;
-    private static final int HasIconLocation = 1<<6;
-    private static final int ForceNoLinkInfo = 1<<8;
+object MSLink {
 
-    public static final class Options {
-        public String targetPath;
-        public String cmdArgs;
-        public String iconLocation;
-        public int iconIndex;
-        public int fileSize;
-        public int showCommand = SW_SHOWNORMAL;
+    const val SW_SHOWNORMAL: Byte = 1
+    const val SW_SHOWMAXIMIZED: Byte = 3
+    const val SW_SHOWMINNOACTIVE: Byte = 7
+
+    private const val HAS_LINK_TARGET_ID_LIST = 1 shl 0
+    private const val HAS_ARGUMENTS = 1 shl 5
+    private const val HAS_ICON_LOCATION = 1 shl 6
+    private const val FORCE_NO_LINK_INFO = 1 shl 8
+
+    private fun charToHexDigit(chr: Char): Int {
+        return if (chr >= 'A') chr.code - 'A'.code + 10 else chr.code - '0'.code
     }
 
-    private static int charToHexDigit(char chr) {
-        return chr >= 'A' ? chr - 'A' + 10 : chr - '0';
+    private fun twoCharsToByte(chr1: Char, chr2: Char): Byte {
+        return (charToHexDigit(chr1.uppercaseChar()) * 16 + charToHexDigit(chr2.uppercaseChar())).toByte()
     }
 
-    private static byte twoCharsToByte(char chr1, char chr2) {
-        return (byte)(charToHexDigit(Character.toUpperCase(chr1)) * 16 + charToHexDigit(Character.toUpperCase(chr2)));
+    private fun convertCLSIDtoDATA(str: String): ByteArray {
+        return byteArrayOf(
+            twoCharsToByte(str[6], str[7]),
+            twoCharsToByte(str[4], str[5]),
+            twoCharsToByte(str[2], str[3]),
+            twoCharsToByte(str[0], str[1]),
+            twoCharsToByte(str[11], str[12]),
+            twoCharsToByte(str[9], str[10]),
+            twoCharsToByte(str[16], str[17]),
+            twoCharsToByte(str[14], str[15]),
+            twoCharsToByte(str[19], str[20]),
+            twoCharsToByte(str[21], str[22]),
+            twoCharsToByte(str[24], str[25]),
+            twoCharsToByte(str[26], str[27]),
+            twoCharsToByte(str[28], str[29]),
+            twoCharsToByte(str[30], str[31]),
+            twoCharsToByte(str[32], str[33]),
+            twoCharsToByte(str[34], str[35]),
+        )
     }
 
-    private static byte[] convertCLSIDtoDATA(String str) {
-        return new byte[]{
-            twoCharsToByte(str.charAt(6), str.charAt(7)),
-            twoCharsToByte(str.charAt(4), str.charAt(5)),
-            twoCharsToByte(str.charAt(2), str.charAt(3)),
-            twoCharsToByte(str.charAt(0), str.charAt(1)),
-            twoCharsToByte(str.charAt(11), str.charAt(12)),
-            twoCharsToByte(str.charAt(9), str.charAt(10)),
-            twoCharsToByte(str.charAt(16), str.charAt(17)),
-            twoCharsToByte(str.charAt(14), str.charAt(15)),
-            twoCharsToByte(str.charAt(19), str.charAt(20)),
-            twoCharsToByte(str.charAt(21), str.charAt(22)),
-            twoCharsToByte(str.charAt(24), str.charAt(25)),
-            twoCharsToByte(str.charAt(26), str.charAt(27)),
-            twoCharsToByte(str.charAt(28), str.charAt(29)),
-            twoCharsToByte(str.charAt(30), str.charAt(31)),
-            twoCharsToByte(str.charAt(32), str.charAt(33)),
-            twoCharsToByte(str.charAt(34), str.charAt(35))
-        };
-    }
+    private fun stringToByteArray(str: String): ByteArray {
+        val bytes = ByteArray(str.length)
 
-    private static byte[] stringToByteArray(String str) {
-        byte[] bytes = new byte[str.length()];
-        for (int i = 0; i < bytes.length; i++) bytes[i] = (byte)str.charAt(i);
-        return bytes;
-    }
-
-    private static byte[] intToByteArray(int value) {
-        return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array();
-    }
-
-    private static byte[] stringSizePaddedToByteArray(String str) {
-        ByteBuffer buffer = ByteBuffer.allocate(str.length() + 2).order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putShort((short)str.length());
-        for (int i = 0; i < str.length(); i++) buffer.put((byte)str.charAt(i));
-        return buffer.array();
-    }
-
-    private static byte[] generateIDLIST(byte[] bytes) {
-        ByteBuffer buffer = ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort((short)(bytes.length + 2));
-        return ArrayUtils.concat(buffer.array(), bytes);
-    }
-
-    public static void createFile(String targetPath, File outputFile) {
-        Options options = new Options();
-        options.targetPath = targetPath;
-        createFile(options, outputFile);
-    }
-
-    public static void createFile(Options options, File outputFile) {
-        byte[] HeaderSize = new byte[]{0x4c, 0x00, 0x00, 0x00};
-        byte[] LinkCLSID = convertCLSIDtoDATA("00021401-0000-0000-c000-000000000046");
-
-        int linkFlags = HasLinkTargetIDList | ForceNoLinkInfo;
-        if (options.cmdArgs != null && !options.cmdArgs.isEmpty()) linkFlags |= HasArguments;
-        if (options.iconLocation != null && !options.iconLocation.isEmpty()) linkFlags |= HasIconLocation;
-
-        byte[] LinkFlags = intToByteArray(linkFlags);
-
-        byte[] FileAttributes, prefixOfTarget;
-        options.targetPath = options.targetPath.replaceAll("/+", "\\\\");
-        if (options.targetPath.endsWith("\\")) {
-            FileAttributes = new byte[]{0x10, 0x00, 0x00, 0x00};
-            prefixOfTarget = new byte[]{0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-            options.targetPath = options.targetPath.replaceAll("\\\\+$", "");
-        }
-        else {
-            FileAttributes = new byte[]{0x20, 0x00, 0x00, 0x00};
-            prefixOfTarget = new byte[]{0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        for (i in bytes.indices) {
+            bytes[i] = str[i].code.toByte()
         }
 
-        byte[] CreationTime, AccessTime, WriteTime;
-        CreationTime = AccessTime = WriteTime = new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        return bytes
+    }
 
-        byte[] FileSize = intToByteArray(options.fileSize);
-        byte[] IconIndex = intToByteArray(options.iconIndex);
-        byte[] ShowCommand = intToByteArray(options.showCommand);
-        byte[] Hotkey = new byte[]{0x00, 0x00};
-        byte[] Reserved1 = new byte[]{0x00, 0x00};
-        byte[] Reserved2 = new byte[]{0x00, 0x00, 0x00, 0x00};
-        byte[] Reserved3 = new byte[]{0x00, 0x00, 0x00, 0x00};
+    private fun intToByteArray(value: Int): ByteArray {
+        return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array()
+    }
 
-        byte[] CLSIDComputer = convertCLSIDtoDATA("20d04fe0-3aea-1069-a2d8-08002b30309d");
-        byte[] CLSIDNetwork = convertCLSIDtoDATA("208d2c60-3aea-1069-a2d7-08002b30309d");
+    private fun stringSizePaddedToByteArray(str: String): ByteArray {
+        val buffer = ByteBuffer.allocate(str.length + 2).order(ByteOrder.LITTLE_ENDIAN)
+        buffer.putShort(str.length.toShort())
 
-        byte[] itemData, prefixRoot, targetRoot, targetLeaf;
-        if (options.targetPath.startsWith("\\")) {
-            prefixRoot = new byte[]{(byte)0xc3, 0x01, (byte)0x81};
-            targetRoot = stringToByteArray(options.targetPath);
-            targetLeaf = !options.targetPath.endsWith("\\") ? stringToByteArray(options.targetPath.substring(options.targetPath.lastIndexOf("\\") + 1)) : null;
-            itemData = ArrayUtils.concat(new byte[]{0x1f, 0x58}, CLSIDNetwork);
-        }
-        else {
-            prefixRoot = new byte[]{0x2f};
-            int index = options.targetPath.indexOf("\\");
-            targetRoot = stringToByteArray(options.targetPath.substring(0, index+1));
-            targetLeaf = stringToByteArray(options.targetPath.substring(index+1));
-            itemData = ArrayUtils.concat(new byte[]{0x1f, 0x50}, CLSIDComputer);
+        for (element in str) {
+            buffer.put(element.code.toByte())
         }
 
-        targetRoot = ArrayUtils.concat(targetRoot, new byte[21]);
+        return buffer.array()
+    }
 
-        byte[] endOfString = new byte[]{0x00};
-        byte[] IDListItems = ArrayUtils.concat(generateIDLIST(itemData), generateIDLIST(ArrayUtils.concat(prefixRoot, targetRoot, endOfString)));
-        if (targetLeaf != null) IDListItems = ArrayUtils.concat(IDListItems, generateIDLIST(ArrayUtils.concat(prefixOfTarget, targetLeaf, endOfString)));
-        byte[] IDList = generateIDLIST(IDListItems);
+    private fun generateIDLIST(bytes: ByteArray): ByteArray {
+        val buffer = ByteBuffer
+            .allocate(2)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .putShort((bytes.size + 2).toShort())
 
-        byte[] TerminalID = new byte[]{0x00, 0x00};
+        return concat(buffer.array(), bytes)
+    }
 
-        byte[] StringData = new byte[0];
-        if ((linkFlags & HasArguments) != 0) StringData = ArrayUtils.concat(StringData, stringSizePaddedToByteArray(options.cmdArgs));
-        if ((linkFlags & HasIconLocation) != 0) StringData = ArrayUtils.concat(StringData, stringSizePaddedToByteArray(options.iconLocation));
+    fun createFile(targetPath: String?, outputFile: File?) {
+        val options = Options()
+        options.targetPath = targetPath
+        createFile(options, outputFile)
+    }
 
-        try (FileOutputStream os = new FileOutputStream(outputFile)) {
-            os.write(HeaderSize);
-            os.write(LinkCLSID);
-            os.write(LinkFlags);
-            os.write(FileAttributes);
-            os.write(CreationTime);
-            os.write(AccessTime);
-            os.write(WriteTime);
-            os.write(FileSize);
-            os.write(IconIndex);
-            os.write(ShowCommand);
-            os.write(Hotkey);
-            os.write(Reserved1);
-            os.write(Reserved2);
-            os.write(Reserved3);
-            os.write(IDList);
-            os.write(TerminalID);
+    fun createFile(options: Options, outputFile: File?) {
+        val headerSize = byteArrayOf(0x4c, 0x00, 0x00, 0x00)
+        val linkCLSID = convertCLSIDtoDATA("00021401-0000-0000-c000-000000000046")
 
-            if (StringData.length > 0) os.write(StringData);
+        var linkFlags = HAS_LINK_TARGET_ID_LIST or FORCE_NO_LINK_INFO
+
+        if (options.cmdArgs != null && options.cmdArgs!!.isNotEmpty()) {
+            linkFlags =
+                linkFlags or HAS_ARGUMENTS
         }
-        catch (IOException e) {
-            e.printStackTrace();
+
+        if (options.iconLocation != null && options.iconLocation!!.isNotEmpty()) {
+            linkFlags = linkFlags or HAS_ICON_LOCATION
         }
+
+        val linkFlagsByteArray = intToByteArray(linkFlags)
+
+        val fileAttributes: ByteArray
+        val prefixOfTarget: ByteArray
+
+        options.targetPath = options.targetPath!!.replace("/+".toRegex(), "\\\\")
+
+        if (options.targetPath!!.endsWith("\\")) {
+            fileAttributes = byteArrayOf(0x10, 0x00, 0x00, 0x00)
+            prefixOfTarget = byteArrayOf(0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+            options.targetPath = options.targetPath!!.replace("\\\\+$".toRegex(), "")
+        } else {
+            fileAttributes = byteArrayOf(0x20, 0x00, 0x00, 0x00)
+            prefixOfTarget = byteArrayOf(0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+        }
+
+        val creationTime: ByteArray
+        val accessTime: ByteArray
+        val writeTime = byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+
+        accessTime = writeTime
+        creationTime = accessTime
+
+        val fileSize = intToByteArray(options.fileSize)
+        val iconIndex = intToByteArray(options.iconIndex)
+        val showCommand = intToByteArray(options.showCommand)
+        val hotkey = byteArrayOf(0x00, 0x00)
+        val reserved1 = byteArrayOf(0x00, 0x00)
+        val reserved2 = byteArrayOf(0x00, 0x00, 0x00, 0x00)
+        val reserved3 = byteArrayOf(0x00, 0x00, 0x00, 0x00)
+
+        val clsidComputer = convertCLSIDtoDATA("20d04fe0-3aea-1069-a2d8-08002b30309d")
+        val clsidNetwork = convertCLSIDtoDATA("208d2c60-3aea-1069-a2d7-08002b30309d")
+
+        val itemData: ByteArray
+        val prefixRoot: ByteArray
+        var targetRoot: ByteArray
+        val targetLeaf: ByteArray?
+        if (options.targetPath!!.startsWith("\\")) {
+            prefixRoot = byteArrayOf(0xc3.toByte(), 0x01, 0x81.toByte())
+
+            targetRoot = stringToByteArray(options.targetPath!!)
+
+            targetLeaf = if (!options.targetPath!!.endsWith("\\")) {
+                stringToByteArray(options.targetPath!!.substring(options.targetPath!!.lastIndexOf("\\") + 1))
+            } else {
+                null
+            }
+
+            itemData = concat(byteArrayOf(0x1f, 0x58), clsidNetwork)
+        } else {
+            prefixRoot = byteArrayOf(0x2f)
+
+            val index = options.targetPath!!.indexOf("\\")
+
+            targetRoot = stringToByteArray(options.targetPath!!.substring(0, index + 1))
+            targetLeaf = stringToByteArray(options.targetPath!!.substring(index + 1))
+
+            itemData = concat(byteArrayOf(0x1f, 0x50), clsidComputer)
+        }
+
+        targetRoot = concat(targetRoot, ByteArray(21))
+
+        val endOfString = byteArrayOf(0x00)
+        var idListItems = concat(
+            generateIDLIST(itemData),
+            generateIDLIST(concat(prefixRoot, targetRoot, endOfString)),
+        )
+
+        if (targetLeaf != null) {
+            idListItems = concat(idListItems, generateIDLIST(concat(prefixOfTarget, targetLeaf, endOfString)))
+        }
+
+        val idList = generateIDLIST(idListItems)
+
+        val terminalID = byteArrayOf(0x00, 0x00)
+
+        var stringData = ByteArray(0)
+
+        if ((linkFlags and HAS_ARGUMENTS) != 0) {
+            stringData = concat(stringData, stringSizePaddedToByteArray(options.cmdArgs!!))
+        }
+
+        if ((linkFlags and HAS_ICON_LOCATION) != 0) {
+            stringData = concat(stringData, stringSizePaddedToByteArray(options.iconLocation!!))
+        }
+
+        try {
+            FileOutputStream(outputFile).use { os ->
+                os.write(headerSize)
+                os.write(linkCLSID)
+                os.write(linkFlagsByteArray)
+                os.write(fileAttributes)
+                os.write(creationTime)
+                os.write(accessTime)
+                os.write(writeTime)
+                os.write(fileSize)
+                os.write(iconIndex)
+                os.write(showCommand)
+                os.write(hotkey)
+                os.write(reserved1)
+                os.write(reserved2)
+                os.write(reserved3)
+                os.write(idList)
+                os.write(terminalID)
+
+                if (stringData.isNotEmpty()) {
+                    os.write(stringData)
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+
+    class Options {
+        var targetPath: String? = null
+        var cmdArgs: String? = null
+        var iconLocation: String? = null
+        var iconIndex: Int = 0
+        var fileSize: Int = 0
+        var showCommand: Int = SW_SHOWNORMAL.toInt()
     }
 }

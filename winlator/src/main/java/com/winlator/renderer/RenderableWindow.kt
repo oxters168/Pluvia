@@ -1,21 +1,16 @@
-package com.winlator.renderer;
+package com.winlator.renderer
 
-import com.winlator.xserver.Drawable;
+import com.winlator.xserver.Drawable
 
-class RenderableWindow {
-    final Drawable content;
-    short rootX;
-    short rootY;
-    final boolean forceFullscreen;
+internal class RenderableWindow @JvmOverloads constructor(
+    @JvmField val content: Drawable,
+    rootX: Int,
+    rootY: Int,
+    @JvmField val forceFullscreen: Boolean = false,
+) {
+    @JvmField
+    var rootX: Short = rootX.toShort()
 
-    public RenderableWindow(Drawable content, int rootX, int rootY) {
-        this(content, rootX, rootY, false);
-    }
-
-    public RenderableWindow(Drawable content, int rootX, int rootY, boolean forceFullscreen) {
-        this.content = content;
-        this.rootX = (short)rootX;
-        this.rootY = (short)rootY;
-        this.forceFullscreen = forceFullscreen;
-    }
+    @JvmField
+    var rootY: Short = rootY.toShort()
 }

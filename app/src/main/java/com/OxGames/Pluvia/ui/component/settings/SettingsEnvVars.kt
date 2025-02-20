@@ -5,9 +5,9 @@ import androidx.compose.runtime.Composable
 import com.alorma.compose.settings.ui.base.internal.LocalSettingsGroupEnabled
 import com.alorma.compose.settings.ui.base.internal.SettingsTileColors
 import com.alorma.compose.settings.ui.base.internal.SettingsTileDefaults
-import com.winlator.core.envvars.EnvVarInfo
-import com.winlator.core.envvars.EnvVarSelectionType
-import com.winlator.core.envvars.EnvVars
+import com.winlator.EnvVarInfo
+import com.winlator.EnvVarSelectionType
+import com.winlator.core.EnvVars
 import kotlin.text.split
 
 @Composable

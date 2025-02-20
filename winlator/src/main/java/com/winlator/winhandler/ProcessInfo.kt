@@ -1,34 +1,27 @@
-package com.winlator.winhandler;
+package com.winlator.winhandler
 
-import com.winlator.core.StringUtils;
+import com.winlator.core.StringUtils.formatBytes
 
-import java.util.ArrayList;
+data class ProcessInfo(
+    val pid: Int,
+    val name: String,
+    val memoryUsage: Long,
+    val affinityMask: Int,
+    val wow64Process: Boolean,
+) {
+    val formattedMemoryUsage: String
+        get() = formatBytes(memoryUsage)
 
-public class ProcessInfo {
-    public final int pid;
-    public final String name;
-    public final long memoryUsage;
-    public final int affinityMask;
-    public final boolean wow64Process;
+    val cPUList: String
+        get() {
+            val numProcessors = Runtime.getRuntime().availableProcessors()
+            val cpuList = ArrayList<String>()
+            for (i in 0..<numProcessors) {
+                if ((affinityMask and (1 shl i)) != 0) {
+                    cpuList.add(i.toString())
+                }
+            }
 
-    public ProcessInfo(int pid, String name, long memoryUsage, int affinityMask, boolean wow64Process) {
-        this.pid = pid;
-        this.name = name;
-        this.memoryUsage = memoryUsage;
-        this.affinityMask = affinityMask;
-        this.wow64Process = wow64Process;
-    }
-
-    public String getFormattedMemoryUsage() {
-        return StringUtils.formatBytes(memoryUsage);
-    }
-
-    public String getCPUList() {
-        int numProcessors = Runtime.getRuntime().availableProcessors();
-        ArrayList<String> cpuList = new ArrayList<>();
-        for (byte i = 0; i < numProcessors; i++) {
-            if ((affinityMask & (1 << i)) != 0) cpuList.add(String.valueOf(i));
+            return cpuList.joinToString(",")
         }
-        return String.join(",", cpuList.toArray(new String[0]));
-    }
 }

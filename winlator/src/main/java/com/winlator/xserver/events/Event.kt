@@ -1,40 +1,40 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
+import com.winlator.xconnector.XOutputStream
+import java.io.IOException
 
-import java.io.IOException;
+abstract class Event(code: Int) {
 
-public abstract class Event {
-    public static final int KEY_PRESS = 1<<0;
-    public static final int KEY_RELEASE = 1<<1;
-    public static final int BUTTON_PRESS = 1<<2;
-    public static final int BUTTON_RELEASE = 1<<3;
-    public static final int ENTER_WINDOW = 1<<4;
-    public static final int LEAVE_WINDOW = 1<<5;
-    public static final int POINTER_MOTION = 1<<6;
-    public static final int POINTER_MOTION_HINT = 1<<7;
-    public static final int BUTTON1_MOTION = 1<<8;
-    public static final int BUTTON2_MOTION = 1<<9;
-    public static final int BUTTON3_MOTION = 1<<10;
-    public static final int BUTTON4_MOTION = 1<<11;
-    public static final int BUTTON5_MOTION = 1<<12;
-    public static final int BUTTON_MOTION = 1<<13;
-    public static final int KEYMAP_STATE = 1<<14;
-    public static final int EXPOSURE = 1<<15;
-    public static final int VISIBILITY_CHANGE = 1<<16;
-    public static final int STRUCTURE_NOTIFY = 1<<17;
-    public static final int RESIZE_REDIRECT = 1<<18;
-    public static final int SUBSTRUCTURE_NOTIFY = 1<<19;
-    public static final int SUBSTRUCTURE_REDIRECT = 1<<20;
-    public static final int FOCUS_CHANGE = 1<<21;
-    public static final int PROPERTY_CHANGE = 1<<22;
-    public static final int COLORMAP_CHANGE = 1<<23;
-    public static final int OWNER_GRAB_BUTTON = 1<<24;
-    protected final byte code;
-
-    public Event(int code) {
-        this.code = (byte)code;
+    companion object {
+        const val KEY_PRESS: Int = 1 shl 0
+        const val KEY_RELEASE: Int = 1 shl 1
+        const val BUTTON_PRESS: Int = 1 shl 2
+        const val BUTTON_RELEASE: Int = 1 shl 3
+        const val ENTER_WINDOW: Int = 1 shl 4
+        const val LEAVE_WINDOW: Int = 1 shl 5
+        const val POINTER_MOTION: Int = 1 shl 6
+        const val POINTER_MOTION_HINT: Int = 1 shl 7
+        const val BUTTON1_MOTION: Int = 1 shl 8
+        const val BUTTON2_MOTION: Int = 1 shl 9
+        const val BUTTON3_MOTION: Int = 1 shl 10
+        const val BUTTON4_MOTION: Int = 1 shl 11
+        const val BUTTON5_MOTION: Int = 1 shl 12
+        const val BUTTON_MOTION: Int = 1 shl 13
+        const val KEYMAP_STATE: Int = 1 shl 14
+        const val EXPOSURE: Int = 1 shl 15
+        const val VISIBILITY_CHANGE: Int = 1 shl 16
+        const val STRUCTURE_NOTIFY: Int = 1 shl 17
+        const val RESIZE_REDIRECT: Int = 1 shl 18
+        const val SUBSTRUCTURE_NOTIFY: Int = 1 shl 19
+        const val SUBSTRUCTURE_REDIRECT: Int = 1 shl 20
+        const val FOCUS_CHANGE: Int = 1 shl 21
+        const val PROPERTY_CHANGE: Int = 1 shl 22
+        const val COLORMAP_CHANGE: Int = 1 shl 23
+        const val OWNER_GRAB_BUTTON: Int = 1 shl 24
     }
 
-    public abstract void send(short sequenceNumber, XOutputStream outputStream) throws IOException;
+    protected val code: Byte = code.toByte()
+
+    @Throws(IOException::class)
+    abstract fun send(sequenceNumber: Short, outputStream: XOutputStream)
 }

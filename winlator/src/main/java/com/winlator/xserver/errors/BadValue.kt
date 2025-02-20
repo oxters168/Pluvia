@@ -1,7 +1,3 @@
-package com.winlator.xserver.errors;
+package com.winlator.xserver.errors
 
-public class BadValue extends XRequestError {
-    public BadValue(int data) {
-        super(2, data);
-    }
-}
+class BadValue(data: Int) : XRequestError(2, data)

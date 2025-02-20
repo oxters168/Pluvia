@@ -1,32 +1,28 @@
-package com.winlator.xenvironment.components;
+package com.winlator.xenvironment.components
 
-import com.winlator.alsaserver.ALSAClientConnectionHandler;
-import com.winlator.alsaserver.ALSARequestHandler;
-import com.winlator.xconnector.UnixSocketConfig;
-import com.winlator.xconnector.XConnectorEpoll;
-import com.winlator.xenvironment.EnvironmentComponent;
+import com.winlator.alsaserver.ALSAClientConnectionHandler
+import com.winlator.alsaserver.ALSARequestHandler
+import com.winlator.xconnector.UnixSocketConfig
+import com.winlator.xconnector.XConnectorEpoll
+import com.winlator.xenvironment.EnvironmentComponent
 
-public class ALSAServerComponent extends EnvironmentComponent {
-    private XConnectorEpoll connector;
-    private final UnixSocketConfig socketConfig;
+class ALSAServerComponent(private val socketConfig: UnixSocketConfig) : EnvironmentComponent() {
 
-    public ALSAServerComponent(UnixSocketConfig socketConfig) {
-        this.socketConfig = socketConfig;
-    }
+    private var connector: XConnectorEpoll? = null
 
-    @Override
-    public void start() {
-        if (connector != null) return;
-        connector = new XConnectorEpoll(socketConfig, new ALSAClientConnectionHandler(), new ALSARequestHandler());
-        connector.setMultithreadedClients(true);
-        connector.start();
-    }
-
-    @Override
-    public void stop() {
+    override fun start() {
         if (connector != null) {
-            connector.stop();
-            connector = null;
+            return
         }
+
+        connector = XConnectorEpoll(socketConfig, ALSAClientConnectionHandler(), ALSARequestHandler()).apply {
+            isMultithreadedClients = true
+            start()
+        }
+    }
+
+    override fun stop() {
+        connector?.stop()
+        connector = null
     }
 }

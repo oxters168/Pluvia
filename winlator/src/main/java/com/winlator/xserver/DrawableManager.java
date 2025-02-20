@@ -2,6 +2,8 @@ package com.winlator.xserver;
 
 import android.util.SparseArray;
 
+import androidx.annotation.Nullable;
+
 import com.winlator.core.Callback;
 import com.winlator.renderer.Texture;
 
@@ -41,6 +43,10 @@ public class DrawableManager extends XResourceManager implements XResourceManage
 
         drawable.setOnDrawListener(null);
         drawables.remove(id);
+    }
+
+    @Override
+    public void onCreateResource(@Nullable XResource resource) {
     }
 
     @Override

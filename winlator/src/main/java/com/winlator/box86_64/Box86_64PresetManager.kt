@@ -208,7 +208,7 @@ object Box86_64PresetManager {
             val preset = customPresets[i].split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
             if (preset[0] != id) {
-                newCustomPresetsStr += (if (!newCustomPresetsStr.isEmpty()) "," else "") + customPresets[i]
+                newCustomPresetsStr += (if (newCustomPresetsStr.isNotEmpty()) "," else "") + customPresets[i]
             }
         }
 

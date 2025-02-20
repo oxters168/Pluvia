@@ -1,20 +1,20 @@
-package com.winlator.xserver.extensions;
+package com.winlator.xserver.extensions
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.XRequestError;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.XClient
+import com.winlator.xserver.errors.XRequestError
+import java.io.IOException
 
-import java.io.IOException;
+interface Extension {
+    val name: String
 
-public interface Extension {
-    String getName();
+    val majorOpcode: Byte
 
-    byte getMajorOpcode();
+    val firstErrorId: Byte
 
-    byte getFirstErrorId();
+    val firstEventId: Byte
 
-    byte getFirstEventId();
-
-    void handleRequest(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError;
+    @Throws(IOException::class, XRequestError::class)
+    fun handleRequest(client: XClient, inputStream: XInputStream, outputStream: XOutputStream)
 }

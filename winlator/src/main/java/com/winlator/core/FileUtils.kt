@@ -1,364 +1,461 @@
-package com.winlator.core;
+package com.winlator.core
 
-import android.content.Context;
-import android.content.res.AssetFileDescriptor;
-import android.net.Uri;
-import android.os.Environment;
-import android.os.StatFs;
-import android.system.ErrnoException;
-import android.system.Os;
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
+import android.os.StatFs
+import android.system.ErrnoException
+import android.system.Os
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.RandomAccessFile
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.util.Stack
+import java.util.UUID
+import java.util.concurrent.Executors
+import kotlin.math.max
+import timber.log.Timber
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Stack;
-import java.util.UUID;
-import java.util.concurrent.Executors;
+object FileUtils {
 
-public abstract class FileUtils {
-    public static byte[] read(Context context, String assetFile) {
-        try (InputStream inStream = context.getAssets().open(assetFile)) {
-            return StreamUtils.copyToByteArray(inStream);
-        }
-        catch (IOException e) {
-            return null;
+    fun read(context: Context, assetFile: String): ByteArray? {
+        return try {
+            context.assets.open(assetFile).use { inStream ->
+                return@use StreamUtils.copyToByteArray(inStream)
+            }
+        } catch (e: IOException) {
+            null
         }
     }
 
-    public static byte[] read(File file) {
-        try (InputStream inStream = new BufferedInputStream(new FileInputStream(file))) {
-            return StreamUtils.copyToByteArray(inStream);
-        }
-        catch (IOException e) {
-            return null;
-        }
-    }
-
-    public static String readString(Context context, String assetFile) {
-        return new String(read(context, assetFile), StandardCharsets.UTF_8);
-    }
-
-    public static String readString(File file) {
-        return new String(read(file), StandardCharsets.UTF_8);
-    }
-
-    public static String readString(Context context, Uri uri) {
-        StringBuilder sb = new StringBuilder();
-        try (InputStream inputStream = context.getContentResolver().openInputStream(uri);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) sb.append(line);
-            return sb.toString();
-        }
-        catch (IOException e) {
-            return null;
+    fun read(file: File?): ByteArray? {
+        return try {
+            BufferedInputStream(FileInputStream(file)).use { inStream ->
+                return@use StreamUtils.copyToByteArray(inStream)
+            }
+        } catch (e: IOException) {
+            null
         }
     }
 
-    public static boolean write(File file, byte[] data) {
-        try (OutputStream os = new FileOutputStream(file)) {
-            os.write(data, 0, data.length);
-            return true;
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
+    fun readString(context: Context, assetFile: String): String {
+        return String(read(context, assetFile)!!, StandardCharsets.UTF_8)
     }
 
-    public static boolean writeString(File file, String data) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
-            bw.write(data);
-            bw.flush();
-            return true;
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
+    fun readString(file: File?): String {
+        return String(read(file)!!, StandardCharsets.UTF_8)
     }
 
-    public static void symlink(File linkTarget, File linkFile) {
-        symlink(linkTarget.getAbsolutePath(), linkFile.getAbsolutePath());
-    }
-
-    public static void symlink(String linkTarget, String linkFile) {
+    fun readString(context: Context, uri: Uri): String? {
+        val sb = StringBuilder()
         try {
-            (new File(linkFile)).delete();
-            Os.symlink(linkTarget, linkFile);
+            context.contentResolver.openInputStream(uri).use { inputStream ->
+                BufferedReader(
+                    InputStreamReader(inputStream),
+                ).use { reader ->
+                    var line: String?
+
+                    while ((reader.readLine().also { line = it }) != null) {
+                        sb.append(line)
+                    }
+
+                    return sb.toString()
+                }
+            }
+        } catch (e: IOException) {
+            return null
         }
-        catch (ErrnoException e) {}
     }
 
-    public static boolean isSymlink(File file) {
-        return Files.isSymbolicLink(file.toPath());
-    }
-
-    public static boolean delete(File targetFile) {
-        if (targetFile == null) return false;
-        if (targetFile.isDirectory()) {
-            if (!isSymlink(targetFile)) if (!clear(targetFile)) return false;
+    fun write(file: File?, data: ByteArray): Boolean {
+        try {
+            FileOutputStream(file).use { os ->
+                os.write(data, 0, data.size)
+                return true
+            }
+        } catch (e: IOException) {
+            Timber.w(e)
         }
-        return targetFile.delete();
+
+        return false
     }
 
-    public static boolean clear(File targetFile) {
-        if (targetFile == null) return false;
-        if (targetFile.isDirectory()) {
-            File[] files = targetFile.listFiles();
+    fun writeString(file: File?, data: String?): Boolean {
+        try {
+            BufferedWriter(FileWriter(file)).use { bw ->
+                bw.write(data)
+                bw.flush()
+
+                return true
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+
+        return false
+    }
+
+    fun symlink(linkTarget: File, linkFile: File) {
+        symlink(linkTarget.absolutePath, linkFile.absolutePath)
+    }
+
+    fun symlink(linkTarget: String?, linkFile: String) {
+        try {
+            (File(linkFile)).delete()
+            Os.symlink(linkTarget, linkFile)
+        } catch (e: ErrnoException) {
+            Timber.w(e)
+        }
+    }
+
+    fun isSymlink(file: File): Boolean {
+        return Files.isSymbolicLink(file.toPath())
+    }
+
+    @JvmStatic
+    fun delete(targetFile: File?): Boolean {
+        if (targetFile == null) {
+            return false
+        }
+
+        if (targetFile.isDirectory) {
+            if (!isSymlink(targetFile)) {
+                if (!clear(targetFile)) {
+                    return false
+                }
+            }
+        }
+
+        return targetFile.delete()
+    }
+
+    fun clear(targetFile: File?): Boolean {
+        if (targetFile == null) {
+            return false
+        }
+
+        if (targetFile.isDirectory) {
+            val files = targetFile.listFiles()
+
             if (files != null) {
-                for (File file : files) {
-                    if (!delete(file)) return false;
+                for (file in files) {
+                    if (!delete(file)) {
+                        return false
+                    }
                 }
             }
         }
-        return true;
+
+        return true
     }
 
-    public static boolean isEmpty(File targetFile) {
-        if (targetFile == null) return true;
-        if (targetFile.isDirectory()) {
-            String[] files = targetFile.list();
-            return files == null || files.length == 0;
+    fun isEmpty(targetFile: File?): Boolean {
+        if (targetFile == null) {
+            return true
         }
-        else return targetFile.length() == 0;
+
+        if (targetFile.isDirectory) {
+            val files = targetFile.list()
+
+            return files == null || files.isEmpty()
+        } else {
+            return targetFile.length() == 0L
+        }
     }
 
-    public static boolean copy(File srcFile, File dstFile) {
-        return copy(srcFile, dstFile, null);
-    }
+    @JvmOverloads
+    fun copy(srcFile: File, dstFile: File, callback: Callback<File>? = null): Boolean {
+        if (isSymlink(srcFile)) {
+            return true
+        }
 
-    public static boolean copy(File srcFile, File dstFile, Callback<File> callback) {
-        if (isSymlink(srcFile)) return true;
-        if (srcFile.isDirectory()) {
-            if (!dstFile.exists() && !dstFile.mkdirs()) return false;
-            if (callback != null) callback.call(dstFile);
+        if (srcFile.isDirectory) {
+            if (!dstFile.exists() && !dstFile.mkdirs()) {
+                return false
+            }
 
-            String[] filenames = srcFile.list();
+            callback?.call(dstFile)
+
+            val filenames = srcFile.list()
             if (filenames != null) {
-                for (String filename : filenames) {
-                    if (!copy(new File(srcFile, filename), new File(dstFile, filename), callback)) {
-                        return false;
+                for (filename in filenames) {
+                    if (!copy(File(srcFile, filename), File(dstFile, filename), callback)) {
+                        return false
                     }
                 }
             }
-        }
-        else {
-            File parent = dstFile.getParentFile();
-            if (!srcFile.exists() || (parent != null && !parent.exists() && !parent.mkdirs())) return false;
+        } else {
+            val parent = dstFile.parentFile
+
+            if (!srcFile.exists() || (parent != null && !parent.exists() && !parent.mkdirs())) {
+                return false
+            }
 
             try {
-                FileChannel inChannel = (new FileInputStream(srcFile)).getChannel();
-                FileChannel outChannel = (new FileOutputStream(dstFile)).getChannel();
-                inChannel.transferTo(0, inChannel.size(), outChannel);
-                inChannel.close();
-                outChannel.close();
+                val inChannel = (FileInputStream(srcFile)).channel
+                val outChannel = (FileOutputStream(dstFile)).channel
 
-                if (callback != null) callback.call(dstFile);
-                return dstFile.exists();
-            }
-            catch (IOException e) {
-                return false;
+                inChannel.transferTo(0, inChannel.size(), outChannel)
+
+                inChannel.close()
+                outChannel.close()
+
+                callback?.call(dstFile)
+                return dstFile.exists()
+            } catch (e: IOException) {
+                return false
             }
         }
-        return true;
+
+        return true
     }
 
-    public static void copy(Context context, String assetFile, File dstFile) {
+    fun copy(context: Context, assetFile: String, dstFile: File) {
+        var dstFile = dstFile
+
         if (isDirectory(context, assetFile)) {
-            if (!dstFile.isDirectory()) dstFile.mkdirs();
+            if (!dstFile.isDirectory) {
+                dstFile.mkdirs()
+            }
+
             try {
-                String[] filenames = context.getAssets().list(assetFile);
-                for (String filename : filenames) {
-                    String relativePath = StringUtils.addEndSlash(assetFile)+filename;
+                val filenames = context.assets.list(assetFile)
+
+                for (filename in filenames!!) {
+                    val relativePath = StringUtils.addEndSlash(assetFile) + filename
                     if (isDirectory(context, relativePath)) {
-                        copy(context, relativePath, new File(dstFile, filename));
+                        copy(context, relativePath, File(dstFile, filename))
+                    } else {
+                        copy(context, relativePath, dstFile)
                     }
-                    else copy(context, relativePath, dstFile);
+                }
+            } catch (e: IOException) {
+                Timber.w(e)
+            }
+        } else {
+            if (dstFile.isDirectory) {
+                dstFile = File(dstFile, getName(assetFile))
+            }
+
+            val parent = dstFile.parentFile
+
+            if (!parent!!.isDirectory) {
+                parent.mkdirs()
+            }
+
+            try {
+                context.assets.open(assetFile).use { inStream ->
+                    BufferedOutputStream(
+                        FileOutputStream(dstFile), StreamUtils.BUFFER_SIZE,
+                    ).use { outStream ->
+                        StreamUtils.copy(inStream, outStream)
+                    }
+                }
+            } catch (e: IOException) {
+                Timber.w(e)
+            }
+        }
+    }
+
+    fun readLines(file: File?): ArrayList<String> {
+        val lines = ArrayList<String>()
+
+        try {
+            FileInputStream(file).use { fis ->
+                val reader = BufferedReader(InputStreamReader(fis))
+                var line: String
+
+                while ((reader.readLine().also { line = it }) != null) {
+                    lines.add(line)
                 }
             }
-            catch (IOException e) {}
+        } catch (e: IOException) {
+            Timber.w(e)
         }
-        else {
-            if (dstFile.isDirectory()) dstFile = new File(dstFile, FileUtils.getName(assetFile));
-            File parent = dstFile.getParentFile();
-            if (!parent.isDirectory()) parent.mkdirs();
-            try (InputStream inStream = context.getAssets().open(assetFile);
-                 BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(dstFile), StreamUtils.BUFFER_SIZE)) {
-                StreamUtils.copy(inStream, outStream);
-            }
-            catch (IOException e) {}
-        }
+
+        return lines
     }
 
-    public static ArrayList<String> readLines(File file) {
-        ArrayList<String> lines = new ArrayList<>();
-        try (FileInputStream fis = new FileInputStream(file)) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
-            String line;
-            while ((line = reader.readLine()) != null) lines.add(line);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        return lines;
+    fun getName(path: String): String {
+        var path: String = path
+
+        path = StringUtils.removeEndSlash(path)
+
+        val index = max(path.lastIndexOf('/').toDouble(), path.lastIndexOf('\\').toDouble()).toInt()
+
+        return path.substring(index + 1)
     }
 
-    public static String getName(String path) {
-        if (path == null) return "";
-        path = StringUtils.removeEndSlash(path);
-        int index = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        return path.substring(index + 1);
+    fun getBasename(path: String): String {
+        return getName(path).replaceFirst("\\.[^\\.]+$".toRegex(), "")
     }
 
-    public static String getBasename(String path) {
-        return getName(path).replaceFirst("\\.[^\\.]+$", "");
+    @JvmStatic
+    fun getDirname(path: String): String {
+        var path: String = path
+        path = StringUtils.removeEndSlash(path)
+
+        val index = max(path.lastIndexOf('/').toDouble(), path.lastIndexOf('\\').toDouble()).toInt()
+
+        return path.substring(0, index)
     }
 
-    public static String getDirname(String path) {
-        if (path == null) return "";
-        path = StringUtils.removeEndSlash(path);
-        int index = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        return path.substring(0, index);
-    }
-
-    public static void chmod(File file, int mode) {
+    fun chmod(file: File, mode: Int) {
         try {
-            Os.chmod(file.getAbsolutePath(), mode);
+            Os.chmod(file.absolutePath, mode)
+        } catch (e: ErrnoException) {
+            Timber.w(e)
         }
-        catch (ErrnoException e) {}
     }
 
-    public static File createTempFile(File parent, String prefix) {
-        File tempFile = null;
-        boolean exists = true;
+    fun createTempFile(parent: File?, prefix: String): File {
+        var tempFile: File? = null
+        var exists = true
+
         while (exists) {
-            tempFile = new File(parent, prefix+"-"+ UUID.randomUUID().toString().replace("-", "")+".tmp");
-            exists = tempFile.exists();
+            tempFile = File(parent, prefix + "-" + UUID.randomUUID().toString().replace("-", "") + ".tmp")
+            exists = tempFile.exists()
         }
-        return tempFile;
+
+        return tempFile!!
     }
 
-    public static String getFilePathFromUri(Uri uri) {
-        String path = null;
-        if (uri.getAuthority().equals("com.android.externalstorage.documents")) {
-            String[] parts = uri.getLastPathSegment().split(":");
-            if (parts[0].equalsIgnoreCase("primary")) path = Environment.getExternalStorageDirectory() + "/" + parts[1];
-        }
-        return path;
-    }
+    fun getFilePathFromUri(uri: Uri): String? {
+        var path: String? = null
 
-    public static boolean contentEquals(File origin, File target) {
-        if (origin.length() != target.length()) return false;
+        if (uri.authority == "com.android.externalstorage.documents") {
+            val parts = uri.lastPathSegment!!.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
-        try (InputStream inStream1 = new BufferedInputStream(new FileInputStream(origin));
-             InputStream inStream2 = new BufferedInputStream(new FileInputStream(target))) {
-            int data;
-            while ((data = inStream1.read()) != -1) {
-                if (data != inStream2.read()) return false;
+            if (parts[0].equals("primary", ignoreCase = true)) {
+                path = Environment.getExternalStorageDirectory().toString() + "/" + parts[1]
             }
-            return true;
         }
-        catch (IOException e) {
-            return false;
+
+        return path
+    }
+
+    fun contentEquals(origin: File, target: File): Boolean {
+        if (origin.length() != target.length()) {
+            return false
+        }
+
+        try {
+            BufferedInputStream(FileInputStream(origin)).use { inStream1 ->
+                BufferedInputStream(FileInputStream(target)).use { inStream2 ->
+                    var data: Int
+
+                    while ((inStream1.read().also { data = it }) != -1) {
+                        if (data != inStream2.read()) return false
+                    }
+
+                    return true
+                }
+            }
+        } catch (e: IOException) {
+            return false
         }
     }
 
-    public static void getSizeAsync(File file, Callback<Long> callback) {
-        Executors.newSingleThreadExecutor().execute(() -> getSize(file, callback));
+    fun getSizeAsync(file: File?, callback: Callback<Long>) {
+        Executors.newSingleThreadExecutor().execute { getSize(file, callback) }
     }
 
-    private static void getSize(File file, Callback<Long> callback) {
-        if (file == null) return;
-        if (file.isFile()) {
-            callback.call(file.length());
-            return;
+    private fun getSize(file: File?, callback: Callback<Long>) {
+        if (file == null) {
+            return
         }
 
-        Stack<File> stack = new Stack<>();
-        stack.push(file);
+        if (file.isFile) {
+            callback.call(file.length())
+            return
+        }
+
+        val stack = Stack<File>()
+        stack.push(file)
 
         while (!stack.isEmpty()) {
-            File current = stack.pop();
-            File[] files = current.listFiles();
-            if (files == null) continue;
-            for (File f : files) {
-                if (f.isDirectory()) {
-                    stack.push(f);
-                }
-                else {
-                    long length = f.length();
-                    if (length > 0) callback.call(length);
+            val current = stack.pop()
+            val files = current.listFiles() ?: continue
+
+            for (f in files) {
+                if (f.isDirectory) {
+                    stack.push(f)
+                } else {
+                    val length = f.length()
+                    if (length > 0) callback.call(length)
                 }
             }
         }
     }
 
-    public static long getSize(Context context, String assetFile) {
-        try (InputStream inStream = context.getAssets().open(assetFile)) {
-            return inStream.available();
-        }
-        catch (IOException e) {
-            return 0;
-        }
-    }
-
-    public static long getInternalStorageSize() {
-        File dataDir = Environment.getDataDirectory();
-        StatFs stat = new StatFs(dataDir.getPath());
-        long blockSize = stat.getBlockSizeLong();
-        long totalBlocks = stat.getBlockCountLong();
-        return totalBlocks * blockSize;
-    }
-
-    public static boolean isDirectory(Context context, String assetFile) {
+    fun getSize(context: Context, assetFile: String): Long {
         try {
-            String[] files = context.getAssets().list(assetFile);
-            return files != null && files.length > 0;
-        }
-        catch (IOException e) {
-            return false;
-        }
-    }
-
-    public static String toRelativePath(String basePath, String fullPath) {
-        return StringUtils.removeEndSlash((fullPath.startsWith("/") ? "/" : "")+(new File(basePath).toURI().relativize(new File(fullPath).toURI()).getPath()));
-    }
-
-    public static int readInt(String path) {
-        int result = 0;
-        try {
-            try (RandomAccessFile reader = new RandomAccessFile(path, "r")) {
-                String line = reader.readLine();
-                result = !line.isEmpty() ? Integer.parseInt(line) : 0;
+            context.assets.open(assetFile).use { inStream ->
+                return inStream.available().toLong()
             }
+        } catch (e: IOException) {
+            return 0
         }
-        catch (Exception e) {}
-        return result;
     }
 
-    public static String readSymlink(File file) {
-        try {
-            return Files.readSymbolicLink(file.toPath()).toString();
+    val internalStorageSize: Long
+        get() {
+            val dataDir = Environment.getDataDirectory()
+            val stat = StatFs(dataDir.path)
+            val blockSize = stat.blockSizeLong
+            val totalBlocks = stat.blockCountLong
+            return totalBlocks * blockSize
         }
-        catch (IOException e) {
-            return "";
+
+    fun isDirectory(context: Context, assetFile: String): Boolean {
+        try {
+            val files = context.assets.list(assetFile)
+            return !files.isNullOrEmpty()
+        } catch (e: IOException) {
+            return false
+        }
+    }
+
+    fun toRelativePath(basePath: String, fullPath: String): String {
+        return StringUtils.removeEndSlash(
+            (if (fullPath.startsWith("/")) "/" else "") + (File(basePath).toURI().relativize(File(fullPath).toURI()).path),
+        )
+    }
+
+    fun readInt(path: String?): Int {
+        var result = 0
+
+        try {
+            RandomAccessFile(path, "r").use { reader ->
+                val line = reader.readLine()
+
+                result = if (line.isNotEmpty()) {
+                    line.toInt()
+                } else {
+                    0
+                }
+            }
+        } catch (e: Exception) {
+            Timber.w(e)
+        }
+
+        return result
+    }
+
+    fun readSymlink(file: File): String {
+        return try {
+            Files.readSymbolicLink(file.toPath()).toString()
+        } catch (e: IOException) {
+            ""
         }
     }
 }

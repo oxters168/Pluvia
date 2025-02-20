@@ -1,112 +1,123 @@
-package com.winlator.core;
+package com.winlator.core
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.opengl.EGL14;
+import android.content.Context
+import android.opengl.EGL14
+import androidx.collection.ArrayMap
+import androidx.collection.arrayMapOf
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
+import java.util.Objects
+import javax.microedition.khronos.egl.EGL10
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.egl.EGLContext
+import javax.microedition.khronos.opengles.GL10
 
-import androidx.collection.ArrayMap;
-import androidx.preference.PreferenceManager;
+object GPUInformation {
+    private fun loadGPUInformation(context: Context): ArrayMap<String, String> {
+        val thread = Thread.currentThread()
 
-import java.util.Locale;
-import java.util.Objects;
+        val gpuInfo = arrayMapOf(
+            "renderer" to "",
+            "vendor" to "",
+            "version" to "",
+        )
 
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
-import javax.microedition.khronos.opengles.GL10;
+        (
+            Thread {
+                var attribList = intArrayOf(
+                    EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
+                    EGL10.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                    EGL10.EGL_RED_SIZE, 8,
+                    EGL10.EGL_GREEN_SIZE, 8,
+                    EGL10.EGL_BLUE_SIZE, 8,
+                    EGL10.EGL_ALPHA_SIZE, 0,
+                    EGL10.EGL_NONE,
+                )
+                val configs = arrayOfNulls<EGLConfig>(1)
+                val configCounts = IntArray(1)
 
-public abstract class GPUInformation {
-    private static ArrayMap<String, String> loadGPUInformation(Context context) {
-        final Thread thread = Thread.currentThread();
-        final ArrayMap<String, String> gpuInfo = new ArrayMap<>();
-        gpuInfo.put("renderer", "");
-        gpuInfo.put("vendor", "");
-        gpuInfo.put("version", "");
+                val egl = EGLContext.getEGL() as EGL10
+                val eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY)
 
-        (new Thread(() -> {
-            int[] attribList = new int[] {
-                EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-                EGL10.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-                EGL10.EGL_RED_SIZE, 8,
-                EGL10.EGL_GREEN_SIZE, 8,
-                EGL10.EGL_BLUE_SIZE, 8,
-                EGL10.EGL_ALPHA_SIZE, 0,
-                EGL10.EGL_NONE
-            };
-            EGLConfig[] configs = new EGLConfig[1];
-            int[] configCounts = new int[1];
+                val version = IntArray(2)
+                egl.eglInitialize(eglDisplay, version)
+                egl.eglChooseConfig(eglDisplay, attribList, configs, 1, configCounts)
 
-            EGL10 egl = (EGL10)EGLContext.getEGL();
-            EGLDisplay eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+                attribList = intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE)
+                val eglContext = egl.eglCreateContext(eglDisplay, configs[0], EGL10.EGL_NO_CONTEXT, attribList)
 
-            int[] version = new int[2];
-            egl.eglInitialize(eglDisplay, version);
-            egl.eglChooseConfig(eglDisplay, attribList, configs, 1, configCounts);
+                egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, eglContext)
 
-            attribList = new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE};
-            EGLContext eglContext = egl.eglCreateContext(eglDisplay, configs[0], EGL10.EGL_NO_CONTEXT, attribList);
+                val gl = eglContext.gl as GL10
+                val gpuRenderer = Objects.toString(gl.glGetString(GL10.GL_RENDERER), "")
+                val gpuVendor = Objects.toString(gl.glGetString(GL10.GL_VENDOR), "")
+                val gpuVersion = Objects.toString(gl.glGetString(GL10.GL_VERSION), "")
 
-            egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, eglContext);
+                gpuInfo["renderer"] = gpuRenderer
+                gpuInfo["vendor"] = gpuVendor
+                gpuInfo["version"] = gpuVersion
 
-            GL10 gl = (GL10)eglContext.getGL();
-            String gpuRenderer = Objects.toString(gl.glGetString(GL10.GL_RENDERER), "");
-            String gpuVendor = Objects.toString(gl.glGetString(GL10.GL_VENDOR), "");
-            String gpuVersion = Objects.toString(gl.glGetString(GL10.GL_VERSION), "");
-
-            gpuInfo.put("renderer", gpuRenderer);
-            gpuInfo.put("vendor", gpuVendor);
-            gpuInfo.put("version", gpuVersion);
-
-            final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            preferences.edit()
-                .putString("gpu_renderer", gpuRenderer)
-                .putString("gpu_vendor", gpuVendor)
-                .putString("gpu_version", gpuVersion)
-                .apply();
-
-            synchronized (thread) {
-                thread.notify();
+                PreferenceManager.getDefaultSharedPreferences(context).edit {
+                    putString("gpu_renderer", gpuRenderer)
+                    putString("gpu_vendor", gpuVendor)
+                    putString("gpu_version", gpuVersion)
+                }
+                synchronized(thread) {
+                    (thread as Object).notify()
+                }
             }
-        })).start();
+            ).start()
 
-        synchronized (thread) {
+        synchronized(thread) {
             try {
-                thread.wait();
+                (thread as Object).wait()
+            } catch (_: InterruptedException) {
             }
-            catch (InterruptedException e) {}
         }
-        return gpuInfo;
+
+        return gpuInfo
     }
 
-    public static String getRenderer(Context context) {
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String value = preferences.getString("gpu_renderer", "");
-        if (!value.isEmpty()) return value;
+    fun getRenderer(context: Context): String? {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val value = preferences.getString("gpu_renderer", "")!!
 
-        ArrayMap<String, String> gpuInfo = loadGPUInformation(context);
-        return gpuInfo.get("renderer");
+        if (value.isNotEmpty()) {
+            return value
+        }
+
+        val gpuInfo = loadGPUInformation(context)
+
+        return gpuInfo["renderer"]
     }
 
-    public static String getVendor(Context context) {
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String value = preferences.getString("gpu_vendor", "");
-        if (!value.isEmpty()) return value;
+    fun getVendor(context: Context): String? {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val value = preferences.getString("gpu_vendor", "")!!
 
-        ArrayMap<String, String> gpuInfo = loadGPUInformation(context);
-        return gpuInfo.get("vendor");
+        if (value.isNotEmpty()) {
+            return value
+        }
+
+        val gpuInfo = loadGPUInformation(context)
+
+        return gpuInfo["vendor"]
     }
 
-    public static String getVersion(Context context) {
-        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String value = preferences.getString("gpu_version", "");
-        if (!value.isEmpty()) return value;
+    fun getVersion(context: Context): String? {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val value = preferences.getString("gpu_version", "")!!
 
-        ArrayMap<String, String> gpuInfo = loadGPUInformation(context);
-        return gpuInfo.get("version");
+        if (value.isNotEmpty()) {
+            return value
+        }
+
+        val gpuInfo = loadGPUInformation(context)
+
+        return gpuInfo["version"]
     }
 
-    public static boolean isAdreno6xx(Context context) {
-        return getRenderer(context).toLowerCase(Locale.ENGLISH).matches(".*adreno[^6]+6[0-9]{2}.*");
+    fun isAdreno6xx(context: Context): Boolean {
+        return getRenderer(context)!!.lowercase().matches(".*adreno[^6]+6[0-9]{2}.*".toRegex())
     }
 }

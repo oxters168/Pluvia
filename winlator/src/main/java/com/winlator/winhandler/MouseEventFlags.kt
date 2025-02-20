@@ -1,34 +1,31 @@
-package com.winlator.winhandler;
+package com.winlator.winhandler
 
-import com.winlator.xserver.Pointer;
+import com.winlator.xserver.Pointer
 
-public abstract class MouseEventFlags {
-    public static final int MOVE = 0x0001;
-    public static final int LEFTDOWN = 0x0002;
-    public static final int LEFTUP = 0x0004;
-    public static final int RIGHTDOWN = 0x0008;
-    public static final int RIGHTUP = 0x0010;
-    public static final int MIDDLEDOWN = 0x0020;
-    public static final int MIDDLEUP = 0x0040;
-    public static final int XDOWN = 0x0080;
-    public static final int XUP = 0x0100;
-    public static final int WHEEL = 0x0800;
-    public static final int VIRTUALDESK = 0x4000;
-    public static final int ABSOLUTE = 0x8000;
+object MouseEventFlags {
+    const val MOVE: Int = 0x0001
+    const val LEFTDOWN: Int = 0x0002
+    const val LEFTUP: Int = 0x0004
+    const val RIGHTDOWN: Int = 0x0008
+    const val RIGHTUP: Int = 0x0010
+    const val MIDDLEDOWN: Int = 0x0020
+    const val MIDDLEUP: Int = 0x0040
+    const val XDOWN: Int = 0x0080
+    const val XUP: Int = 0x0100
+    const val WHEEL: Int = 0x0800
+    const val VIRTUALDESK: Int = 0x4000
+    const val ABSOLUTE: Int = 0x8000
 
-    public static int getFlagFor(Pointer.Button button, boolean isActionDown) {
-        switch (button) {
-            case BUTTON_LEFT:
-                return isActionDown ? MouseEventFlags.LEFTDOWN : MouseEventFlags.LEFTUP;
-            case BUTTON_MIDDLE:
-                return isActionDown ? MouseEventFlags.MIDDLEDOWN : MouseEventFlags.MIDDLEUP;
-            case BUTTON_RIGHT:
-                return isActionDown ? MouseEventFlags.RIGHTDOWN : MouseEventFlags.RIGHTUP;
-            case BUTTON_SCROLL_DOWN:
-            case BUTTON_SCROLL_UP:
-                return MouseEventFlags.WHEEL;
-            default:
-                return 0;
+    @JvmStatic
+    fun getFlagFor(button: Pointer.Button, isActionDown: Boolean): Int {
+        return when (button) {
+            Pointer.Button.BUTTON_LEFT -> if (isActionDown) LEFTDOWN else LEFTUP
+            Pointer.Button.BUTTON_MIDDLE -> if (isActionDown) MIDDLEDOWN else MIDDLEUP
+            Pointer.Button.BUTTON_RIGHT -> if (isActionDown) RIGHTDOWN else RIGHTUP
+            Pointer.Button.BUTTON_SCROLL_DOWN,
+            Pointer.Button.BUTTON_SCROLL_UP,
+            -> WHEEL
+            else -> 0
         }
     }
 }

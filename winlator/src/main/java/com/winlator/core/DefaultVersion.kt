@@ -1,13 +1,13 @@
-package com.winlator.core;
+package com.winlator.core
 
-public abstract class DefaultVersion {
-    public static final String BOX86 = "0.3.2";
-    public static final String BOX64 = "0.2.8";
-    public static final String TURNIP = "24.1.0";
-    public static final String ZINK = "22.2.5";
-    public static final String VIRGL = "23.1.9";
-    public static final String DXVK = "1.10.3";
-    public static final String D8VK = "1.0";
-    public static final String VKD3D = "2.12";
-    public static final String CNC_DDRAW = "6.6";
+object DefaultVersion {
+    const val BOX86: String = "0.3.2"
+    const val BOX64: String = "0.2.8"
+    const val TURNIP: String = "24.1.0"
+    const val ZINK: String = "22.2.5"
+    const val VIRGL: String = "23.1.9"
+    const val DXVK: String = "1.10.3"
+    const val D8VK: String = "1.0"
+    const val VKD3D: String = "2.12"
+    const val CNC_DDRAW: String = "6.6"
 }

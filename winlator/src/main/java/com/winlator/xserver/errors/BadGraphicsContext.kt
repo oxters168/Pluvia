@@ -1,7 +1,3 @@
-package com.winlator.xserver.errors;
+package com.winlator.xserver.errors
 
-public class BadGraphicsContext extends XRequestError {
-    public BadGraphicsContext(int id) {
-        super(13, id);
-    }
-}
+class BadGraphicsContext(id: Int) : XRequestError(13, id)

@@ -1,9 +1,9 @@
-package com.winlator.xenvironment;
+package com.winlator.xenvironment
 
-public abstract class EnvironmentComponent {
-    protected XEnvironment environment;
+abstract class EnvironmentComponent {
+    var environment: XEnvironment? = null
 
-    public abstract void start();
+    abstract fun start()
 
-    public abstract void stop();
+    abstract fun stop()
 }

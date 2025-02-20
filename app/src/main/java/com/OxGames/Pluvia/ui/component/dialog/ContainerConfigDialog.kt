@@ -66,12 +66,12 @@ import com.OxGames.Pluvia.utils.ContainerUtils
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
+import com.winlator.EnvVarInfo
 import com.winlator.box86_64.Box86_64PresetManager
 import com.winlator.container.Container
+import com.winlator.core.EnvVars
 import com.winlator.core.KeyValueSet
 import com.winlator.core.StringUtils
-import com.winlator.core.envvars.EnvVarInfo
-import com.winlator.core.envvars.EnvVars
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

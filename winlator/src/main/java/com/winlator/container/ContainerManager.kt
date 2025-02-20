@@ -55,6 +55,7 @@ class ContainerManager(private val context: Context) {
                 }
             }
         } catch (e: JSONException) {
+            Timber.w(e)
         }
     }
 
@@ -101,7 +102,9 @@ class ContainerManager(private val context: Context) {
             data.put("id", id)
 
             val containerDir = File(homeDir, ImageFs.USER + "-" + id)
-            if (!containerDir.mkdirs()) return null
+            if (!containerDir.mkdirs()) {
+                return null
+            }
 
             val container = Container(id)
             container.rootDir = containerDir
@@ -132,7 +135,7 @@ class ContainerManager(private val context: Context) {
 
         if (!dstDir.mkdirs()) return
 
-        if (!FileUtils.copy(srcContainer.rootDir, dstDir, Callback { file: File? -> FileUtils.chmod(file, 505) })) {
+        if (!FileUtils.copy(srcContainer.rootDir!!, dstDir, Callback { file: File? -> FileUtils.chmod(file!!, 505) })) {
             FileUtils.delete(dstDir)
             return
         }
@@ -215,15 +218,17 @@ class ContainerManager(private val context: Context) {
 
             if (onExtractFileListener != null) {
                 dstFile = onExtractFileListener.onExtractFile(dstFile, 0)
-                if (dstFile == null) continue
+                if (dstFile == null) {
+                    continue
+                }
             }
 
-            FileUtils.copy(File(srcDir, dlname), dstFile)
+            FileUtils.copy(File(srcDir, dlname), dstFile!!)
         }
     }
 
     fun extractContainerPatternFile(
-        wineVersion: String?,
+        wineVersion: String,
         containerDir: File?,
         onExtractFileListener: OnExtractFileListener?,
     ): Boolean {

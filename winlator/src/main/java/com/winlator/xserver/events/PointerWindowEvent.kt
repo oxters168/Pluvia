@@ -1,61 +1,58 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Bitmask;
-import com.winlator.xserver.Window;
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Bitmask
+import com.winlator.xserver.Window
+import java.io.IOException
 
-import java.io.IOException;
+abstract class PointerWindowEvent(
+    code: Int,
+    private val detail: Detail,
+    private val root: Window,
+    private val event: Window,
+    private val child: Window?,
+    private val rootX: Short,
+    private val rootY: Short,
+    private val eventX: Short,
+    private val eventY: Short,
+    private val state: Bitmask,
+    private val mode: Mode,
+    private val sameScreenAndFocus: Boolean,
+) : Event(code) {
 
-public abstract class PointerWindowEvent extends Event {
-    public enum Detail {ANCESTOR, VIRTUAL, INFERIOR, NONLINEAR, NONLINEAR_VIRTUAL}
-    public enum Mode {NORMAL, GRAB, UNGRAB}
-    private final Detail detail;
-    private final int timestamp;
-    private final Window root;
-    private final Window event;
-    private final Window child;
-    private final short rootX;
-    private final short rootY;
-    private final short eventX;
-    private final short eventY;
-    private final Bitmask state;
-    private final Mode mode;
-    private final boolean sameScreenAndFocus;
-
-    public PointerWindowEvent(int code, Detail detail, Window root, Window event, Window child, short rootX, short rootY, short eventX, short eventY, Bitmask state, Mode mode, boolean sameScreenAndFocus) {
-        super(code);
-        this.detail = detail;
-        this.timestamp = (int)System.currentTimeMillis();
-        this.root = root;
-        this.event = event;
-        this.child = child;
-        this.rootX = rootX;
-        this.rootY = rootY;
-        this.eventX = eventX;
-        this.eventY = eventY;
-        this.state = state;
-        this.mode = mode;
-        this.sameScreenAndFocus = sameScreenAndFocus;
+    enum class Detail {
+        ANCESTOR,
+        VIRTUAL,
+        INFERIOR,
+        NONLINEAR,
+        NONLINEAR_VIRTUAL,
     }
 
-    @Override
-    public void send(short sequenceNumber, XOutputStream outputStream) throws IOException {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(code);
-            outputStream.writeByte((byte)detail.ordinal());
-            outputStream.writeShort(sequenceNumber);
-            outputStream.writeInt(timestamp);
-            outputStream.writeInt(root.id);
-            outputStream.writeInt(event.id);
-            outputStream.writeInt(child != null ? child.id : 0);
-            outputStream.writeShort(rootX);
-            outputStream.writeShort(rootY);
-            outputStream.writeShort(eventX);
-            outputStream.writeShort(eventY);
-            outputStream.writeShort((short)state.getBits());
-            outputStream.writeByte((byte)mode.ordinal());
-            outputStream.writeByte((byte)(sameScreenAndFocus ? 1 : 0));
+    enum class Mode {
+        NORMAL,
+        GRAB,
+        UNGRAB,
+    }
+
+    private val timestamp = System.currentTimeMillis().toInt()
+
+    @Throws(IOException::class)
+    override fun send(sequenceNumber: Short, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.writeByte(code)
+            outputStream.writeByte(detail.ordinal.toByte())
+            outputStream.writeShort(sequenceNumber)
+            outputStream.writeInt(timestamp)
+            outputStream.writeInt(root.id)
+            outputStream.writeInt(event.id)
+            outputStream.writeInt(child?.id ?: 0)
+            outputStream.writeShort(rootX)
+            outputStream.writeShort(rootY)
+            outputStream.writeShort(eventX)
+            outputStream.writeShort(eventY)
+            outputStream.writeShort(state.bits.toShort())
+            outputStream.writeByte(mode.ordinal.toByte())
+            outputStream.writeByte((if (sameScreenAndFocus) 1 else 0).toByte())
         }
     }
 }

@@ -39,11 +39,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.OxGames.Pluvia.ui.component.settings.SettingsEnvVars
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
+import com.winlator.EnvVarInfo
 import com.winlator.box86_64.Box86_64Preset
 import com.winlator.box86_64.Box86_64PresetManager
+import com.winlator.core.EnvVars
 import com.winlator.core.StringUtils
-import com.winlator.core.envvars.EnvVarInfo
-import com.winlator.core.envvars.EnvVars
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -165,8 +165,8 @@ fun Box64PresetsDialog(
                                         val defaultEnvVars = EnvVarInfo.KNOWN_BOX64_VARS.values.joinToString(" ") {
                                             "${it.identifier}=${it.possibleValues.first()}"
                                         }
-                                        presetId = Box86_64PresetManager
-                                            .editPreset(prefix, context, null, "Unnamed", EnvVars(defaultEnvVars))
+                                        presetId =
+                                            Box86_64PresetManager.editPreset(prefix, context, null, "Unnamed", EnvVars(defaultEnvVars))
                                         presetName = getPreset(presetId).name
                                         envVars = Box86_64PresetManager.getEnvVars(prefix, context, getPreset(presetId).id).toString()
                                     },

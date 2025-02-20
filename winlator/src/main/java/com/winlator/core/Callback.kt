@@ -1,5 +1,5 @@
-package com.winlator.core;
+package com.winlator.core
 
-public interface Callback<T> {
-    void call(T object);
+fun interface Callback<T> {
+    fun call(`object`: T)
 }

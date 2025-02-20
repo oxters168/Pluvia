@@ -1,55 +1,43 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Window;
-import com.winlator.xserver.extensions.PresentExtension;
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Window
+import com.winlator.xserver.extensions.PresentExtension
+import java.io.IOException
 
-import java.io.IOException;
+class PresentCompleteNotify(
+    private val eventId: Int,
+    private val window: Window,
+    private val serial: Int,
+    private val kind: PresentExtension.Kind,
+    private val mode: PresentExtension.Mode,
+    private val ust: Long,
+    private val msc: Long,
+) : Event(35) {
 
-public class PresentCompleteNotify extends Event {
-    private final int eventId;
-    private final Window window;
-    private final int serial;
-    private final PresentExtension.Kind kind;
-    private final PresentExtension.Mode mode;
-    private final long ust;
-    private final long msc;
+    companion object {
+        val eventType: Short
+            get() = 1
 
-    public PresentCompleteNotify(int eventId, Window window, int serial, PresentExtension.Kind kind, PresentExtension.Mode mode, long ust, long msc) {
-        super(35);
-        this.eventId = eventId;
-        this.window = window;
-        this.serial = serial;
-        this.kind = kind;
-        this.mode = mode;
-        this.ust = ust;
-        this.msc = msc;
+        val eventMask: Int
+            get() = 1 shl eventType.toInt()
     }
 
-    @Override
-    public void send(short sequenceNumber, XOutputStream outputStream) throws IOException {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(code);
-            outputStream.writeByte(PresentExtension.MAJOR_OPCODE);
-            outputStream.writeShort(sequenceNumber);
-            outputStream.writeInt(2);
-            outputStream.writeShort(getEventType());
-            outputStream.writeByte((byte)kind.ordinal());
-            outputStream.writeByte((byte)mode.ordinal());
-            outputStream.writeInt(eventId);
-            outputStream.writeInt(window.id);
-            outputStream.writeInt(serial);
-            outputStream.writeLong(ust);
-            outputStream.writeLong(msc);
+    @Throws(IOException::class)
+    override fun send(sequenceNumber: Short, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.writeByte(code)
+            outputStream.writeByte(PresentExtension.MAJOR_OPCODE)
+            outputStream.writeShort(sequenceNumber)
+            outputStream.writeInt(2)
+            outputStream.writeShort(eventType)
+            outputStream.writeByte(kind.ordinal.toByte())
+            outputStream.writeByte(mode.ordinal.toByte())
+            outputStream.writeInt(eventId)
+            outputStream.writeInt(window.id)
+            outputStream.writeInt(serial)
+            outputStream.writeLong(ust)
+            outputStream.writeLong(msc)
         }
-    }
-
-    public static short getEventType() {
-        return 1;
-    }
-
-    public static int getEventMask() {
-        return 1<<getEventType();
     }
 }

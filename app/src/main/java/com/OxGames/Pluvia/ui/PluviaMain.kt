@@ -491,11 +491,10 @@ fun preLaunchApp(
     CoroutineScope(Dispatchers.IO).launch {
         // set up Ubuntu file system
         SplitCompat.install(context)
-        val imageFsInstallSuccess =
-            ImageFsInstaller.installIfNeededFuture(context, context.assets) { progress ->
-                // Log.d("XServerScreen", "$progress")
-                setLoadingProgress(progress / 100f)
-            }.get()
+        val imageFsInstallSuccess = ImageFsInstaller.installIfNeeded(context) { progress ->
+            // Log.d("XServerScreen", "$progress")
+            setLoadingProgress(progress / 100f)
+        }
         setLoadingProgress(-1f)
 
         // create container if it does not already exist

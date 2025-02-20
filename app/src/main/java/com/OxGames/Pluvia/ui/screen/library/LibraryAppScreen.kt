@@ -212,10 +212,10 @@ fun AppScreen(
                     }
                     if (!SteamService.isImageFsInstalled(context)) {
                         SplitCompat.install(context)
-                        ImageFsInstaller.installIfNeededFuture(context, context.assets) {
+                        ImageFsInstaller.installIfNeeded(context) {
                             // Log.d("XServerScreen", "$progress")
                             loadingProgress = it / 100f
-                        }.get()
+                        }
                     }
                     loadingDialogVisible = false
                     showEditConfigDialog()

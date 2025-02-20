@@ -1,122 +1,121 @@
-package com.winlator.core;
+package com.winlator.core
 
-import android.content.Context;
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.content.Context
+import android.os.Parcel
+import android.os.Parcelable
+import com.winlator.core.FileUtils.chmod
+import com.winlator.core.FileUtils.copy
+import com.winlator.xenvironment.ImageFs
+import java.io.File
+import java.util.regex.Pattern
 
-import androidx.annotation.NonNull;
+class WineInfo : Parcelable {
 
-import com.winlator.xenvironment.ImageFs;
+    companion object {
+        val MAIN_WINE_VERSION: WineInfo = WineInfo("9.2", "x86_64")
 
-import java.io.File;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+        private val pattern: Pattern = Pattern.compile("^wine\\-([0-9\\.]+)\\-?([0-9\\.]+)?\\-(x86|x86_64)$")
 
-public class WineInfo implements Parcelable {
-    public static final WineInfo MAIN_WINE_VERSION = new WineInfo("9.2", "x86_64");
-    private static final Pattern pattern = Pattern.compile("^wine\\-([0-9\\.]+)\\-?([0-9\\.]+)?\\-(x86|x86_64)$");
-    public final String version;
-    public final String subversion;
-    public final String path;
-    private String arch;
+        @JvmField
+        val CREATOR = object : Parcelable.Creator<WineInfo> {
+            override fun createFromParcel(parcel: Parcel): WineInfo {
+                return WineInfo(parcel)
+            }
 
-    public WineInfo(String version, String arch) {
-        this.version = version;
-        this.subversion = null;
-        this.arch = arch;
-        this.path = null;
+            override fun newArray(size: Int): Array<WineInfo?> {
+                return arrayOfNulls(size)
+            }
+        }
+
+        fun fromIdentifier(context: Context, identifier: String): WineInfo {
+            if (identifier == MAIN_WINE_VERSION.identifier()) {
+                return MAIN_WINE_VERSION
+            }
+
+            val matcher = pattern.matcher(identifier)
+
+            if (matcher.find()) {
+                val installedWineDir = ImageFs.find(context).installedWineDir
+                val path = (File(installedWineDir, identifier)).path
+
+                return WineInfo(matcher.group(1), matcher.group(2), matcher.group(3), path)
+            } else {
+                return MAIN_WINE_VERSION
+            }
+        }
+
+        fun isMainWineVersion(wineVersion: String?): Boolean {
+            return wineVersion == null || wineVersion == MAIN_WINE_VERSION.identifier()
+        }
     }
 
-    public WineInfo(String version, String subversion, String arch, String path) {
-        this.version = version;
-        this.subversion = subversion != null && !subversion.isEmpty() ? subversion : null;
-        this.arch = arch;
-        this.path = path;
+    val version: String?
+    val subversion: String?
+    val path: String?
+    var arch: String?
+
+    constructor(version: String?, arch: String?) {
+        this.version = version
+        this.subversion = null
+        this.arch = arch
+        this.path = null
     }
 
-    private WineInfo(Parcel in) {
-        version = in.readString();
-        subversion = in.readString();
-        arch = in.readString();
-        path = in.readString();
+    constructor(version: String?, subversion: String?, arch: String?, path: String?) {
+        this.version = version
+        this.subversion = if (!subversion.isNullOrEmpty()) subversion else null
+        this.arch = arch
+        this.path = path
     }
 
-    public String getArch() {
-        return arch;
+    private constructor(`in`: Parcel) {
+        version = `in`.readString()
+        subversion = `in`.readString()
+        arch = `in`.readString()
+        path = `in`.readString()
     }
 
-    public void setArch(String arch) {
-        this.arch = arch;
-    }
+    val isWin64: Boolean
+        get() = arch == "x86_64"
 
-    public boolean isWin64() {
-        return arch.equals("x86_64");
-    }
-
-    public String getExecutable(Context context, boolean wow64Mode) {
+    fun getExecutable(context: Context, wow64Mode: Boolean): String {
         if (this == MAIN_WINE_VERSION) {
-            File wineBinDir = new File(ImageFs.find(context).getRootDir(), "/opt/wine/bin");
-            File wineBinFile = new File(wineBinDir, "wine");
-            File winePreloaderBinFile = new File(wineBinDir, "wine-preloader");
-            FileUtils.copy(new File(wineBinDir, wow64Mode ? "wine-wow64" : "wine32"), wineBinFile);
-            FileUtils.copy(new File(wineBinDir, wow64Mode ? "wine-preloader-wow64" : "wine32-preloader"), winePreloaderBinFile);
-            FileUtils.chmod(wineBinFile, 0771);
-            FileUtils.chmod(winePreloaderBinFile, 0771);
-            return wow64Mode ? "wine" : "wine64";
+            val wineBinDir = File(ImageFs.find(context).rootDir, "/opt/wine/bin")
+            val wineBinFile = File(wineBinDir, "wine")
+            val winePreloaderBinFile = File(wineBinDir, "wine-preloader")
+
+            copy(File(wineBinDir, if (wow64Mode) "wine-wow64" else "wine32"), wineBinFile)
+            copy(File(wineBinDir, if (wow64Mode) "wine-preloader-wow64" else "wine32-preloader"), winePreloaderBinFile)
+
+            chmod(wineBinFile, 505)
+            chmod(winePreloaderBinFile, 505)
+
+            return if (wow64Mode) {
+                "wine"
+            } else {
+                "wine64"
+            }
+        } else {
+            return if ((File(path, "/bin/wine64")).isFile) {
+                "wine64"
+            } else {
+                "wine"
+            }
         }
-        else return (new File(path, "/bin/wine64")).isFile() ? "wine64" : "wine";
     }
 
-    public String identifier() {
-        return "wine-"+fullVersion()+"-"+(this == MAIN_WINE_VERSION ? "custom" : arch);
-    }
+    fun identifier(): String = "wine-" + fullVersion() + "-" + (if (this == MAIN_WINE_VERSION) "custom" else arch)
 
-    public String fullVersion() {
-        return version+(subversion != null ? "-"+subversion : "");
-    }
+    fun fullVersion(): String = version + (if (subversion != null) "-$subversion" else "")
 
-    @NonNull
-    @Override
-    public String toString() {
-        return "Wine "+fullVersion()+(this == MAIN_WINE_VERSION ? " (Custom)" : "");
-    }
+    override fun toString(): String = "Wine " + fullVersion() + (if (this == MAIN_WINE_VERSION) " (Custom)" else "")
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
+    override fun describeContents(): Int = 0
 
-    public static final Parcelable.Creator<WineInfo> CREATOR = new Parcelable.Creator<WineInfo>() {
-        public WineInfo createFromParcel(Parcel in) {
-            return new WineInfo(in);
-        }
-
-        public WineInfo[] newArray(int size) {
-            return new WineInfo[size];
-        }
-    };
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(version);
-        dest.writeString(subversion);
-        dest.writeString(arch);
-        dest.writeString(path);
-    }
-
-    @NonNull
-    public static WineInfo fromIdentifier(Context context, String identifier) {
-        if (identifier.equals(MAIN_WINE_VERSION.identifier())) return MAIN_WINE_VERSION;
-        Matcher matcher = pattern.matcher(identifier);
-        if (matcher.find()) {
-            File installedWineDir = ImageFs.find(context).getInstalledWineDir();
-            String path = (new File(installedWineDir, identifier)).getPath();
-            return new WineInfo(matcher.group(1), matcher.group(2), matcher.group(3), path);
-        }
-        else return MAIN_WINE_VERSION;
-    }
-
-    public static boolean isMainWineVersion(String wineVersion) {
-        return wineVersion == null ||wineVersion.equals(MAIN_WINE_VERSION.identifier());
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(version)
+        dest.writeString(subversion)
+        dest.writeString(arch)
+        dest.writeString(path)
     }
 }

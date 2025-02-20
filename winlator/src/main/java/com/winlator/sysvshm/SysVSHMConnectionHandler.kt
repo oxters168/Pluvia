@@ -1,21 +1,14 @@
-package com.winlator.sysvshm;
+package com.winlator.sysvshm
 
-import com.winlator.xconnector.Client;
-import com.winlator.xconnector.ConnectionHandler;
+import com.winlator.xconnector.Client
+import com.winlator.xconnector.ConnectionHandler
 
-public class SysVSHMConnectionHandler implements ConnectionHandler {
-    private final SysVSharedMemory sysVSharedMemory;
+class SysVSHMConnectionHandler(private val sysVSharedMemory: SysVSharedMemory) : ConnectionHandler {
 
-    public SysVSHMConnectionHandler(SysVSharedMemory sysVSharedMemory) {
-        this.sysVSharedMemory = sysVSharedMemory;
+    override fun handleNewConnection(client: Client) {
+        client.createIOStreams()
+        client.tag = sysVSharedMemory
     }
 
-    @Override
-    public void handleNewConnection(Client client) {
-        client.createIOStreams();
-        client.setTag(sysVSharedMemory);
-    }
-
-    @Override
-    public void handleConnectionShutdown(Client client) {}
+    override fun handleConnectionShutdown(client: Client) {}
 }

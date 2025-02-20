@@ -1,146 +1,188 @@
-package com.winlator.core;
+package com.winlator.core
 
-import android.graphics.Bitmap;
-import android.graphics.Color;
+import android.graphics.Bitmap
+import android.graphics.Color
+import androidx.core.graphics.createBitmap
+import com.winlator.core.FileUtils.read
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
-public abstract class MSBitmap {
-    public static Bitmap open(File targetFile) {
-        if (!targetFile.isFile()) return null;
-        byte[] bytes = FileUtils.read(targetFile);
-        if (bytes == null) return null;
-
-        ByteBuffer data = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
-        if (data.getShort() != 0x4d42) return null;
-
-        int fileSize = data.getInt();
-        if (fileSize > targetFile.length()) return null;
-
-        data.getInt();
-        int dataOffset = data.getInt();
-        int infoHeaderSize = data.getInt();
-        int width = data.getInt();
-        int height = data.getInt();
-        short planes = data.getShort();
-        short bitCount = data.getShort();
-        int compression = data.getInt();
-        int imageSize = data.getInt();
-        int hr = data.getInt();
-        int vr = data.getInt();
-        int colorsUsed = data.getInt();
-        int colorsImportant = data.getInt();
-
-        if (width == 0 || height == 0) return null;
-
-        boolean invertY = true;
-        if (height < 0) {
-            height *= -1;
-            invertY = false;
+object MSBitmap {
+    fun open(targetFile: File): Bitmap? {
+        if (!targetFile.isFile) {
+            return null
         }
 
-        ByteBuffer pixels = ByteBuffer.allocate(width * height * 4);
-        byte r1 = 0, g1 = 0, b1 = 0, r2 = 0, g2 = 0, b2 = 0;
-        boolean started = false;
-        boolean blank = true;
-        for (int y = height - 1, i = data.position(), j, line; y >= 0; y--) {
-            line = invertY ? y : height - 1 - y;
+        val bytes = read(targetFile) ?: return null
 
-            for (int x = 0; x < width; x++) {
-                j = line * width * 4 + x * 4;
-                b1 = data.get(i++);
-                g1 = data.get(i++);
-                r1 = data.get(i++);
-                pixels.put(j+2, b1);
-                pixels.put(j+1, g1);
-                pixels.put(j+0, r1);
-                pixels.put(j+3, (byte)255);
+        val data = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+
+        if (data.getShort().toInt() != 0x4d42) {
+            return null
+        }
+
+        val fileSize = data.getInt()
+
+        if (fileSize > targetFile.length()) {
+            return null
+        }
+
+        data.getInt()
+
+        val dataOffset = data.getInt()
+        val infoHeaderSize = data.getInt()
+        val width = data.getInt()
+        var height = data.getInt()
+        val planes = data.getShort()
+        val bitCount = data.getShort()
+        val compression = data.getInt()
+        val imageSize = data.getInt()
+        val hr = data.getInt()
+        val vr = data.getInt()
+        val colorsUsed = data.getInt()
+        val colorsImportant = data.getInt()
+
+        if (width == 0 || height == 0) {
+            return null
+        }
+
+        var invertY = true
+        if (height < 0) {
+            height *= -1
+            invertY = false
+        }
+
+        val pixels = ByteBuffer.allocate(width * height * 4)
+        var r1: Byte = 0
+        var g1: Byte = 0
+        var b1: Byte = 0
+        var r2: Byte = 0
+        var g2: Byte = 0
+        var b2: Byte = 0
+        var started = false
+        var blank = true
+        var y = height - 1
+        var i = data.position()
+        var j: Int
+        var line: Int
+
+        while (y >= 0) {
+            line = if (invertY) {
+                y
+            } else {
+                height - 1 - y
+            }
+
+            for (x in 0..<width) {
+                j = line * width * 4 + x * 4
+                b1 = data[i++]
+                g1 = data[i++]
+                r1 = data[i++]
+                pixels.put(j + 2, b1)
+                pixels.put(j + 1, g1)
+                pixels.put(j + 0, r1)
+                pixels.put(j + 3, 255.toByte())
 
                 if (!started) {
-                    b2 = b1;
-                    g2 = g1;
-                    r2 = r1;
-                    started = true;
-                }
-                else if (r1 != r2 || b1 != b2 || g1 != g2) {
-                    blank = false;
+                    b2 = b1
+                    g2 = g1
+                    r2 = r1
+                    started = true
+                } else if (r1 != r2 || b1 != b2 || g1 != g2) {
+                    blank = false
                 }
             }
 
-            i += width % 4;
+            i += width % 4
+            y--
         }
 
-        if (blank) return null;
+        if (blank) return null
 
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        bitmap.copyPixelsFromBuffer(pixels);
-        return bitmap;
+        val bitmap = createBitmap(width, height)
+        bitmap.copyPixelsFromBuffer(pixels)
+
+        return bitmap
     }
 
-    public static boolean create(Bitmap bitmap, File outputFile) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
+    fun create(bitmap: Bitmap, outputFile: File?): Boolean {
+        val width = bitmap.width
+        val height = bitmap.height
 
-        int[] pixels = new int[width * height];
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
 
-        int extraBytes = width % 4;
-        int imageSize = height * (3 * width + extraBytes);
-        int infoHeaderSize = 40;
-        int dataOffset = 54;
-        int bitCount = 24;
-        int planes = 1;
-        int compression = 0;
-        int hr = 0;
-        int vr = 0;
-        int colorsUsed = 0;
-        int colorsImportant = 0;
-        
-        ByteBuffer buffer = ByteBuffer.allocate(dataOffset + imageSize).order(ByteOrder.LITTLE_ENDIAN);
+        val extraBytes = width % 4
+        val imageSize = height * (3 * width + extraBytes)
+        val infoHeaderSize = 40
+        val dataOffset = 54
+        val bitCount = 24
+        val planes = 1
+        val compression = 0
+        val hr = 0
+        val vr = 0
+        val colorsUsed = 0
+        val colorsImportant = 0
 
-        buffer.putShort((short)0x4d42); // "BM"
-        buffer.putInt(dataOffset + imageSize);
-        buffer.putInt(0);
-        buffer.putInt(dataOffset);
+        val buffer = ByteBuffer.allocate(dataOffset + imageSize).order(ByteOrder.LITTLE_ENDIAN)
 
-        buffer.putInt(infoHeaderSize);
-        buffer.putInt(width);
-        buffer.putInt(height);
-        buffer.putShort((short)planes);
-        buffer.putShort((short)bitCount);
-        buffer.putInt(compression);
-        buffer.putInt(imageSize);
-        buffer.putInt(hr);
-        buffer.putInt(vr);
-        buffer.putInt(colorsUsed);
-        buffer.putInt(colorsImportant);
+        buffer.putShort(0x4d42.toShort()) // "BM"
+        buffer.putInt(dataOffset + imageSize)
+        buffer.putInt(0)
+        buffer.putInt(dataOffset)
 
-        int rowBytes = 3 * width + extraBytes;
-        for (int y = height - 1, i = 0, j; y >= 0; y--) {
-            for (int x = 0; x < width; x++) {
-                j = dataOffset + y * rowBytes + x * 3;
-                int pixel = pixels[i++];
-                buffer.put(j+0, (byte)Color.blue(pixel));
-                buffer.put(j+1, (byte)Color.green(pixel));
-                buffer.put(j+2, (byte)Color.red(pixel));
+        buffer.putInt(infoHeaderSize)
+        buffer.putInt(width)
+        buffer.putInt(height)
+        buffer.putShort(planes.toShort())
+        buffer.putShort(bitCount.toShort())
+        buffer.putInt(compression)
+        buffer.putInt(imageSize)
+        buffer.putInt(hr)
+        buffer.putInt(vr)
+        buffer.putInt(colorsUsed)
+        buffer.putInt(colorsImportant)
+
+        val rowBytes = 3 * width + extraBytes
+        var y = height - 1
+        var i = 0
+        var j: Int
+
+        while (y >= 0) {
+            for (x in 0..<width) {
+                j = dataOffset + y * rowBytes + x * 3
+
+                val pixel = pixels[i++]
+
+                buffer.put(j + 0, Color.blue(pixel).toByte())
+                buffer.put(j + 1, Color.green(pixel).toByte())
+                buffer.put(j + 2, Color.red(pixel).toByte())
             }
 
             if (extraBytes > 0) {
-                int fillOffset = dataOffset + y * rowBytes + width * 3;
-                for (j = fillOffset; j < fillOffset + extraBytes; j++) buffer.put(j, (byte)255);
+                val fillOffset = dataOffset + y * rowBytes + width * 3
+
+                j = fillOffset
+
+                while (j < fillOffset + extraBytes) {
+                    buffer.put(j, 255.toByte())
+                    j++
+                }
             }
+
+            y--
         }
 
-        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-            fos.write(buffer.array());
-            return true;
-        }
-        catch (IOException e) {
-            return false;
+        try {
+            FileOutputStream(outputFile).use { fos ->
+                fos.write(buffer.array())
+                return true
+            }
+        } catch (e: IOException) {
+            return false
         }
     }
 }

@@ -1,33 +1,24 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Window;
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Window
+import java.io.IOException
 
-import java.io.IOException;
-
-public class ResizeRequest extends Event {
-    private final Window window;
-    private final short width;
-    private final short height;
-
-    public ResizeRequest(Window window, short width, short height) {
-        super(25);
-        this.window = window;
-        this.width = width;
-        this.height = height;
-    }
-
-    @Override
-    public void send(short sequenceNumber, XOutputStream outputStream) throws IOException {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(code);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(sequenceNumber);
-            outputStream.writeInt(window.id);
-            outputStream.writeShort(width);
-            outputStream.writeShort(height);
-            outputStream.writePad(20);
+class ResizeRequest(
+    private val window: Window,
+    private val width: Short,
+    private val height: Short,
+) : Event(25) {
+    @Throws(IOException::class)
+    override fun send(sequenceNumber: Short, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.writeByte(code)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(sequenceNumber)
+            outputStream.writeInt(window.id)
+            outputStream.writeShort(width)
+            outputStream.writeShort(height)
+            outputStream.writePad(20)
         }
     }
 }

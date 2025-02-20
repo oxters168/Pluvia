@@ -1,18 +1,18 @@
-package com.winlator.winhandler;
+package com.winlator.winhandler
 
-abstract class RequestCodes {
-    public static final byte EXIT = 0;
-    public static final byte INIT = 1;
-    public static final byte EXEC = 2;
-    public static final byte KILL_PROCESS = 3;
-    public static final byte LIST_PROCESSES = 4;
-    public static final byte GET_PROCESS = 5;
-    public static final byte SET_PROCESS_AFFINITY = 6;
-    public static final byte MOUSE_EVENT = 7;
-    public static final byte GET_GAMEPAD = 8;
-    public static final byte GET_GAMEPAD_STATE = 9;
-    public static final byte RELEASE_GAMEPAD = 10;
-    public static final byte KEYBOARD_EVENT = 11;
-    public static final byte BRING_TO_FRONT = 12;
-    public static final byte CURSOR_POS_FEEDBACK = 13;
+internal object RequestCodes {
+    const val EXIT: Byte = 0
+    const val INIT: Byte = 1
+    const val EXEC: Byte = 2
+    const val KILL_PROCESS: Byte = 3
+    const val LIST_PROCESSES: Byte = 4
+    const val GET_PROCESS: Byte = 5
+    const val SET_PROCESS_AFFINITY: Byte = 6
+    const val MOUSE_EVENT: Byte = 7
+    const val GET_GAMEPAD: Byte = 8
+    const val GET_GAMEPAD_STATE: Byte = 9
+    const val RELEASE_GAMEPAD: Byte = 10
+    const val KEYBOARD_EVENT: Byte = 11
+    const val BRING_TO_FRONT: Byte = 12
+    const val CURSOR_POS_FEEDBACK: Byte = 13
 }

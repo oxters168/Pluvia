@@ -1,40 +1,48 @@
-package com.winlator.core;
+package com.winlator.core
 
-import org.json.JSONArray;
-import org.json.JSONException;
+import org.json.JSONArray
+import org.json.JSONException
+import timber.log.Timber
 
-import java.util.Arrays;
+object ArrayUtils {
 
-public abstract class ArrayUtils {
-    public static byte[] concat(byte[]... elements) {
-        byte[] result = Arrays.copyOf(elements[0], elements[0].length);
-        for (int i = 1; i < elements.length; i++) {
-            byte[] newArray = Arrays.copyOf(result, result.length + elements[i].length);
-            System.arraycopy(elements[i], 0, newArray, result.length, elements[i].length);
-            result = newArray;
+    @JvmStatic
+    fun concat(vararg elements: ByteArray): ByteArray {
+        var result = elements[0].copyOf(elements[0].size)
+
+        for (i in 1..<elements.size) {
+            val newArray = result.copyOf(result.size + elements[i].size)
+            System.arraycopy(elements[i], 0, newArray, result.size, elements[i].size)
+            result = newArray
         }
-        return result;
+
+        return result
     }
 
     @SafeVarargs
-    public static <T> T[] concat(T[]... elements) {
-        T[] result = Arrays.copyOf(elements[0], elements[0].length);
-        for (int i = 1; i < elements.length; i++) {
-            T[] newArray = Arrays.copyOf(result, result.length + elements[i].length);
-            System.arraycopy(elements[i], 0, newArray, result.length, elements[i].length);
-            result = newArray;
+    fun <T> concat(vararg elements: Array<T>): Array<T?> {
+        var result = elements[0].copyOf(elements[0].size)
+
+        for (i in 1..<elements.size) {
+            val newArray = result.copyOf(result.size + elements[i].size)
+            System.arraycopy(elements[i], 0, newArray, result.size, elements[i].size)
+            result = newArray
         }
-        return result;
+
+        return result
     }
 
-    public static String[] toStringArray(JSONArray data) {
-        String[] stringArray = new String[data.length()];
-        for (int i = 0; i < data.length(); i++) {
+    fun toStringArray(data: JSONArray): Array<String?> {
+        val stringArray = arrayOfNulls<String>(data.length())
+
+        for (i in 0..<data.length()) {
             try {
-                stringArray[i] = data.getString(i);
+                stringArray[i] = data.getString(i)
+            } catch (e: JSONException) {
+                Timber.w(e)
             }
-            catch (JSONException e) {}
         }
-        return stringArray;
+
+        return stringArray
     }
 }

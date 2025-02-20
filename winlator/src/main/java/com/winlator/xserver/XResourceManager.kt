@@ -1,33 +1,28 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import java.util.ArrayList;
+abstract class XResourceManager {
 
-public abstract class XResourceManager {
-    private final ArrayList<OnResourceLifecycleListener> onResourceLifecycleListeners = new ArrayList<>();
+    private val onResourceLifecycleListeners = ArrayList<OnResourceLifecycleListener>()
 
-    public interface OnResourceLifecycleListener {
-        default void onCreateResource(XResource resource) {}
+    interface OnResourceLifecycleListener {
+        fun onCreateResource(resource: XResource?) {}
 
-        default void onFreeResource(XResource resource) {}
+        fun onFreeResource(resource: XResource?) {}
     }
 
-    public void addOnResourceLifecycleListener(OnResourceLifecycleListener OnResourceLifecycleListener) {
-        onResourceLifecycleListeners.add(OnResourceLifecycleListener);
+    fun addOnResourceLifecycleListener(onResourceLifecycleListener: OnResourceLifecycleListener) {
+        onResourceLifecycleListeners.add(onResourceLifecycleListener)
     }
 
-    public void removeOnResourceLifecycleListener(OnResourceLifecycleListener OnResourceLifecycleListener) {
-        onResourceLifecycleListeners.remove(OnResourceLifecycleListener);
+    fun removeOnResourceLifecycleListener(onResourceLifecycleListener: OnResourceLifecycleListener) {
+        onResourceLifecycleListeners.remove(onResourceLifecycleListener)
     }
 
-    public void triggerOnCreateResourceListener(XResource resource) {
-        for (int i = onResourceLifecycleListeners.size()-1; i >= 0; i--) {
-            onResourceLifecycleListeners.get(i).onCreateResource(resource);
-        }
+    fun triggerOnCreateResourceListener(resource: XResource?) {
+        onResourceLifecycleListeners.indices.reversed().forEach { onResourceLifecycleListeners[it].onCreateResource(resource) }
     }
 
-    public void triggerOnFreeResourceListener(XResource resource) {
-        for (int i = onResourceLifecycleListeners.size()-1; i >= 0; i--) {
-            onResourceLifecycleListeners.get(i).onFreeResource(resource);
-        }
+    fun triggerOnFreeResourceListener(resource: XResource?) {
+        onResourceLifecycleListeners.indices.reversed().forEach { onResourceLifecycleListeners[it].onFreeResource(resource) }
     }
 }

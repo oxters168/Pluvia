@@ -1,70 +1,102 @@
-package com.winlator.core;
+package com.winlator.core
 
-import android.content.Context;
+import android.content.Context
+import java.nio.charset.Charset
+import java.util.Locale
+import kotlin.math.log10
+import kotlin.math.pow
 
-import java.nio.charset.Charset;
-import java.util.Locale;
+object StringUtils {
+    fun removeEndSlash(value: String): String {
+        var value = value
 
-public class StringUtils {
-    public static String removeEndSlash(String value) {
-        while (value.endsWith("/") || value.endsWith("\\")) value = value.substring(0, value.length()-1);
-        return value;
+        while (value.endsWith("/") || value.endsWith("\\")) {
+            value = value.substring(0, value.length - 1)
+        }
+
+        return value
     }
 
-    public static String addEndSlash(String value) {
-        return value.endsWith("/") ? value : value+"/";
+    fun addEndSlash(value: String): String {
+        return if (value.endsWith("/")) value else "$value/"
     }
 
-    public static String insert(String text, int index, String value) {
-        return text.substring(0, index) + value + text.substring(index);
+    fun insert(text: String, index: Int, value: String): String {
+        return text.substring(0, index) + value + text.substring(index)
     }
 
-    public static String replace(String text, int start, int end, String value) {
-        return text.substring(0, start) + value + text.substring(end);
+    fun replace(text: String, start: Int, end: Int, value: String): String {
+        return text.substring(0, start) + value + text.substring(end)
     }
 
-    public static String unescape(String path) {
-        return path.replaceAll("\\\\([^\\\\]+)", "$1").replaceAll("\\\\([^\\\\]+)", "$1").replaceAll("\\\\\\\\", "\\\\").trim();
+    fun unescape(path: String): String {
+        return path.replace(
+            "\\\\([^\\\\]+)"
+                .toRegex(),
+            "$1",
+        )
+            .replace("\\\\([^\\\\]+)".toRegex(), "$1")
+            .replace("\\\\\\\\".toRegex(), "\\\\")
+            .trim { it <= ' ' }
     }
 
-    public static String parseIdentifier(Object text) {
-        return text.toString().toLowerCase(Locale.ENGLISH).replaceAll(" *\\(([^\\)]+)\\)$", "").replaceAll("( \\+ )+| +", "-");
+    fun parseIdentifier(text: Any): String {
+        return text.toString()
+            .lowercase()
+            .replace(" *\\(([^\\)]+)\\)$".toRegex(), "")
+            .replace("( \\+ )+| +".toRegex(), "-")
     }
 
-    public static String parseNumber(Object text) {
-        return text.toString().replaceAll("[^0-9\\.]+", "");
+    fun parseNumber(text: Any): String {
+        return text.toString().replace("[^0-9\\.]+".toRegex(), "")
     }
 
-    public static String getString(Context context, String resName) {
+    fun getString(context: Context, resName: String): String? {
+        var resName = resName
+
         try {
-            resName = resName.toLowerCase(Locale.ENGLISH);
-            int resID = context.getResources().getIdentifier(resName, "string", context.getPackageName());
-            return context.getString(resID);
+            resName = resName.lowercase()
+            val resID = context.resources.getIdentifier(resName, "string", context.packageName)
+
+            return context.getString(resID)
+        } catch (e: Exception) {
+            return null
         }
-        catch (Exception e) {
-            return null;
+    }
+
+    @JvmOverloads
+    fun formatBytes(bytes: Long, withSuffix: Boolean = true): String {
+        if (bytes <= 0) {
+            return "0 bytes"
         }
+
+        val units = arrayOf("bytes", "KB", "MB", "GB", "TB")
+        val digitGroups = (log10(bytes.toDouble()) / log10(1024.0)).toInt()
+
+        val suffix = if (withSuffix) {
+            " " + units[digitGroups]
+        } else {
+            ""
+        }
+
+        return String.format(Locale.ENGLISH, "%.2f", bytes / 1024.0.pow(digitGroups.toDouble())) + suffix
     }
 
-    public static String formatBytes(long bytes) {
-        return formatBytes(bytes, true);
-    }
+    @JvmStatic
+    @JvmOverloads
+    fun fromANSIString(bytes: ByteArray?, charset: Charset? = null): String {
+        val value = if (charset != null) {
+            String(bytes!!, charset)
+        } else {
+            String(bytes!!)
+        }
 
-    public static String formatBytes(long bytes, boolean withSuffix) {
-        if (bytes <= 0) return "0 bytes";
-        final String[] units = new String[]{"bytes", "KB", "MB", "GB", "TB"};
-        int digitGroups = (int)(Math.log10(bytes) / Math.log10(1024));
-        String suffix = withSuffix ? " "+units[digitGroups] : "";
-        return String.format(Locale.ENGLISH, "%.2f", bytes / Math.pow(1024, digitGroups))+suffix;
-    }
+        val indexOfNull = value.indexOf('\u0000')
 
-    public static String fromANSIString(byte[] bytes) {
-        return fromANSIString(bytes, null);
-    }
-
-    public static String fromANSIString(byte[] bytes, Charset charset) {
-        String value = charset != null ? new String(bytes, charset) : new String(bytes);
-        int indexOfNull = value.indexOf('\0');
-        return indexOfNull != -1 ? value.substring(0, indexOfNull) : value;
+        return if (indexOfNull != -1) {
+            value.substring(0, indexOfNull)
+        } else {
+            value
+        }
     }
 }

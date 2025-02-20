@@ -1,7 +1,3 @@
-package com.winlator.xserver.errors;
+package com.winlator.xserver.errors
 
-public class BadAlloc extends XRequestError {
-    public BadAlloc() {
-        super(11, 0);
-    }
-}
+class BadAlloc : XRequestError(11, 0)

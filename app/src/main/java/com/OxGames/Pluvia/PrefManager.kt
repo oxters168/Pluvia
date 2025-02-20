@@ -179,14 +179,14 @@ object PrefManager {
 
     private val CPU_LIST = stringPreferencesKey("cpu_list")
     var cpuList: String
-        get() = getPref(CPU_LIST, Container.getFallbackCPUList())
+        get() = getPref(CPU_LIST, Container.fallbackCPUList)
         set(value) {
             setPref(CPU_LIST, value)
         }
 
     private val CPU_LIST_WOW64 = stringPreferencesKey("cpu_list_wow64")
     var cpuListWoW64: String
-        get() = getPref(CPU_LIST_WOW64, Container.getFallbackCPUListWoW64())
+        get() = getPref(CPU_LIST_WOW64, Container.fallbackCPUListWoW64)
         set(value) {
             setPref(CPU_LIST_WOW64, value)
         }

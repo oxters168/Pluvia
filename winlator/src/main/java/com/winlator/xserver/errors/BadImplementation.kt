@@ -1,7 +1,3 @@
-package com.winlator.xserver.errors;
+package com.winlator.xserver.errors
 
-public class BadImplementation extends XRequestError {
-    public BadImplementation() {
-        super(17, 0);
-    }
-}
+class BadImplementation : XRequestError(17, 0)

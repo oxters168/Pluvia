@@ -1,7 +1,7 @@
-package com.winlator.core;
+package com.winlator.core
 
-import java.io.File;
+import java.io.File
 
-public interface OnExtractFileListener {
-    File onExtractFile(File destination, long size);
+fun interface OnExtractFileListener {
+    fun onExtractFile(destination: File?, size: Long): File?
 }

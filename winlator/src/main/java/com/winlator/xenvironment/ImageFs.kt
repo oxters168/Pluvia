@@ -1,96 +1,72 @@
-package com.winlator.xenvironment;
+package com.winlator.xenvironment
 
-import android.content.Context;
+import android.content.Context
+import com.winlator.core.FileUtils.readLines
+import com.winlator.core.FileUtils.toRelativePath
+import com.winlator.core.FileUtils.writeString
+import java.io.File
+import java.io.IOException
+import java.util.Locale
 
-import androidx.annotation.NonNull;
+class ImageFs private constructor(val rootDir: File) {
 
-import com.winlator.core.FileUtils;
+    companion object {
+        const val USER: String = "xuser"
+        const val HOME_PATH: String = "/home/$USER"
+        const val CACHE_PATH: String = "/home/$USER/.cache"
+        const val CONFIG_PATH: String = "/home/$USER/.config"
+        const val WINEPREFIX: String = "/home/$USER/.wine"
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Locale;
-
-public class ImageFs {
-    public static final String USER = "xuser";
-    public static final String HOME_PATH = "/home/"+USER;
-    public static final String CACHE_PATH = "/home/"+USER+"/.cache";
-    public static final String CONFIG_PATH = "/home/"+USER+"/.config";
-    public static final String WINEPREFIX = "/home/"+USER+"/.wine";
-    private final File rootDir;
-    private String winePath = "/opt/wine";
-
-    private ImageFs(File rootDir) {
-        this.rootDir = rootDir;
+        fun find(context: Context): ImageFs = ImageFs(File(context.filesDir, "imagefs"))
     }
 
-    public static ImageFs find(Context context) {
-        return new ImageFs(new File(context.getFilesDir(), "imagefs"));
-    }
+    var winePath: String = "/opt/wine"
+        set(winePath) {
+            field = toRelativePath(rootDir.path, winePath)
+        }
 
-    public File getRootDir() {
-        return rootDir;
-    }
+    val isValid: Boolean
+        get() = rootDir.isDirectory && imgVersionFile.exists()
 
-    public boolean isValid() {
-        return rootDir.isDirectory() && getImgVersionFile().exists();
-    }
+    val version: Int
+        get() {
+            val imgVersionFile = imgVersionFile
+            return if (imgVersionFile.exists()) readLines(imgVersionFile)[0].toInt() else 0
+        }
 
-    public int getVersion() {
-        File imgVersionFile = getImgVersionFile();
-        return imgVersionFile.exists() ? Integer.parseInt(FileUtils.readLines(imgVersionFile).get(0)) : 0;
-    }
+    val formattedVersion: String
+        get() = String.format(Locale.ENGLISH, "%.1f", version.toFloat())
 
-    public String getFormattedVersion() {
-        return String.format(Locale.ENGLISH, "%.1f", (float)getVersion());
-    }
+    fun createImgVersionFile(version: Int) {
+        configDir.mkdirs()
 
-    public void createImgVersionFile(int version) {
-        getConfigDir().mkdirs();
-        File file = getImgVersionFile();
+        val file = imgVersionFile
+
         try {
-            file.createNewFile();
-            FileUtils.writeString(file, String.valueOf(version));
+            file.createNewFile()
+            writeString(file, version.toString())
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
-    public String getWinePath() {
-        return winePath;
-    }
+    val configDir: File
+        get() = File(rootDir, ".winlator")
 
-    public void setWinePath(String winePath) {
-        this.winePath = FileUtils.toRelativePath(rootDir.getPath(), winePath);
-    }
+    val imgVersionFile: File
+        get() = File(configDir, ".img_version")
 
-    public File getConfigDir() {
-        return new File(rootDir, ".winlator");
-    }
+    val installedWineDir: File
+        get() = File(rootDir, "/opt/installed-wine")
 
-    public File getImgVersionFile() {
-        return new File(getConfigDir(), ".img_version");
-    }
+    val tmpDir: File
+        get() = File(rootDir, "/tmp")
 
-    public File getInstalledWineDir() {
-        return new File(rootDir, "/opt/installed-wine");
-    }
+    val lib32Dir: File
+        get() = File(rootDir, "/usr/lib/arm-linux-gnueabihf")
 
-    public File getTmpDir() {
-        return new File(rootDir, "/tmp");
-    }
+    val lib64Dir: File
+        get() = File(rootDir, "/usr/lib/aarch64-linux-gnu")
 
-    public File getLib32Dir() {
-        return new File(rootDir, "/usr/lib/arm-linux-gnueabihf");
-    }
-
-    public File getLib64Dir() {
-        return new File(rootDir, "/usr/lib/aarch64-linux-gnu");
-    }
-
-    @NonNull
-    @Override
-    public String toString() {
-        return rootDir.getPath();
-    }
+    override fun toString(): String = rootDir.path
 }

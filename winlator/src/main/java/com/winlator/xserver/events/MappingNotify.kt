@@ -1,33 +1,28 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
+import com.winlator.xconnector.XOutputStream
+import java.io.IOException
 
-import java.io.IOException;
+class MappingNotify(private val request: Request, private val firstKeycode: Byte, count: Int) : Event(34) {
 
-public class MappingNotify extends Event {
-    public enum Request {MODIFIER, KEYBOARD, POINTER}
-    private final Request request;
-    private final byte firstKeycode;
-    private final byte count;
-
-    public MappingNotify(Request request, byte firstKeycode, int count) {
-        super(34);
-        this.request = request;
-        this.firstKeycode = firstKeycode;
-        this.count = (byte)count;
+    enum class Request {
+        MODIFIER,
+        KEYBOARD,
+        POINTER,
     }
 
-    @Override
-    public void send(short sequenceNumber, XOutputStream outputStream) throws IOException {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(code);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(sequenceNumber);
-            outputStream.writeByte((byte)request.ordinal());
-            outputStream.writeByte(firstKeycode);
-            outputStream.writeByte(count);
-            outputStream.writePad(25);
+    private val count = count.toByte()
+
+    @Throws(IOException::class)
+    override fun send(sequenceNumber: Short, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.writeByte(code)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(sequenceNumber)
+            outputStream.writeByte(request.ordinal.toByte())
+            outputStream.writeByte(firstKeycode)
+            outputStream.writeByte(count)
+            outputStream.writePad(25)
         }
     }
 }

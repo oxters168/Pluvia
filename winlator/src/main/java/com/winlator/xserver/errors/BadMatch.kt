@@ -1,7 +1,3 @@
-package com.winlator.xserver.errors;
+package com.winlator.xserver.errors
 
-public class BadMatch extends XRequestError {
-    public BadMatch() {
-        super(8, 0);
-    }
-}
+class BadMatch : XRequestError(8, 0)

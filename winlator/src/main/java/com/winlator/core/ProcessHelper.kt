@@ -1,187 +1,213 @@
-package com.winlator.core;
+package com.winlator.core
 
-import android.os.Process;
+import java.io.BufferedReader
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.util.concurrent.Executors
+import kotlin.math.pow
+import timber.log.Timber
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.concurrent.Executors;
+object ProcessHelper {
+    const val PRINT_DEBUG: Boolean = false // FIXME change to false
 
-public abstract class ProcessHelper {
-    public static final boolean PRINT_DEBUG = false; // FIXME change to false
-    private static final ArrayList<Callback<String>> debugCallbacks = new ArrayList<>();
-    private static final byte SIGCONT = 18;
-    private static final byte SIGSTOP = 19;
+    private val debugCallbacks = ArrayList<Callback<String>>()
+    private const val SIGCONT: Byte = 18
+    private const val SIGSTOP: Byte = 19
 
-    public static void suspendProcess(int pid) {
-        Process.sendSignal(pid, SIGSTOP);
+    fun suspendProcess(pid: Int) {
+        android.os.Process.sendSignal(pid, SIGSTOP.toInt())
     }
 
-    public static void resumeProcess(int pid) {
-        Process.sendSignal(pid, SIGCONT);
+    fun resumeProcess(pid: Int) {
+        android.os.Process.sendSignal(pid, SIGCONT.toInt())
     }
 
-    public static int exec(String command) {
-        return exec(command, null);
-    }
+    @JvmOverloads
+    fun exec(
+        command: String,
+        envp: Array<String?>? = null,
+        workingDir: File? = null,
+        terminationCallback: Callback<Int>? = null,
+    ): Int {
+        var pid = -1
 
-    public static int exec(String command, String[] envp) {
-        return exec(command, envp, null);
-    }
-
-    public static int exec(String command, String[] envp, File workingDir) {
-        return exec(command, envp, workingDir, null);
-    }
-
-    public static int exec(String command, String[] envp, File workingDir, Callback<Integer> terminationCallback) {
-        int pid = -1;
         try {
-            java.lang.Process process = Runtime.getRuntime().exec(splitCommand(command), envp, workingDir);
-            Field pidField = process.getClass().getDeclaredField("pid");
-            pidField.setAccessible(true);
-            pid = pidField.getInt(process);
-            pidField.setAccessible(false);
+            val process = Runtime.getRuntime().exec(splitCommand(command), envp, workingDir)
+            val pidField = process.javaClass.getDeclaredField("pid")
 
-            if (!debugCallbacks.isEmpty()) {
-                createDebugThread(process.getInputStream());
-                createDebugThread(process.getErrorStream());
+            pidField.isAccessible = true
+            pid = pidField.getInt(process)
+            pidField.isAccessible = false
+
+            if (debugCallbacks.isNotEmpty()) {
+                createDebugThread(process.inputStream)
+                createDebugThread(process.errorStream)
             }
 
-            if (terminationCallback != null) createWaitForThread(process, terminationCallback);
+            if (terminationCallback != null) {
+                createWaitForThread(process, terminationCallback)
+            }
+        } catch (e: Exception) {
+            Timber.w(e)
         }
-        catch (Exception e) {}
-        return pid;
+
+        return pid
     }
 
-    private static void createDebugThread(final InputStream inputStream) {
-        Executors.newSingleThreadExecutor().execute(() -> {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (PRINT_DEBUG) System.out.println(line);
-                    synchronized (debugCallbacks) {
-                        if (!debugCallbacks.isEmpty()) {
-                            for (Callback<String> callback : debugCallbacks) callback.call(line);
+    private fun createDebugThread(inputStream: InputStream) {
+        Executors.newSingleThreadExecutor().execute {
+            try {
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    var line: String
+                    while ((reader.readLine().also { line = it }) != null) {
+                        if (PRINT_DEBUG) {
+                            println(line)
+                        }
+
+                        synchronized(debugCallbacks) {
+                            if (debugCallbacks.isNotEmpty()) {
+                                for (callback in debugCallbacks) {
+                                    callback.call(line)
+                                }
+                            }
                         }
                     }
                 }
+            } catch (e: IOException) {
+                Timber.w(e)
             }
-            catch (IOException e) {}
-        });
+        }
     }
 
-    private static void createWaitForThread(java.lang.Process process, final Callback<Integer> terminationCallback) {
-        Executors.newSingleThreadExecutor().execute(() -> {
+    private fun createWaitForThread(process: Process, terminationCallback: Callback<Int>) {
+        Executors.newSingleThreadExecutor().execute {
             try {
-                int status = process.waitFor();
-                terminationCallback.call(status);
+                val status = process.waitFor()
+                terminationCallback.call(status)
+            } catch (_: InterruptedException) {
             }
-            catch (InterruptedException e) {}
-        });
-    }
-
-    public static void removeAllDebugCallbacks() {
-        synchronized (debugCallbacks) {
-            debugCallbacks.clear();
         }
     }
 
-    public static void addDebugCallback(Callback<String> callback) {
-        synchronized (debugCallbacks) {
-            if (!debugCallbacks.contains(callback)) debugCallbacks.add(callback);
+    fun removeAllDebugCallbacks() {
+        synchronized(debugCallbacks) {
+            debugCallbacks.clear()
         }
     }
 
-    public static void removeDebugCallback(Callback<String> callback) {
-        synchronized (debugCallbacks) {
-            debugCallbacks.remove(callback);
+    fun addDebugCallback(callback: Callback<String>) {
+        synchronized(debugCallbacks) {
+            if (!debugCallbacks.contains(callback)) debugCallbacks.add(callback)
         }
     }
 
-    public static String[] splitCommand(String command) {
-        ArrayList<String> result = new ArrayList<>();
-        boolean startedQuotes = false;
-        String value = "";
-        char currChar, nextChar;
-        for (int i = 0, count = command.length(); i < count; i++) {
-            currChar = command.charAt(i);
+    fun removeDebugCallback(callback: Callback<String>) {
+        synchronized(debugCallbacks) {
+            debugCallbacks.remove(callback)
+        }
+    }
+
+    fun splitCommand(command: String): Array<String> {
+        val result = ArrayList<String>()
+        var startedQuotes = false
+        var value = ""
+        var currChar: Char
+        var nextChar: Char
+        var i = 0
+        val count = command.length
+
+        while (i < count) {
+            currChar = command[i]
 
             if (startedQuotes) {
                 if (currChar == '"') {
-                    startedQuotes = false;
-                    if (!value.isEmpty()) {
-                        value += '"';
-                        result.add(value);
-                        value = "";
+                    startedQuotes = false
+
+                    if (value.isNotEmpty()) {
+                        value += '"'
+                        result.add(value)
+                        value = ""
                     }
+                } else {
+                    value += currChar
                 }
-                else value += currChar;
-            }
-            else if (currChar == '"') {
-                startedQuotes = true;
-                value += '"';
-            }
-            else {
-                nextChar = i < count-1 ? command.charAt(i+1) : '\0';
+            } else if (currChar == '"') {
+                startedQuotes = true
+                value += '"'
+            } else {
+                nextChar = if (i < count - 1) command[i + 1] else '\u0000'
+
                 if (currChar == ' ' || (currChar == '\\' && nextChar == ' ')) {
                     if (currChar == '\\') {
-                        value += ' ';
-                        i++;
+                        value += ' '
+                        i++
+                    } else if (!value.isEmpty()) {
+                        result.add(value)
+                        value = ""
                     }
-                    else if (!value.isEmpty()) {
-                        result.add(value);
-                        value = "";
-                    }
-                }
-                else {
-                    value += currChar;
-                    if (i == count-1) {
-                        result.add(value);
-                        value = "";
+                } else {
+                    value += currChar
+
+                    if (i == count - 1) {
+                        result.add(value)
+                        value = ""
                     }
                 }
             }
+
+            i++
         }
 
-        return result.toArray(new String[0]);
+        return result.toTypedArray<String>()
     }
 
-    public static String getAffinityMaskAsHexString(String cpuList) {
-        String[] values = cpuList.split(",");
-        int affinityMask = 0;
-        for (String value : values) {
-            byte index = Byte.parseByte(value);
-            affinityMask |= (int)Math.pow(2, index);
+    fun getAffinityMaskAsHexString(cpuList: String): String {
+        val values = cpuList.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        var affinityMask = 0
+
+        for (value in values) {
+            val index = value.toByte()
+            affinityMask = affinityMask or 2.0.pow(index.toDouble()).toInt()
         }
-        return Integer.toHexString(affinityMask);
+
+        return Integer.toHexString(affinityMask)
     }
 
-    public static int getAffinityMask(String cpuList) {
-        if (cpuList == null || cpuList.isEmpty()) return 0;
-        String[] values = cpuList.split(",");
-        int affinityMask = 0;
-        for (String value : values) {
-            byte index = Byte.parseByte(value);
-            affinityMask |= (int)Math.pow(2, index);
+    fun getAffinityMask(cpuList: String?): Int {
+        if (cpuList.isNullOrEmpty()) {
+            return 0
         }
-        return affinityMask;
-    }
 
-    public static int getAffinityMask(boolean[] cpuList) {
-        int affinityMask = 0;
-        for (int i = 0; i < cpuList.length; i++) {
-            if (cpuList[i]) affinityMask |= (int)Math.pow(2, i);
+        val values = cpuList.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        var affinityMask = 0
+
+        for (value in values) {
+            val index = value.toByte()
+            affinityMask = affinityMask or 2.0.pow(index.toDouble()).toInt()
         }
-        return affinityMask;
+
+        return affinityMask
     }
 
-    public static int getAffinityMask(int from, int to) {
-        int affinityMask = 0;
-        for (int i = from; i < to; i++) affinityMask |= (int)Math.pow(2, i);
-        return affinityMask;
+    fun getAffinityMask(cpuList: BooleanArray): Int {
+        var affinityMask = 0
+
+        for (i in cpuList.indices) {
+            if (cpuList[i]) affinityMask = affinityMask or 2.0.pow(i.toDouble()).toInt()
+        }
+
+        return affinityMask
+    }
+
+    fun getAffinityMask(from: Int, to: Int): Int {
+        var affinityMask = 0
+
+        for (i in from..<to) {
+            affinityMask = affinityMask or 2.0.pow(i.toDouble()).toInt()
+        }
+
+        return affinityMask
     }
 }

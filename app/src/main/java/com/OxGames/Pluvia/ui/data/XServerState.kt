@@ -1,8 +1,8 @@
 package com.OxGames.Pluvia.ui.data
 
 import androidx.compose.runtime.saveable.mapSaver
+import com.winlator.DXVKHelper
 import com.winlator.container.Container
-import com.winlator.core.DXVKHelper
 import com.winlator.core.KeyValueSet
 import com.winlator.core.WineInfo
 

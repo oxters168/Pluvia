@@ -1,94 +1,65 @@
-package com.winlator.inputcontrols;
+package com.winlator.inputcontrols
 
-import android.view.KeyEvent;
-import android.view.MotionEvent;
+import android.view.KeyEvent
+import android.view.MotionEvent
+import org.json.JSONException
+import org.json.JSONObject
 
-import androidx.annotation.NonNull;
+class ExternalControllerBinding {
 
-import org.json.JSONException;
-import org.json.JSONObject;
+    private var keyCode: Short = 0
 
-public class ExternalControllerBinding {
-    public static final byte AXIS_X_NEGATIVE = -1;
-    public static final byte AXIS_X_POSITIVE = -2;
-    public static final byte AXIS_Y_NEGATIVE = -3;
-    public static final byte AXIS_Y_POSITIVE = -4;
-    public static final byte AXIS_Z_NEGATIVE = -5;
-    public static final byte AXIS_Z_POSITIVE = -6;
-    public static final byte AXIS_RZ_NEGATIVE = -7;
-    public static final byte AXIS_RZ_POSITIVE = -8;
-    private short keyCode;
-    private Binding binding = Binding.NONE;
+    var binding: Binding = Binding.NONE
 
-    public int getKeyCodeForAxis() {
-        return keyCode;
+    val keyCodeForAxis: Int
+        get() = keyCode.toInt()
+
+    fun setKeyCode(keyCode: Int) {
+        this.keyCode = keyCode.toShort()
     }
 
-    public void setKeyCode(int keyCode) {
-        this.keyCode = (short)keyCode;
+    fun toJSONObject(): JSONObject? = try {
+        val controllerBindingJSONObject = JSONObject()
+        controllerBindingJSONObject.put("keyCode", keyCode.toInt())
+        controllerBindingJSONObject.put("binding", binding.name)
+
+        controllerBindingJSONObject
+    } catch (e: JSONException) {
+        null
     }
 
-    public Binding getBinding() {
-        return binding;
-    }
-
-    public void setBinding(Binding binding) {
-        this.binding = binding;
-    }
-
-    public JSONObject toJSONObject() {
-        try {
-            JSONObject controllerBindingJSONObject = new JSONObject();
-            controllerBindingJSONObject.put("keyCode", keyCode);
-            controllerBindingJSONObject.put("binding", binding.name());
-            return controllerBindingJSONObject;
-        }
-        catch (JSONException e) {
-            return null;
+    override fun toString(): String {
+        return when (keyCode) {
+            AXIS_X_NEGATIVE.toShort() -> "AXIS X-"
+            AXIS_X_POSITIVE.toShort() -> "AXIS X+"
+            AXIS_Y_NEGATIVE.toShort() -> "AXIS Y-"
+            AXIS_Y_POSITIVE.toShort() -> "AXIS Y+"
+            AXIS_Z_NEGATIVE.toShort() -> "AXIS Z-"
+            AXIS_Z_POSITIVE.toShort() -> "AXIS Z+"
+            AXIS_RZ_NEGATIVE.toShort() -> "AXIS RZ-"
+            AXIS_RZ_POSITIVE.toShort() -> "AXIS RZ+"
+            else -> KeyEvent.keyCodeToString(keyCode.toInt()).replace("KEYCODE_", "").replace("_", " ")
         }
     }
 
-    @NonNull
-    @Override
-    public String toString() {
-        switch (keyCode) {
-            case AXIS_X_NEGATIVE:
-                return "AXIS X-";
-            case AXIS_X_POSITIVE:
-                return "AXIS X+";
-            case AXIS_Y_NEGATIVE:
-                return "AXIS Y-";
-            case AXIS_Y_POSITIVE:
-                return "AXIS Y+";
-            case AXIS_Z_NEGATIVE:
-                return "AXIS Z-";
-            case AXIS_Z_POSITIVE:
-                return "AXIS Z+";
-            case AXIS_RZ_NEGATIVE:
-                return "AXIS RZ-";
-            case AXIS_RZ_POSITIVE:
-                return "AXIS RZ+";
-            default:
-                return KeyEvent.keyCodeToString(keyCode).replace("KEYCODE_", "").replace("_", " ");
-        }
-    }
+    companion object {
+        const val AXIS_X_NEGATIVE: Byte = -1
+        const val AXIS_X_POSITIVE: Byte = -2
+        const val AXIS_Y_NEGATIVE: Byte = -3
+        const val AXIS_Y_POSITIVE: Byte = -4
+        const val AXIS_Z_NEGATIVE: Byte = -5
+        const val AXIS_Z_POSITIVE: Byte = -6
+        const val AXIS_RZ_NEGATIVE: Byte = -7
+        const val AXIS_RZ_POSITIVE: Byte = -8
 
-    public static int getKeyCodeForAxis(int axis, byte sign) {
-        switch (axis) {
-            case MotionEvent.AXIS_X:
-                return sign > 0 ? AXIS_X_POSITIVE : AXIS_X_NEGATIVE;
-            case MotionEvent.AXIS_Y:
-                return sign > 0 ? AXIS_Y_NEGATIVE : AXIS_Y_POSITIVE;
-            case MotionEvent.AXIS_Z:
-                return sign > 0 ? AXIS_Z_POSITIVE : AXIS_Z_NEGATIVE;
-            case MotionEvent.AXIS_RZ:
-                return sign > 0 ? AXIS_RZ_NEGATIVE : AXIS_RZ_POSITIVE;
-            case MotionEvent.AXIS_HAT_X:
-                return sign > 0 ? KeyEvent.KEYCODE_DPAD_RIGHT : KeyEvent.KEYCODE_DPAD_LEFT;
-            case MotionEvent.AXIS_HAT_Y:
-                return sign > 0 ? KeyEvent.KEYCODE_DPAD_DOWN : KeyEvent.KEYCODE_DPAD_UP;
-            default:
-                return KeyEvent.KEYCODE_UNKNOWN;
+        fun getKeyCodeForAxis(axis: Int, sign: Byte): Int = when (axis) {
+            MotionEvent.AXIS_X -> (if (sign > 0) AXIS_X_POSITIVE else AXIS_X_NEGATIVE).toInt()
+            MotionEvent.AXIS_Y -> (if (sign > 0) AXIS_Y_NEGATIVE else AXIS_Y_POSITIVE).toInt()
+            MotionEvent.AXIS_Z -> (if (sign > 0) AXIS_Z_POSITIVE else AXIS_Z_NEGATIVE).toInt()
+            MotionEvent.AXIS_RZ -> (if (sign > 0) AXIS_RZ_NEGATIVE else AXIS_RZ_POSITIVE).toInt()
+            MotionEvent.AXIS_HAT_X -> if (sign > 0) KeyEvent.KEYCODE_DPAD_RIGHT else KeyEvent.KEYCODE_DPAD_LEFT
+            MotionEvent.AXIS_HAT_Y -> if (sign > 0) KeyEvent.KEYCODE_DPAD_DOWN else KeyEvent.KEYCODE_DPAD_UP
+            else -> KeyEvent.KEYCODE_UNKNOWN
         }
     }
 }

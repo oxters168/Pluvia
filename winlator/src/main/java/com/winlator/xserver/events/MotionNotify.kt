@@ -1,10 +1,16 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xserver.Bitmask;
-import com.winlator.xserver.Window;
+import com.winlator.xserver.Bitmask
+import com.winlator.xserver.Window
 
-public class MotionNotify extends InputDeviceEvent {
-    public MotionNotify(boolean detail, Window root, Window event, Window child, short rootX, short rootY, short eventX, short eventY, Bitmask state) {
-        super(6, (byte)(detail ? 1 : 0), root, event, child, rootX, rootY, eventX, eventY, state);
-    }
-}
+class MotionNotify(
+    detail: Boolean,
+    root: Window,
+    event: Window,
+    child: Window?,
+    rootX: Short,
+    rootY: Short,
+    eventX: Short,
+    eventY: Short,
+    state: Bitmask,
+) : InputDeviceEvent(6, (if (detail) 1 else 0).toByte(), root, event, child, rootX, rootY, eventX, eventY, state)

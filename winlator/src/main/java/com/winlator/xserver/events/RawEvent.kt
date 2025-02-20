@@ -1,22 +1,13 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
+import com.winlator.xconnector.XOutputStream
+import java.io.IOException
 
-import java.io.IOException;
-
-public class RawEvent extends Event {
-    private final byte[] data;
-
-    public RawEvent(byte[] data) {
-        super(data[0]);
-        this.data = data;
-    }
-
-    @Override
-    public void send(short sequenceNumber, XOutputStream outputStream) throws IOException {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.write(data);
+class RawEvent(private val data: ByteArray) : Event(data[0].toInt()) {
+    @Throws(IOException::class)
+    override fun send(sequenceNumber: Short, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.write(data)
         }
     }
 }

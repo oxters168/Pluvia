@@ -1,36 +1,28 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Window;
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Window
+import java.io.IOException
 
-import java.io.IOException;
+class PropertyNotify(
+    private val window: Window,
+    private val atom: Int,
+    private val deleted: Boolean,
+) : Event(28) {
 
-public class PropertyNotify extends Event {
-    private final Window window;
-    private final int atom;
-    private final int timestamp;
-    private final boolean deleted;
+    private val timestamp = System.currentTimeMillis().toInt()
 
-    public PropertyNotify(Window window, int atom, boolean deleted) {
-        super(28);
-        this.window = window;
-        this.atom = atom;
-        this.timestamp = (int)System.currentTimeMillis();
-        this.deleted = deleted;
-    }
-
-    @Override
-    public void send(short sequenceNumber, XOutputStream outputStream) throws IOException {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(code);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(sequenceNumber);
-            outputStream.writeInt(window.id);
-            outputStream.writeInt(atom);
-            outputStream.writeInt(timestamp);
-            outputStream.writeByte((byte)(deleted ? 1 : 0));
-            outputStream.writePad(15);
+    @Throws(IOException::class)
+    override fun send(sequenceNumber: Short, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.writeByte(code)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(sequenceNumber)
+            outputStream.writeInt(window.id)
+            outputStream.writeInt(atom)
+            outputStream.writeInt(timestamp)
+            outputStream.writeByte((if (deleted) 1 else 0).toByte())
+            outputStream.writePad(15)
         }
     }
 }

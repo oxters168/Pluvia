@@ -1,5 +1,5 @@
-package com.winlator.winhandler;
+package com.winlator.winhandler
 
-public interface OnGetProcessInfoListener {
-    void onGetProcessInfo(int index, int count, ProcessInfo processInfo);
+fun interface OnGetProcessInfoListener {
+    fun onGetProcessInfo(index: Int, count: Int, processInfo: ProcessInfo?)
 }

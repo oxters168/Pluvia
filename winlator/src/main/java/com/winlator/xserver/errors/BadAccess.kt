@@ -1,7 +1,3 @@
-package com.winlator.xserver.errors;
+package com.winlator.xserver.errors
 
-public class BadAccess extends XRequestError {
-    public BadAccess() {
-        super(10, 0);
-    }
-}
+class BadAccess : XRequestError(10, 0)

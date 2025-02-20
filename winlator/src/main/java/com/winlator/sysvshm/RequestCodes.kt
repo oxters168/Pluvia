@@ -1,7 +1,7 @@
-package com.winlator.sysvshm;
+package com.winlator.sysvshm
 
-public abstract class RequestCodes {
-    public static final byte SHMGET = 0;
-    public static final byte GET_FD = 1;
-    public static final byte DELETE = 2;
+enum class RequestCodes(val code: Byte) {
+    SHMGET(0),
+    GET_FD(1),
+    DELETE(2),
 }

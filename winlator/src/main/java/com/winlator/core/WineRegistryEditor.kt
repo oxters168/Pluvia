@@ -1,405 +1,501 @@
-package com.winlator.core;
+package com.winlator.core
 
-import com.winlator.math.Mathf;
+import com.winlator.core.FileUtils.copy
+import com.winlator.core.FileUtils.createTempFile
+import com.winlator.core.FileUtils.getBasename
+import com.winlator.math.Mathf
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.Closeable
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.IOException
+import java.util.Locale
+import kotlin.math.max
+import kotlin.math.min
+import timber.log.Timber
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
+class WineRegistryEditor(private val file: File) : Closeable {
 
-public class WineRegistryEditor implements Closeable {
-    private final File file;
-    private final File cloneFile;
-    private boolean modified = false;
-    private boolean createKeyIfNotExist = true;
-    private int lastParentKeyPosition = 0;
-    private String lastParentKey = "";
+    private val cloneFile = createTempFile(file.parentFile, getBasename(file.path))
+    private var modified = false
+    private var createKeyIfNotExist = true
+    private var lastParentKeyPosition = 0
+    private var lastParentKey = ""
 
-    public static class Location {
-        public final int offset;
-        public final int start;
-        public final int end;
-
-        public Location(int offset, int start, int end) {
-            this.offset = offset;
-            this.start = start;
-            this.end = end;
-        }
-
-        public int length() {
-            return end - start;
-        }
+    class Location(val offset: Int, val start: Int, val end: Int) {
+        fun length(): Int = end - start
     }
 
-    public WineRegistryEditor(File file) {
-        this.file = file;
-        cloneFile = FileUtils.createTempFile(file.getParentFile(), FileUtils.getBasename(file.getPath()));
-        if (!file.isFile()) {
+    init {
+        if (!file.isFile) {
             try {
-                cloneFile.createNewFile();
+                cloneFile.createNewFile()
+            } catch (e: IOException) {
+                Timber.w(e)
             }
-            catch (IOException e) {}
+        } else {
+            copy(file, cloneFile)
         }
-        else FileUtils.copy(file, cloneFile);
     }
 
-    private static String escape(String str) {
-        return str.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    private static String unescape(String str) {
-        return str.replace("\\\"", "\"").replace("\\\\", "\\");
-    }
-
-    private static boolean lineHasName(String line) {
-        int index;
-        return (index = line.indexOf('"')) != -1 &&
-               (index = line.indexOf('"', index)) != -1 &&
-               (index = line.indexOf('=', index)) != -1;
-    }
-
-    @Override
-    public void close() {
+    override fun close() {
         if (modified && cloneFile.exists()) {
-            cloneFile.renameTo(file);
+            cloneFile.renameTo(file)
+        } else {
+            cloneFile.delete()
         }
-        else cloneFile.delete();
     }
 
-    private void resetLastParentKeyPositionIfNeed(String newKey) {
-        int lastIndex = newKey.lastIndexOf("\\");
+    private fun resetLastParentKeyPositionIfNeed(newKey: String) {
+        val lastIndex = newKey.lastIndexOf("\\")
+
         if (lastIndex == -1) {
-            lastParentKeyPosition = 0;
-            lastParentKey = "";
-            return;
+            lastParentKeyPosition = 0
+            lastParentKey = ""
+            return
         }
 
-        String parentKey = newKey.substring(0, lastIndex);
-        if (!parentKey.equals(lastParentKey)) lastParentKeyPosition = 0;
-        lastParentKey = parentKey;
+        val parentKey = newKey.substring(0, lastIndex)
+
+        if (parentKey != lastParentKey) {
+            lastParentKeyPosition = 0
+        }
+
+        lastParentKey = parentKey
     }
 
-    public void setCreateKeyIfNotExist(boolean createKeyIfNotExist) {
-        this.createKeyIfNotExist = createKeyIfNotExist;
+    fun setCreateKeyIfNotExist(createKeyIfNotExist: Boolean) {
+        this.createKeyIfNotExist = createKeyIfNotExist
     }
 
-    private Location createKey(String key) {
-        lastParentKeyPosition = 0;
-        Location location = getParentKeyLocation(key);
-        boolean success = false;
-        int offset = 0;
-        int totalLength = 0;
+    private fun createKey(key: String): Location? {
+        lastParentKeyPosition = 0
 
-        char[] buffer = new char[StreamUtils.BUFFER_SIZE];
-        File tempFile = FileUtils.createTempFile(file.getParentFile(), FileUtils.getBasename(file.getPath()));
+        val location = getParentKeyLocation(key)
+        var success = false
+        var offset = 0
+        var totalLength = 0
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(cloneFile), StreamUtils.BUFFER_SIZE);
-             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile), StreamUtils.BUFFER_SIZE)) {
+        val buffer = CharArray(StreamUtils.BUFFER_SIZE)
+        val tempFile = createTempFile(file.parentFile, getBasename(file.path))
 
-            int length;
-            for (int i = 0, end = location != null ? location.end+1 : (int)cloneFile.length(); i < end; i += length) {
-                length = Math.min(buffer.length, end - i);
-                reader.read(buffer, 0, length);
-                writer.write(buffer, 0, length);
-                totalLength += length;
+        try {
+            BufferedReader(FileReader(cloneFile), StreamUtils.BUFFER_SIZE).use { reader ->
+                BufferedWriter(FileWriter(tempFile), StreamUtils.BUFFER_SIZE).use { writer ->
+                    var length: Int
+                    var i = 0
+                    val end = if (location != null) location.end + 1 else cloneFile.length().toInt()
+                    while (i < end) {
+                        length = min(buffer.size.toDouble(), (end - i).toDouble()).toInt()
+                        reader.read(buffer, 0, length)
+                        writer.write(buffer, 0, length)
+                        totalLength += length
+                        i += length
+                    }
+
+                    offset = totalLength
+
+                    val ticks1601To1970 = 86400L * (369 * 365 + 89) * 10000000
+                    val currentTime = System.currentTimeMillis() + ticks1601To1970
+                    val content = "\n[${escape(key)}] ${(currentTime - ticks1601To1970) / 1000}" +
+                        String.format(Locale.ENGLISH, "\n#time=%x%08x", currentTime shr 32, currentTime.toInt()) + "\n"
+
+                    writer.write(content)
+                    totalLength += content.length - 1
+
+                    while ((reader.read(buffer).also { length = it }) != -1) {
+                        writer.write(buffer, 0, length)
+                    }
+
+                    success = true
+                }
             }
-
-            offset = totalLength;
-            long ticks1601To1970 = 86400L * (369 * 365 + 89) * 10000000;
-            long currentTime = System.currentTimeMillis() + ticks1601To1970;
-            String content = "\n["+escape(key)+"] "+((currentTime - ticks1601To1970) / 1000) +
-                              String.format(Locale.ENGLISH, "\n#time=%x%08x", currentTime >> 32, (int)currentTime)+"\n";
-            writer.write(content);
-            totalLength += content.length() - 1;
-
-            while ((length = reader.read(buffer)) != -1) writer.write(buffer, 0, length);
-            success = true;
+        } catch (e: IOException) {
+            Timber.w(e)
         }
-        catch (IOException e) {}
 
         if (success) {
-            modified = true;
-            tempFile.renameTo(cloneFile);
-            return new Location(offset, totalLength, totalLength);
+            modified = true
+            tempFile.renameTo(cloneFile)
+
+            return Location(offset, totalLength, totalLength)
+        } else {
+            tempFile.delete()
+
+            return null
         }
-        else {
-            tempFile.delete();
-            return null;
-        }
     }
 
-    public String getStringValue(String key, String name) {
-        return getStringValue(key, name, null);
+    fun getStringValue(key: String, name: String?): String = getStringValue(key, name, null)
+
+    fun getStringValue(key: String, name: String?, fallback: String?): String {
+        val value = getRawValue(key, name)
+        return value?.substring(1, value.length - 1) ?: fallback!!
     }
 
-    public String getStringValue(String key, String name, String fallback) {
-        String value = getRawValue(key, name);
-        return value != null ? value.substring(1, value.length() - 1) : fallback;
+    fun setStringValue(key: String, name: String?, value: String?) {
+        setRawValue(key, name, if (value != null) "\"" + escape(value) + "\"" else "\"\"")
     }
 
-    public void setStringValue(String key, String name, String value) {
-        setRawValue(key, name, value != null ? "\""+escape(value)+"\"" : "\"\"");
+    fun getDwordValue(key: String, name: String?): Int = getDwordValue(key, name, null)
+
+    fun getDwordValue(key: String, name: String?, fallback: Int?): Int {
+        val value = getRawValue(key, name)
+        return if (value != null) Integer.decode("0x" + value.substring(6)) else fallback!!
     }
 
-    public Integer getDwordValue(String key, String name) {
-        return getDwordValue(key, name, null);
+    fun setDwordValue(key: String, name: String?, value: Int) {
+        setRawValue(key, name, "dword:" + String.format("%08x", value))
     }
 
-    public Integer getDwordValue(String key, String name, Integer fallback) {
-        String value = getRawValue(key, name);
-        return value != null ? Integer.decode("0x" + value.substring(6)) : fallback;
-    }
-
-    public void setDwordValue(String key, String name, int value) {
-        setRawValue(key, name, "dword:"+String.format("%08x", value));
-    }
-
-    public void setHexValue(String key, String name, String value) {
-        int start = (int)Mathf.roundTo(name.length(), 2) + 7;
-        StringBuilder lines = new StringBuilder();
-        for (int i = 0, j = start; i < value.length(); i++) {
-            if (i > 0 && (i % 2) == 0) lines.append(",");
-            if (j++ > 56) {
-                lines.append("\\\n  ");
-                j = 8;
+    fun setHexValue(key: String, name: String, value: String) {
+        val start = Mathf.roundTo(name.length.toFloat(), 2f).toInt() + 7
+        val lines = StringBuilder()
+        var i = 0
+        var j = start
+        while (i < value.length) {
+            if (i > 0 && (i % 2) == 0) {
+                lines.append(",")
             }
-            lines.append(value.charAt(i));
+
+            if (j++ > 56) {
+                lines.append("\\\n  ")
+                j = 8
+            }
+
+            lines.append(value[i])
+
+            i++
         }
-        setRawValue(key, name, "hex:"+lines);
+
+        setRawValue(key, name, "hex:$lines")
     }
 
-    public void setHexValue(String key, String name, byte[] bytes) {
-        StringBuilder data = new StringBuilder();
-        for (byte b : bytes) data.append(String.format(Locale.ENGLISH, "%02x", Byte.toUnsignedInt(b)));
-        setHexValue(key, name, data.toString());
-    }
+    fun setHexValue(key: String, name: String, bytes: ByteArray) {
+        val data = StringBuilder()
 
-    private String getRawValue(String key, String name) {
-        lastParentKeyPosition = 0;
-        Location keyLocation = getKeyLocation(key);
-        if (keyLocation == null) return null;
-
-        Location valueLocation = getValueLocation(keyLocation, name);
-        if (valueLocation == null) return null;
-        boolean success = false;
-        char[] buffer = new char[valueLocation.length()];
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(cloneFile), StreamUtils.BUFFER_SIZE)) {
-            reader.skip(valueLocation.start);
-            success = reader.read(buffer) == buffer.length;
+        for (b in bytes) {
+            data.append(String.format(Locale.ENGLISH, "%02x", java.lang.Byte.toUnsignedInt(b)))
         }
-        catch (IOException e) {}
-        return success ? unescape(new String(buffer)) : null;
+
+        setHexValue(key, name, data.toString())
     }
 
-    private void setRawValue(String key, String name, String value) {
-        resetLastParentKeyPositionIfNeed(key);
+    private fun getRawValue(key: String, name: String?): String? {
+        lastParentKeyPosition = 0
 
-        Location keyLocation = getKeyLocation(key);
+        val keyLocation = getKeyLocation(key) ?: return null
+
+        val valueLocation = getValueLocation(keyLocation, name) ?: return null
+        var success = false
+        val buffer = CharArray(valueLocation.length())
+
+        try {
+            BufferedReader(FileReader(cloneFile), StreamUtils.BUFFER_SIZE).use { reader ->
+                reader.skip(valueLocation.start.toLong())
+                success = reader.read(buffer) == buffer.size
+            }
+        } catch (e: IOException) {
+            Timber.w(e)
+        }
+
+        return if (success) {
+            unescape(String(buffer))
+        } else {
+            null
+        }
+    }
+
+    private fun setRawValue(key: String, name: String?, value: String) {
+        resetLastParentKeyPositionIfNeed(key)
+
+        var keyLocation = getKeyLocation(key)
         if (keyLocation == null) {
             if (createKeyIfNotExist) {
-                keyLocation = createKey(key);
+                keyLocation = createKey(key)
+            } else {
+                return
             }
-            else return;
         }
 
-        Location valueLocation = getValueLocation(keyLocation, name);
-        char[] buffer = new char[StreamUtils.BUFFER_SIZE];
-        boolean success = false;
+        val valueLocation = getValueLocation(keyLocation!!, name)
+        val buffer = CharArray(StreamUtils.BUFFER_SIZE)
+        var success = false
 
-        File tempFile = FileUtils.createTempFile(file.getParentFile(), FileUtils.getBasename(file.getPath()));
+        val tempFile = createTempFile(file.parentFile, getBasename(file.path))
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(cloneFile), StreamUtils.BUFFER_SIZE);
-             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile), StreamUtils.BUFFER_SIZE)) {
+        try {
+            BufferedReader(FileReader(cloneFile), StreamUtils.BUFFER_SIZE).use { reader ->
+                BufferedWriter(FileWriter(tempFile), StreamUtils.BUFFER_SIZE).use { writer ->
+                    var length: Int
+                    var i = 0
+                    val end = valueLocation?.start ?: keyLocation.end
 
-            int length;
-            for (int i = 0, end = valueLocation != null ? valueLocation.start : keyLocation.end; i < end; i += length) {
-                length = Math.min(buffer.length, end - i);
-                reader.read(buffer, 0, length);
-                writer.write(buffer, 0, length);
+                    while (i < end) {
+                        length = min(buffer.size.toDouble(), (end - i).toDouble()).toInt()
+
+                        reader.read(buffer, 0, length)
+                        writer.write(buffer, 0, length)
+
+                        i += length
+                    }
+
+                    if (valueLocation == null) {
+                        writer.write("\n${if (name != null) "\"${escape(name)}\"" else "@"}=$value")
+                    } else {
+                        writer.write(value)
+                        reader.skip(valueLocation.length().toLong())
+                    }
+
+                    while ((reader.read(buffer).also { length = it }) != -1) {
+                        writer.write(buffer, 0, length)
+                    }
+
+                    success = true
+                }
             }
-
-            if (valueLocation == null) {
-                writer.write("\n"+(name != null ? "\""+escape(name)+"\"" : "@")+"="+value);
-            }
-            else {
-                writer.write(value);
-                reader.skip(valueLocation.length());
-            }
-
-            while ((length = reader.read(buffer)) != -1) writer.write(buffer, 0, length);
-            success = true;
+        } catch (e: IOException) {
+            Timber.w(e)
         }
-        catch (IOException e) {}
 
         if (success) {
-            modified = true;
-            tempFile.renameTo(cloneFile);
+            modified = true
+            tempFile.renameTo(cloneFile)
+        } else {
+            tempFile.delete()
         }
-        else tempFile.delete();
     }
 
-    public void removeValue(String key, String name) {
-        lastParentKeyPosition = 0;
-        Location keyLocation = getKeyLocation(key);
-        if (keyLocation == null) return;
+    fun removeValue(key: String, name: String?) {
+        lastParentKeyPosition = 0
+        val keyLocation = getKeyLocation(key) ?: return
 
-        Location valueLocation = getValueLocation(keyLocation, name);
-        if (valueLocation == null) return;
-        removeRegion(valueLocation);
+        val valueLocation = getValueLocation(keyLocation, name) ?: return
+        removeRegion(valueLocation)
     }
 
-    public boolean removeKey(String key) {
-        return removeKey(key, false);
-    }
+    @JvmOverloads
+    fun removeKey(key: String, removeTree: Boolean = false): Boolean {
+        lastParentKeyPosition = 0
 
-    public boolean removeKey(String key, boolean removeTree) {
-        lastParentKeyPosition = 0;
-        boolean removed = false;
+        var removed = false
+
         if (removeTree) {
-            Location location;
-            while ((location = getKeyLocation(key, true)) != null) {
-                if (removeRegion(location)) removed = true;
+            var location: Location?
+
+            while ((getKeyLocation(key, true).also { location = it }) != null) {
+                if (removeRegion(location!!)) {
+                    removed = true
+                }
+            }
+        } else {
+            val location = getKeyLocation(key, false)
+
+            if (location != null && removeRegion(location)) {
+                removed = true
             }
         }
-        else {
-            Location location = getKeyLocation(key, false);
-            if (location != null && removeRegion(location)) removed = true;
-        }
-        return removed;
+
+        return removed
     }
 
-    private boolean removeRegion(Location location) {
-        char[] buffer = new char[StreamUtils.BUFFER_SIZE];
-        boolean success = false;
+    private fun removeRegion(location: Location): Boolean {
+        val buffer = CharArray(StreamUtils.BUFFER_SIZE)
+        var success = false
 
-        File tempFile = FileUtils.createTempFile(file.getParentFile(), FileUtils.getBasename(file.getPath()));
+        val tempFile = createTempFile(file.parentFile, getBasename(file.path))
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(cloneFile), StreamUtils.BUFFER_SIZE);
-             BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile), StreamUtils.BUFFER_SIZE)) {
+        try {
+            BufferedReader(FileReader(cloneFile), StreamUtils.BUFFER_SIZE).use { reader ->
+                BufferedWriter(FileWriter(tempFile), StreamUtils.BUFFER_SIZE).use { writer ->
+                    var length = 0
+                    var i = 0
 
-            int length = 0;
-            for (int i = 0; i < location.offset; i += length) {
-                length = Math.min(buffer.length, location.offset - i);
-                reader.read(buffer, 0, length);
-                writer.write(buffer, 0, length);
+                    while (i < location.offset) {
+                        length = min(buffer.size.toDouble(), (location.offset - i).toDouble()).toInt()
+
+                        reader.read(buffer, 0, length)
+                        writer.write(buffer, 0, length)
+
+                        i += length
+                    }
+
+                    val skipLine = length > 1 && buffer[length - 1] == '\n'
+                    reader.skip((location.end - location.offset + (if (skipLine) 1 else 0)).toLong())
+
+                    while ((reader.read(buffer).also { length = it }) != -1) {
+                        writer.write(buffer, 0, length)
+                    }
+
+                    success = true
+                }
             }
-
-            boolean skipLine = length > 1 && buffer[length-1] == '\n';
-            reader.skip(location.end - location.offset + (skipLine ? 1 : 0));
-            while ((length = reader.read(buffer)) != -1) writer.write(buffer, 0, length);
-            success = true;
+        } catch (e: IOException) {
+            Timber.w(e)
         }
-        catch (IOException e) {}
 
         if (success) {
-            modified = true;
-            tempFile.renameTo(cloneFile);
+            modified = true
+            tempFile.renameTo(cloneFile)
+        } else {
+            tempFile.delete()
         }
-        else tempFile.delete();
-        return success;
+
+        return success
     }
 
-    private Location getKeyLocation(String key) {
-        return getKeyLocation(key, false);
+    private fun getKeyLocation(key: String): Location? = getKeyLocation(key, false)
+
+    private fun getKeyLocation(key: String, keyAsPrefix: Boolean): Location? {
+        var key = key
+        try {
+            BufferedReader(FileReader(cloneFile), StreamUtils.BUFFER_SIZE).use { reader ->
+                val lastIndex = key.lastIndexOf("\\")
+                var parentKey = if (lastParentKeyPosition == 0 && lastIndex != -1) {
+                    "[" + escape(key.substring(0, lastIndex))
+                } else {
+                    null
+                }
+
+                if (lastParentKeyPosition > 0) {
+                    reader.skip(lastParentKeyPosition.toLong())
+                }
+
+                key = "[" + escape(key) + (if (!keyAsPrefix) "]" else "")
+
+                var totalLength = lastParentKeyPosition
+                var start = -1
+                var end = -1
+                var emptyLines = 0
+                var offset = 0
+
+                var line: String
+                while ((reader.readLine().also { line = it }) != null) {
+                    if (start == -1) {
+                        if (parentKey != null && line.startsWith(parentKey)) {
+                            lastParentKeyPosition = totalLength
+                            parentKey = null
+                        }
+
+                        if (parentKey == null && line.startsWith(key)) {
+                            offset = totalLength - 1
+                            start = totalLength + line.length + 1
+                        }
+                    } else {
+                        if (line.startsWith("[")) {
+                            end = max(-1.0, (totalLength - emptyLines - 1).toDouble()).toInt()
+                            break
+                        } else {
+                            emptyLines = if (line.isEmpty()) {
+                                emptyLines + 1
+                            } else {
+                                0
+                            }
+                        }
+                    }
+
+                    totalLength += line.length + 1
+                }
+
+                if (end == -1) {
+                    end = totalLength - 1
+                }
+
+                return if (start != -1) {
+                    Location(offset, start, end)
+                } else {
+                    null
+                }
+            }
+        } catch (e: IOException) {
+            return null
+        }
     }
 
-    private Location getKeyLocation(String key, boolean keyAsPrefix) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(cloneFile), StreamUtils.BUFFER_SIZE)) {
-            int lastIndex = key.lastIndexOf("\\");
-            String parentKey = lastParentKeyPosition == 0 && lastIndex != -1 ? "["+escape(key.substring(0, lastIndex)) : null;
+    private fun getParentKeyLocation(key: String): Location? {
+        val parts = key.split("\\\\".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val stack = ArrayList(listOf(*parts).subList(0, parts.size - 1))
 
-            if (lastParentKeyPosition > 0) reader.skip(lastParentKeyPosition);
-            key = "["+escape(key)+(!keyAsPrefix ? "]" : "");
-            int totalLength = lastParentKeyPosition;
-            int start = -1;
-            int end = -1;
-            int emptyLines = 0;
-            int offset = 0;
+        while (stack.isNotEmpty()) {
+            val currentKey = stack.joinToString("\\")
+            val location = getKeyLocation(currentKey, true)
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (start == -1) {
-                    if (parentKey != null && line.startsWith(parentKey)) {
-                        lastParentKeyPosition = totalLength;
-                        parentKey = null;
-                    }
-
-                    if (parentKey == null && line.startsWith(key)) {
-                        offset = totalLength - 1;
-                        start = totalLength + line.length() + 1;
-                    }
-                }
-                else {
-                    if (line.startsWith("[")) {
-                        end = Math.max(-1, totalLength - emptyLines - 1);
-                        break;
-                    }
-                    else emptyLines = line.isEmpty() ? emptyLines + 1 : 0;
-                }
-                totalLength += line.length() + 1;
+            if (location != null) {
+                return location
             }
 
-            if (end == -1) end = totalLength - 1;
-            return start != -1 ? new Location(offset, start, end) : null;
+            stack.removeAt(stack.size - 1)
         }
-        catch (IOException e) {
-            return null;
-        }
+
+        return null
     }
 
-    private Location getParentKeyLocation(String key) {
-        String[] parts = key.split("\\\\");
-        ArrayList<String> stack = new ArrayList<>(Arrays.asList(parts).subList(0, parts.length - 1));
+    private fun getValueLocation(keyLocation: Location, name: String?): Location? {
+        var name = name
 
-        while (!stack.isEmpty()) {
-            String currentKey = String.join("\\", stack);
-            Location location = getKeyLocation(currentKey, true);
-            if (location != null) return location;
-            stack.remove(stack.size()-1);
+        if (keyLocation.start == keyLocation.end) {
+            return null
         }
 
-        return null;
-    }
+        try {
+            BufferedReader(FileReader(cloneFile), StreamUtils.BUFFER_SIZE).use { reader ->
+                reader.skip(keyLocation.start.toLong())
+                name = if (name != null) "\"" + escape(name!!) + "\"=" else "@="
 
-    private Location getValueLocation(Location keyLocation, String name) {
-        if (keyLocation.start == keyLocation.end) return null;
-        try (BufferedReader reader = new BufferedReader(new FileReader(cloneFile), StreamUtils.BUFFER_SIZE)) {
-            reader.skip(keyLocation.start);
-            name = name != null ? "\""+escape(name)+"\"=" : "@=";
-            int totalLength = 0;
-            int start = -1;
-            int end = -1;
-            int offset = 0;
+                var totalLength = 0
+                var start = -1
+                var end = -1
+                var offset = 0
 
-            String line;
-            while ((line = reader.readLine()) != null && totalLength < keyLocation.length()) {
-                if (start == -1) {
-                    if (line.startsWith(name)) {
-                        offset = totalLength - 1;
-                        start = totalLength + name.length();
+                var line: String
+                while ((reader.readLine().also { line = it }) != null && totalLength < keyLocation.length()) {
+                    if (start == -1) {
+                        if (line.startsWith(name!!)) {
+                            offset = totalLength - 1
+                            start = totalLength + name!!.length
+                        }
+                    } else {
+                        if (line.isEmpty() || lineHasName(line)) {
+                            end = totalLength - 1
+                            break
+                        }
                     }
+
+                    totalLength += line.length + 1
                 }
-                else {
-                    if (line.isEmpty() || lineHasName(line)) {
-                        end = totalLength - 1;
-                        break;
-                    }
+
+                if (end == -1) {
+                    end = totalLength - 1
                 }
-                totalLength += line.length() + 1;
+
+                return if (start != -1) {
+                    Location(
+                        keyLocation.start + offset,
+                        keyLocation.start + start,
+                        keyLocation.start + end,
+                    )
+                } else {
+                    null
+                }
             }
-
-            if (end == -1) end = totalLength - 1;
-            return start != -1 ? new Location(keyLocation.start + offset, keyLocation.start + start, keyLocation.start + end) : null;
+        } catch (e: IOException) {
+            return null
         }
-        catch (IOException e) {
-            return null;
+    }
+
+    companion object {
+        private fun escape(str: String): String = str.replace("\\", "\\\\").replace("\"", "\\\"")
+
+        private fun unescape(str: String): String = str.replace("\\\"", "\"").replace("\\\\", "\\")
+
+        private fun lineHasName(line: String): Boolean {
+            var index: Int
+            return (line.indexOf('"').also { index = it }) != -1 &&
+                (line.indexOf('"', index).also { index = it }) !=
+                -1 &&
+                (line.indexOf('=', index).also { index = it }) != -1
         }
     }
 }

@@ -1,27 +1,25 @@
-package com.winlator.math;
+package com.winlator.math
 
-public abstract class Mathf {
-    public static float clamp(float x, float min, float max) {
-        return (x < min) ? min : ((x > max) ? max : x);
-    }
+import kotlin.math.ceil
+import kotlin.math.floor
 
-    public static int clamp(int x, int min, int max) {
-        return (x < min) ? min : (x > max ? max : x);
-    }
+// TODO: Maybe these can be `infix`?
+object Mathf {
+    @JvmStatic
+    fun clamp(x: Float, min: Float, max: Float): Float = if (x < min) min else (if (x > max) max else x)
 
-    public static float roundTo(float x, float step) {
-        return (float)(Math.floor(x / step) * step);
-    }
+    @JvmStatic
+    fun clamp(x: Int, min: Int, max: Int): Int = if (x < min) min else (if (x > max) max else x)
 
-    public static int roundPoint(float x) {
-        return (int)(x <= 0 ? Math.floor(x) : Math.ceil(x));
-    }
+    @JvmStatic
+    fun roundTo(x: Float, step: Float): Float = (floor((x / step).toDouble()) * step).toFloat()
 
-    public static byte sign(float x) {
-        return (byte)(x < 0 ? -1 : (x > 0 ? 1 : 0));
-    }
+    @JvmStatic
+    fun roundPoint(x: Float): Int = (if (x <= 0) floor(x.toDouble()) else ceil(x.toDouble())).toInt()
 
-    public static float lengthSq(float x, float y) {
-        return x * x + y * y;
-    }
+    @JvmStatic
+    fun sign(x: Float): Byte = (if (x < 0) -1 else (if (x > 0) 1 else 0)).toByte()
+
+    @JvmStatic
+    fun lengthSq(x: Float, y: Float): Float = x * x + y * y
 }

@@ -1,40 +1,33 @@
-package com.winlator.xenvironment.components;
+package com.winlator.xenvironment.components
 
-import com.winlator.xenvironment.EnvironmentComponent;
-import com.winlator.xconnector.XConnectorEpoll;
-import com.winlator.xconnector.UnixSocketConfig;
-import com.winlator.xserver.XClientConnectionHandler;
-import com.winlator.xserver.XClientRequestHandler;
-import com.winlator.xserver.XServer;
+import com.winlator.xconnector.UnixSocketConfig
+import com.winlator.xconnector.XConnectorEpoll
+import com.winlator.xenvironment.EnvironmentComponent
+import com.winlator.xserver.XClientConnectionHandler
+import com.winlator.xserver.XClientRequestHandler
+import com.winlator.xserver.XServer
 
-public class XServerComponent extends EnvironmentComponent {
-    private XConnectorEpoll connector;
-    private final XServer xServer;
-    private final UnixSocketConfig socketConfig;
+class XServerComponent(
+    val xServer: XServer,
+    private val socketConfig: UnixSocketConfig,
+) : EnvironmentComponent() {
 
-    public XServerComponent(XServer xServer, UnixSocketConfig socketConfig) {
-        this.xServer = xServer;
-        this.socketConfig = socketConfig;
-    }
+    private var connector: XConnectorEpoll? = null
 
-    @Override
-    public void start() {
-        if (connector != null) return;
-        connector = new XConnectorEpoll(socketConfig, new XClientConnectionHandler(xServer), new XClientRequestHandler());
-        connector.setInitialInputBufferCapacity(262144);
-        connector.setCanReceiveAncillaryMessages(true);
-        connector.start();
-    }
-
-    @Override
-    public void stop() {
+    override fun start() {
         if (connector != null) {
-            connector.stop();
-            connector = null;
+            return
+        }
+
+        connector = XConnectorEpoll(socketConfig, XClientConnectionHandler(xServer), XClientRequestHandler()).apply {
+            initialInputBufferCapacity = 262144
+            isCanReceiveAncillaryMessages = true
+            start()
         }
     }
 
-    public XServer getXServer() {
-        return xServer;
+    override fun stop() {
+        connector?.stop()
+        connector = null
     }
 }

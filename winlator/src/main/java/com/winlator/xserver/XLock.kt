@@ -1,6 +1,5 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-public interface XLock extends AutoCloseable {
-    @Override
-    void close();
+fun interface XLock : AutoCloseable {
+    override fun close()
 }

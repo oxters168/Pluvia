@@ -1,167 +1,128 @@
-package com.winlator.core;
+package com.winlator.core
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-public class MSLogFont {
-    private int height = -11;
-    private int width = 0;
-    private int escapement = 0;
-    private int orientation = 0;
-    private int weight = 400;
-    private byte italic = 0;
-    private byte underline = 0;
-    private byte strikeOut = 0;
-    private byte charSet = 0;
-    private byte outPrecision = 0;
-    private byte clipPrecision = 0;
-    private byte quality = 0;
-    private byte pitchAndFamily = 34;
-    private String faceName = "Tahoma";
+class MSLogFont {
+    var height: Int = -11
+        private set
+    var width: Int = 0
+        private set
+    var escapement: Int = 0
+        private set
+    var orientation: Int = 0
+        private set
+    var weight: Int = 400
+        private set
+    var italic: Byte = 0
+        private set
+    var underline: Byte = 0
+        private set
+    var strikeOut: Byte = 0
+        private set
+    var charSet: Byte = 0
+        private set
+    var outPrecision: Byte = 0
+        private set
+    var clipPrecision: Byte = 0
+        private set
+    var quality: Byte = 0
+        private set
+    var pitchAndFamily: Byte = 34
+        private set
+    var faceName: String = "Tahoma"
+        private set
 
-    public int getHeight() {
-        return height;
+    fun setHeight(height: Int): MSLogFont {
+        this.height = height
+        return this
     }
 
-    public MSLogFont setHeight(int height) {
-        this.height = height;
-        return this;
+    fun setWidth(width: Int): MSLogFont {
+        this.width = width
+        return this
     }
 
-    public int getWidth() {
-        return width;
+    fun setEscapement(escapement: Int): MSLogFont {
+        this.escapement = escapement
+        return this
     }
 
-    public MSLogFont setWidth(int width) {
-        this.width = width;
-        return this;
+    fun setOrientation(orientation: Int): MSLogFont {
+        this.orientation = orientation
+        return this
     }
 
-    public int getEscapement() {
-        return escapement;
+    fun setWeight(weight: Int): MSLogFont {
+        this.weight = weight
+        return this
     }
 
-    public MSLogFont setEscapement(int escapement) {
-        this.escapement = escapement;
-        return this;
+    fun setItalic(italic: Byte): MSLogFont {
+        this.italic = italic
+        return this
     }
 
-    public int getOrientation() {
-        return orientation;
+    fun setUnderline(underline: Byte): MSLogFont {
+        this.underline = underline
+        return this
     }
 
-    public MSLogFont setOrientation(int orientation) {
-        this.orientation = orientation;
-        return this;
+    fun setStrikeOut(strikeOut: Byte): MSLogFont {
+        this.strikeOut = strikeOut
+        return this
     }
 
-    public int getWeight() {
-        return weight;
+    fun setCharSet(charSet: Byte): MSLogFont {
+        this.charSet = charSet
+        return this
     }
 
-    public MSLogFont setWeight(int weight) {
-        this.weight = weight;
-        return this;
+    fun setOutPrecision(outPrecision: Byte): MSLogFont {
+        this.outPrecision = outPrecision
+        return this
     }
 
-    public byte getItalic() {
-        return italic;
+    fun setClipPrecision(clipPrecision: Byte): MSLogFont {
+        this.clipPrecision = clipPrecision
+        return this
     }
 
-    public MSLogFont setItalic(byte italic) {
-        this.italic = italic;
-        return this;
+    fun setQuality(quality: Byte): MSLogFont {
+        this.quality = quality
+        return this
     }
 
-    public byte getUnderline() {
-        return underline;
+    fun setPitchAndFamily(pitchAndFamily: Byte): MSLogFont {
+        this.pitchAndFamily = pitchAndFamily
+        return this
     }
 
-    public MSLogFont setUnderline(byte underline) {
-        this.underline = underline;
-        return this;
+    fun setFaceName(faceName: String): MSLogFont {
+        this.faceName = faceName
+        return this
     }
 
-    public byte getStrikeOut() {
-        return strikeOut;
-    }
+    fun toByteArray(): ByteArray {
+        val data = ByteBuffer.allocate(92).order(ByteOrder.LITTLE_ENDIAN)
+        data.putInt(height)
+        data.putInt(width)
+        data.putInt(escapement)
+        data.putInt(orientation)
+        data.putInt(weight)
+        data.put(italic)
+        data.put(underline)
+        data.put(strikeOut)
+        data.put(charSet)
+        data.put(outPrecision)
+        data.put(clipPrecision)
+        data.put(quality)
+        data.put(pitchAndFamily)
 
-    public MSLogFont setStrikeOut(byte strikeOut) {
-        this.strikeOut = strikeOut;
-        return this;
-    }
+        for (element in faceName) {
+            data.putChar(element)
+        }
 
-    public byte getCharSet() {
-        return charSet;
-    }
-
-    public MSLogFont setCharSet(byte charSet) {
-        this.charSet = charSet;
-        return this;
-    }
-
-    public byte getOutPrecision() {
-        return outPrecision;
-    }
-
-    public MSLogFont setOutPrecision(byte outPrecision) {
-        this.outPrecision = outPrecision;
-        return this;
-    }
-
-    public byte getClipPrecision() {
-        return clipPrecision;
-    }
-
-    public MSLogFont setClipPrecision(byte clipPrecision) {
-        this.clipPrecision = clipPrecision;
-        return this;
-    }
-
-    public byte getQuality() {
-        return quality;
-    }
-
-    public MSLogFont setQuality(byte quality) {
-        this.quality = quality;
-        return this;
-    }
-
-    public byte getPitchAndFamily() {
-        return pitchAndFamily;
-    }
-
-    public MSLogFont setPitchAndFamily(byte pitchAndFamily) {
-        this.pitchAndFamily = pitchAndFamily;
-        return this;
-    }
-
-    public String getFaceName() {
-        return faceName;
-    }
-
-    public MSLogFont setFaceName(String faceName) {
-        this.faceName = faceName;
-        return this;
-    }
-
-    public byte[] toByteArray() {
-        ByteBuffer data = ByteBuffer.allocate(92).order(ByteOrder.LITTLE_ENDIAN);
-        data.putInt(height);
-        data.putInt(width);
-        data.putInt(escapement);
-        data.putInt(orientation);
-        data.putInt(weight);
-        data.put(italic);
-        data.put(underline);
-        data.put(strikeOut);
-        data.put(charSet);
-        data.put(outPrecision);
-        data.put(clipPrecision);
-        data.put(quality);
-        data.put(pitchAndFamily);
-
-        for (int i = 0; i < faceName.length(); i++) data.putChar(faceName.charAt(i));
-        return data.array();
+        return data.array()
     }
 }

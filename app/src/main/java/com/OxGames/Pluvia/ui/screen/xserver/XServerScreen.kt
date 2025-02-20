@@ -30,12 +30,13 @@ import com.OxGames.Pluvia.events.SteamEvent
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.data.XServerState
 import com.OxGames.Pluvia.utils.ContainerUtils
+import com.winlator.DXVKHelper
 import com.winlator.container.Container
 import com.winlator.container.ContainerManager
 import com.winlator.core.AppUtils
 import com.winlator.core.Callback
-import com.winlator.core.DXVKHelper
 import com.winlator.core.DefaultVersion
+import com.winlator.core.EnvVars
 import com.winlator.core.FileUtils
 import com.winlator.core.GPUInformation
 import com.winlator.core.KeyValueSet
@@ -47,7 +48,6 @@ import com.winlator.core.WineRegistryEditor
 import com.winlator.core.WineStartMenuCreator
 import com.winlator.core.WineThemeManager
 import com.winlator.core.WineUtils
-import com.winlator.core.envvars.EnvVars
 import com.winlator.inputcontrols.ExternalController
 import com.winlator.inputcontrols.TouchMouse
 import com.winlator.widget.XServerView
@@ -94,13 +94,12 @@ fun XServerScreen(
     // xServerViewModel: XServerViewModel = viewModel()
 ) {
     Timber.i("Starting up XServerScreen")
+
     val context = LocalContext.current
 
     // PluviaApp.events.emit(AndroidEvent.SetAppBarVisibility(false))
     PluviaApp.events.emit(AndroidEvent.SetSystemUIVisibility(false))
-    PluviaApp.events.emit(
-        AndroidEvent.SetAllowedOrientation(PrefManager.allowedOrientation),
-    )
+    PluviaApp.events.emit(AndroidEvent.SetAllowedOrientation(PrefManager.allowedOrientation))
 
     // seems to be used to indicate when a custom wine is being installed (intent extra "generate_wineprefix")
     // val generateWinePrefix = false
@@ -286,58 +285,60 @@ fun XServerScreen(
                     appLaunchInfo?.let { renderer.forceFullscreenWMClass = Paths.get(it.executable).name }
                 }
 
-                getxServer().windowManager.addOnWindowModificationListener(object : WindowManager.OnWindowModificationListener {
-                    override fun onUpdateWindowContent(window: Window) {
-                        // Timber.v("onUpdateWindowContent:" +
-                        //     "\n\twindowName: ${window.name}" +
-                        //     "\n\tprocessId: ${window.processId}" +
-                        //     "\n\thasParent: ${window.parent != null}" +
-                        //     "\n\tchildrenSize: ${window.children.size}"
-                        // )
-                        if (!xServerState.value.winStarted && window.isApplicationWindow()) {
-                            renderer?.setCursorVisible(true)
-                            xServerState.value.winStarted = true
+                getxServer().windowManager.addOnWindowModificationListener(
+                    object : WindowManager.OnWindowModificationListener {
+                        override fun onUpdateWindowContent(window: Window) {
+                            // Timber.v("onUpdateWindowContent:" +
+                            //     "\n\twindowName: ${window.name}" +
+                            //     "\n\tprocessId: ${window.processId}" +
+                            //     "\n\thasParent: ${window.parent != null}" +
+                            //     "\n\tchildrenSize: ${window.children.size}"
+                            // )
+                            if (!xServerState.value.winStarted && window.isApplicationWindow()) {
+                                renderer?.setCursorVisible(true)
+                                xServerState.value.winStarted = true
+                            }
+                            // if (window.id == frameRatingWindowId) frameRating.update()
                         }
-                        // if (window.id == frameRatingWindowId) frameRating.update()
-                    }
 
-                    override fun onModifyWindowProperty(window: Window, property: Property) {
-                        // Timber.v("onModifyWindowProperty:" +
-                        //     "\n\twindowName: ${window.name}" +
-                        //     "\n\tprocessId: ${window.processId}" +
-                        //     "\n\thasParent: ${window.parent != null}" +
-                        //     "\n\tchildrenSize: ${window.children.size}" +
-                        //     "\n\tpropertyName${property.name}"
-                        // )
-                        // changeFrameRatingVisibility(window, property)
-                    }
+                        override fun onModifyWindowProperty(window: Window, property: Property) {
+                            // Timber.v("onModifyWindowProperty:" +
+                            //     "\n\twindowName: ${window.name}" +
+                            //     "\n\tprocessId: ${window.processId}" +
+                            //     "\n\thasParent: ${window.parent != null}" +
+                            //     "\n\tchildrenSize: ${window.children.size}" +
+                            //     "\n\tpropertyName${property.name}"
+                            // )
+                            // changeFrameRatingVisibility(window, property)
+                        }
 
-                    override fun onMapWindow(window: Window) {
-                        Timber.i(
-                            "onMapWindow:" +
-                                "\n\twindowName: ${window.name}" +
-                                "\n\twindowClassName: ${window.className}" +
-                                "\n\tprocessId: ${window.processId}" +
-                                "\n\thasParent: ${window.parent != null}" +
-                                "\n\tchildrenSize: ${window.children.size}",
-                        )
-                        assignTaskAffinity(window, getxServer().winHandler, taskAffinityMask, taskAffinityMaskWoW64)
-                        onWindowMapped?.invoke(window)
-                    }
+                        override fun onMapWindow(window: Window) {
+                            Timber.i(
+                                "onMapWindow:" +
+                                    "\n\twindowName: ${window.name}" +
+                                    "\n\twindowClassName: ${window.className}" +
+                                    "\n\tprocessId: ${window.processId}" +
+                                    "\n\thasParent: ${window.parent != null}" +
+                                    "\n\tchildrenSize: ${window.children.size}",
+                            )
+                            assignTaskAffinity(window, getxServer().winHandler, taskAffinityMask, taskAffinityMaskWoW64)
+                            onWindowMapped?.invoke(window)
+                        }
 
-                    override fun onUnmapWindow(window: Window) {
-                        Timber.i(
-                            "onUnmapWindow:" +
-                                "\n\twindowName: ${window.name}" +
-                                "\n\twindowClassName: ${window.className}" +
-                                "\n\tprocessId: ${window.processId}" +
-                                "\n\thasParent: ${window.parent != null}" +
-                                "\n\tchildrenSize: ${window.children.size}",
-                        )
-                        // changeFrameRatingVisibility(window, null)
-                        onWindowUnmapped?.invoke(window)
-                    }
-                })
+                        override fun onUnmapWindow(window: Window) {
+                            Timber.i(
+                                "onUnmapWindow:" +
+                                    "\n\twindowName: ${window.name}" +
+                                    "\n\twindowClassName: ${window.className}" +
+                                    "\n\tprocessId: ${window.processId}" +
+                                    "\n\thasParent: ${window.parent != null}" +
+                                    "\n\tchildrenSize: ${window.children.size}",
+                            )
+                            // changeFrameRatingVisibility(window, null)
+                            onWindowUnmapped?.invoke(window)
+                        }
+                    },
+                )
 
                 if (PluviaApp.xEnvironment != null) {
                     PluviaApp.xEnvironment = shiftXEnvironmentToContext(
@@ -367,14 +368,12 @@ fun XServerScreen(
                     }
 
                     val onExtractFileListener = if (!xServerState.value.wineInfo.isWin64) {
-                        object : OnExtractFileListener {
-                            override fun onExtractFile(destination: File?, size: Long): File? {
-                                return destination?.path?.let {
-                                    if (it.contains("system32/")) {
-                                        null
-                                    } else {
-                                        File(it.replace("syswow64/", "system32/"))
-                                    }
+                        OnExtractFileListener { destination, _ ->
+                            destination.path.let {
+                                if (it.contains("system32/")) {
+                                    null
+                                } else {
+                                    File(it.replace("syswow64/", "system32/"))
                                 }
                             }
                         }
@@ -453,14 +452,17 @@ private fun assignTaskAffinity(
     taskAffinityMask: Int,
     taskAffinityMaskWoW64: Int,
 ) {
-    if (taskAffinityMask == 0) return
+    if (taskAffinityMask == 0) {
+        return
+    }
+
     val processId = window.getProcessId()
     val className = window.getClassName()
     val processAffinity = if (window.isWoW64()) taskAffinityMaskWoW64 else taskAffinityMask
 
     if (processId > 0) {
         winHandler.setProcessAffinity(processId, processAffinity)
-    } else if (!className.isEmpty()) {
+    } else if (className.isNotEmpty()) {
         winHandler.setProcessAffinity(window.getClassName(), processAffinity)
     }
 }
@@ -472,43 +474,43 @@ private fun shiftXEnvironmentToContext(
 ): XEnvironment {
     val environment = XEnvironment(context, xEnvironment.imageFs)
     val rootPath = xEnvironment.imageFs.rootDir.path
-    xEnvironment.getComponent<SysVSharedMemoryComponent>(SysVSharedMemoryComponent::class.java).stop()
-    val sysVSharedMemoryComponent = SysVSharedMemoryComponent(
-        xServer,
-        UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.SYSVSHM_SERVER_PATH),
-    )
+
+    xEnvironment.getComponent(SysVSharedMemoryComponent::class.java).stop()
+
+    val sysVSharedMemoryComponent =
+        SysVSharedMemoryComponent(xServer, UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.SYSVSHM_SERVER_PATH))
     // val sysVSharedMemoryComponent = xEnvironment.getComponent<SysVSharedMemoryComponent>(SysVSharedMemoryComponent::class.java)
     // sysVSharedMemoryComponent.connectToXServer(xServer)
     environment.addComponent(sysVSharedMemoryComponent)
-    xEnvironment.getComponent<XServerComponent>(XServerComponent::class.java).stop()
+    xEnvironment.getComponent(XServerComponent::class.java).stop()
     val xServerComponent = XServerComponent(xServer, UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.XSERVER_PATH))
     // val xServerComponent = xEnvironment.getComponent<XServerComponent>(XServerComponent::class.java)
     // xServerComponent.connectToXServer(xServer)
     environment.addComponent(xServerComponent)
-    xEnvironment.getComponent<NetworkInfoUpdateComponent>(NetworkInfoUpdateComponent::class.java).stop()
+    xEnvironment.getComponent(NetworkInfoUpdateComponent::class.java).stop()
     val networkInfoComponent = NetworkInfoUpdateComponent()
     environment.addComponent(networkInfoComponent)
     // environment.addComponent(xEnvironment.getComponent<NetworkInfoUpdateComponent>(NetworkInfoUpdateComponent::class.java))
     environment.addComponent(xEnvironment.getComponent<SteamClientComponent>(SteamClientComponent::class.java))
-    val alsaComponent = xEnvironment.getComponent<ALSAServerComponent>(ALSAServerComponent::class.java)
+
+    val alsaComponent = xEnvironment.getComponent(ALSAServerComponent::class.java)
     if (alsaComponent != null) {
         environment.addComponent(alsaComponent)
     }
-    val pulseComponent = xEnvironment.getComponent<PulseAudioComponent>(PulseAudioComponent::class.java)
+
+    val pulseComponent = xEnvironment.getComponent(PulseAudioComponent::class.java)
     if (pulseComponent != null) {
         environment.addComponent(pulseComponent)
     }
-    var virglComponent: VirGLRendererComponent? =
-        xEnvironment.getComponent<VirGLRendererComponent>(VirGLRendererComponent::class.java)
+
+    var virglComponent: VirGLRendererComponent? = xEnvironment.getComponent(VirGLRendererComponent::class.java)
     if (virglComponent != null) {
         virglComponent.stop()
-        virglComponent = VirGLRendererComponent(
-            xServer,
-            UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.VIRGL_SERVER_PATH),
-        )
+        virglComponent = VirGLRendererComponent(xServer, UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.VIRGL_SERVER_PATH))
         environment.addComponent(virglComponent)
     }
-    environment.addComponent(xEnvironment.getComponent<GuestProgramLauncherComponent>(GuestProgramLauncherComponent::class.java))
+
+    environment.addComponent(xEnvironment.getComponent(GuestProgramLauncherComponent::class.java))
 
     FileUtils.clear(XEnvironment.getTmpDir(context))
     sysVSharedMemoryComponent.start()
@@ -519,6 +521,7 @@ private fun shiftXEnvironmentToContext(
 
     return environment
 }
+
 private fun setupXEnvironment(
     context: Context,
     appId: Int,
@@ -538,7 +541,11 @@ private fun setupXEnvironment(
 
     val enableWineDebug = true // preferences.getBoolean("enable_wine_debug", false)
     val wineDebugChannels = PrefManager.getString("wine_debug_channels", Constants.XServer.DEFAULT_WINE_DEBUG_CHANNELS)
-    envVars.put("WINEDEBUG", if (enableWineDebug && !wineDebugChannels.isEmpty()) "+" + wineDebugChannels.replace(",", ",+") else "-all")
+
+    envVars.put(
+        name = "WINEDEBUG",
+        value = if (enableWineDebug && wineDebugChannels.isNotEmpty()) "+" + wineDebugChannels.replace(",", ",+") else "-all",
+    )
 
     val imageFs = ImageFs.find(context)
     val rootPath = imageFs.rootDir.path
@@ -547,17 +554,22 @@ private fun setupXEnvironment(
     val guestProgramLauncherComponent = GuestProgramLauncherComponent()
 
     if (container != null) {
-        if (container.startupSelection == Container.STARTUP_SELECTION_AGGRESSIVE) xServer.winHandler.killProcess("services.exe")
+        if (container.startupSelection == Container.STARTUP_SELECTION_AGGRESSIVE) {
+            xServer.winHandler.killProcess("services.exe")
+        }
 
         val wow64Mode = container.isWoW64Mode
-        val guestExecutable =
-            xServerState.value.wineInfo.getExecutable(context, wow64Mode) + " explorer /desktop=shell," + xServer.screenInfo + " " +
-                getWineStartCommand(appId, container, bootToContainer, appLaunchInfo)
+        val guestExecutable = xServerState.value.wineInfo.getExecutable(context, wow64Mode) + " explorer /desktop=shell," +
+            xServer.screenInfo + " " + getWineStartCommand(appId, container, bootToContainer, appLaunchInfo)
+
         guestProgramLauncherComponent.isWoW64Mode = wow64Mode
         guestProgramLauncherComponent.guestExecutable = guestExecutable
 
         envVars.putAll(container.envVars)
-        if (!envVars.has("WINEESYNC")) envVars.put("WINEESYNC", "1")
+
+        if (!envVars.has("WINEESYNC")) {
+            envVars.put("WINEESYNC", "1")
+        }
 
         // Timber.d("3 Container drives: ${container.drives}")
         val bindingPaths = mutableListOf<String>()
@@ -565,6 +577,7 @@ private fun setupXEnvironment(
             Timber.i("Binding drive ${drive[0]} with path of ${drive[1]}")
             bindingPaths.add(drive[1])
         }
+
         guestProgramLauncherComponent.bindingPaths = bindingPaths.toTypedArray()
         guestProgramLauncherComponent.box86Version = container.box86Version
         guestProgramLauncherComponent.box64Version = container.box64Version
@@ -635,6 +648,7 @@ private fun setupXEnvironment(
     )
     return environment
 }
+
 private fun getWineStartCommand(
     appId: Int,
     container: Container,
@@ -663,6 +677,7 @@ private fun getWineStartCommand(
 
     return "winhandler.exe $args"
 }
+
 private fun exit(winHandler: WinHandler?, environment: XEnvironment?, onExit: () -> Unit) {
     Timber.i("Exit called")
     winHandler?.stop()
@@ -710,9 +725,9 @@ private fun generateWineprefix(
     // val preloaderDialog = PreloaderDialog(context)
     guestProgramLauncherComponent.terminationCallback = (
         object : Callback<Int> {
-            override fun call(status: Int) {
+            override fun call(`object`: Int) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    if (status > 0) {
+                    if (`object` > 0) {
                         // AppUtils.showToast(context, R.string.unable_to_install_wine)
                         FileUtils.delete(File(installedWineDir, "/preinstall"))
                         AppUtils.restartApplication(context)
@@ -737,6 +752,7 @@ private fun generateWineprefix(
 
                     val suffix = wineInfo.fullVersion() + "-" + wineInfo.arch
                     val containerPatternFile = File(installedWineDir, "/preinstall/container-pattern-$suffix.tzst")
+
                     TarCompressorUtils.compress(
                         TarCompressorUtils.Type.ZSTD,
                         File(rootDir, ImageFs.WINEPREFIX),
@@ -806,7 +822,9 @@ private fun setupWineSystemFiles(
         containerDataChanged = true
     }
 
-    if (xServerState.value.dxwrapper == "cnc-ddraw") envVars.put("CNC_DDRAW_CONFIG_FILE", "C:\\ProgramData\\cnc-ddraw\\ddraw.ini")
+    if (xServerState.value.dxwrapper == "cnc-ddraw") {
+        envVars.put("CNC_DDRAW_CONFIG_FILE", "C:\\ProgramData\\cnc-ddraw\\ddraw.ini")
+    }
 
     // val wincomponents = if (shortcut != null) shortcut.getExtra("wincomponents", container.winComponents) else container.winComponents
     val wincomponents = container.winComponents
@@ -818,9 +836,9 @@ private fun setupWineSystemFiles(
     }
 
     val desktopTheme = container.desktopTheme
-    if ((desktopTheme + "," + screenInfo) != container.getExtra("desktopTheme")) {
+    if (("$desktopTheme,$screenInfo") != container.getExtra("desktopTheme")) {
         WineThemeManager.apply(context, WineThemeManager.ThemeInfo(desktopTheme), screenInfo)
-        container.putExtra("desktopTheme", desktopTheme + "," + screenInfo)
+        container.putExtra("desktopTheme", "$desktopTheme,$screenInfo")
         containerDataChanged = true
     }
 
@@ -834,7 +852,9 @@ private fun setupWineSystemFiles(
         containerDataChanged = true
     }
 
-    if (containerDataChanged) container.saveData()
+    if (containerDataChanged) {
+        container.saveData()
+    }
 }
 
 private fun applyGeneralPatches(
@@ -845,14 +865,30 @@ private fun applyGeneralPatches(
     onExtractFileListener: OnExtractFileListener?,
 ) {
     val rootDir = imageFs.rootDir
+
     FileUtils.delete(File(rootDir, "/opt/apps"))
-    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context.assets, "imagefs_patches.tzst", rootDir, onExtractFileListener)
-    TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context.assets, "pulseaudio.tzst", File(context.filesDir, "pulseaudio"))
+
+    TarCompressorUtils.extract(
+        TarCompressorUtils.Type.ZSTD,
+        context,
+        "imagefs_patches.tzst",
+        rootDir,
+        onExtractFileListener,
+    )
+    TarCompressorUtils.extract(
+        TarCompressorUtils.Type.ZSTD,
+        context,
+        "pulseaudio.tzst",
+        File(context.filesDir, "pulseaudio"),
+    )
+
     WineUtils.applySystemTweaks(context, wineInfo)
+
     container.putExtra("graphicsDriver", null)
     container.putExtra("desktopTheme", null)
     // SettingsFragment.resetBox86_64Version(context)
 }
+
 private fun extractDXWrapperFiles(
     context: Context,
     firstTimeBoot: Boolean,
@@ -863,18 +899,14 @@ private fun extractDXWrapperFiles(
     onExtractFileListener: OnExtractFileListener?,
 ) {
     val dlls = arrayOf(
-        "d3d10.dll",
-        "d3d10_1.dll",
-        "d3d10core.dll",
-        "d3d11.dll",
-        "d3d12.dll",
-        "d3d12core.dll",
-        "d3d8.dll",
-        "d3d9.dll",
-        "dxgi.dll",
-        "ddraw.dll",
+        "d3d10.dll", "d3d10_1.dll", "d3d10core.dll", "d3d11.dll", "d3d12.dll",
+        "d3d12core.dll", "d3d8.dll", "d3d9.dll", "dxgi.dll", "ddraw.dll",
     )
-    if (firstTimeBoot && dxwrapper != "vkd3d") cloneOriginalDllFiles(imageFs, *dlls)
+
+    if (firstTimeBoot && dxwrapper != "vkd3d") {
+        cloneOriginalDllFiles(imageFs, *dlls)
+    }
+
     val rootDir = imageFs.rootDir
     val windowsDir = File(rootDir, ImageFs.WINEPREFIX + "/drive_c/windows")
 
@@ -882,42 +914,60 @@ private fun extractDXWrapperFiles(
         "wined3d" -> {
             restoreOriginalDllFiles(container, containerManager, imageFs, *dlls)
         }
+
         "cnc-ddraw" -> {
             restoreOriginalDllFiles(container, containerManager, imageFs, *dlls)
+
             val assetDir = "dxwrapper/cnc-ddraw-" + DefaultVersion.CNC_DDRAW
             val configFile = File(rootDir, ImageFs.WINEPREFIX + "/drive_c/ProgramData/cnc-ddraw/ddraw.ini")
-            if (!configFile.isFile) FileUtils.copy(context, "$assetDir/ddraw.ini", configFile)
+
+            if (!configFile.isFile) {
+                FileUtils.copy(context, "$assetDir/ddraw.ini", configFile)
+            }
+
             val shadersDir = File(rootDir, ImageFs.WINEPREFIX + "/drive_c/ProgramData/cnc-ddraw/Shaders")
+
             FileUtils.delete(shadersDir)
             FileUtils.copy(context, "$assetDir/Shaders", shadersDir)
+
             TarCompressorUtils.extract(
-                TarCompressorUtils.Type.ZSTD, context.assets,
-                "$assetDir/ddraw.tzst", windowsDir, onExtractFileListener,
+                TarCompressorUtils.Type.ZSTD,
+                context,
+                "$assetDir/ddraw.tzst",
+                windowsDir,
+                onExtractFileListener,
             )
         }
+
         "vkd3d" -> {
             val dxvkVersions = context.resources.getStringArray(R.array.dxvk_version_entries)
             TarCompressorUtils.extract(
-                TarCompressorUtils.Type.ZSTD, context.assets,
-                "dxwrapper/dxvk-" + (dxvkVersions[dxvkVersions.size - 1]) + ".tzst", windowsDir, onExtractFileListener,
+                TarCompressorUtils.Type.ZSTD,
+                context,
+                "dxwrapper/dxvk-" + (dxvkVersions[dxvkVersions.size - 1]) + ".tzst",
+                windowsDir,
+                onExtractFileListener,
             )
             TarCompressorUtils.extract(
                 TarCompressorUtils.Type.ZSTD,
-                context.assets,
+                context,
                 "dxwrapper/vkd3d-" + DefaultVersion.VKD3D + ".tzst",
                 windowsDir,
                 onExtractFileListener,
             )
         }
+
         else -> {
             restoreOriginalDllFiles(container, containerManager, imageFs, "d3d12.dll", "d3d12core.dll", "ddraw.dll")
             TarCompressorUtils.extract(
-                TarCompressorUtils.Type.ZSTD, context.assets,
-                "dxwrapper/$dxwrapper.tzst", windowsDir, onExtractFileListener,
+                TarCompressorUtils.Type.ZSTD,
+                context,
+                "dxwrapper/$dxwrapper.tzst",
+                windowsDir, onExtractFileListener,
             )
             TarCompressorUtils.extract(
                 TarCompressorUtils.Type.ZSTD,
-                context.assets,
+                context,
                 "dxwrapper/d8vk-${DefaultVersion.D8VK}.tzst",
                 windowsDir,
                 onExtractFileListener,
@@ -925,6 +975,7 @@ private fun extractDXWrapperFiles(
         }
     }
 }
+
 private fun cloneOriginalDllFiles(imageFs: ImageFs, vararg dlls: String) {
     val rootDir = imageFs.rootDir
     val cacheDir = File(rootDir, ImageFs.CACHE_PATH + "/original_dlls")
@@ -939,6 +990,7 @@ private fun cloneOriginalDllFiles(imageFs: ImageFs, vararg dlls: String) {
         }
     }
 }
+
 private fun restoreOriginalDllFiles(
     container: Container,
     containerManager: ContainerManager,
@@ -957,8 +1009,10 @@ private fun restoreOriginalDllFiles(
             for (dirname in dirnames!!) {
                 val srcFile = File(cacheDir, "$dirname/$dll")
                 val dstFile = File(windowsDir, "$dirname/$dll")
+
                 if (FileUtils.copy(srcFile, dstFile)) success = true
             }
+
             if (success) filesCopied++
         }
 
@@ -966,13 +1020,14 @@ private fun restoreOriginalDllFiles(
     }
 
     containerManager.extractContainerPatternFile(
-        container.wineVersion, container.rootDir,
+        container.wineVersion,
+        container.rootDir,
         object : OnExtractFileListener {
-            override fun onExtractFile(file: File, size: Long): File? {
-                val path = file.path
+            override fun onExtractFile(destination: File?, size: Long): File? {
+                val path = destination?.path ?: return null
                 if (path.contains("system32/") || path.contains("syswow64/")) {
                     for (dll in dlls) {
-                        if (path.endsWith("system32/$dll") || path.endsWith("syswow64/$dll")) return file
+                        if (path.endsWith("system32/$dll") || path.endsWith("syswow64/$dll")) return destination
                     }
                 }
                 return null
@@ -982,6 +1037,7 @@ private fun restoreOriginalDllFiles(
 
     cloneOriginalDllFiles(imageFs, *dlls)
 }
+
 private fun extractWinComponentFiles(
     context: Context,
     firstTimeBoot: Boolean,
@@ -1017,14 +1073,20 @@ private fun extractWinComponentFiles(
         val oldWinComponentsIter = KeyValueSet(container.getExtra("wincomponents", Container.FALLBACK_WINCOMPONENTS)).iterator()
 
         for (wincomponent in KeyValueSet(wincomponents)) {
-            if (wincomponent[1].equals(oldWinComponentsIter.next()[1])) continue
+            if (wincomponent[1] == oldWinComponentsIter.next()[1]) {
+                continue
+            }
+
             val identifier = wincomponent[0]
-            val useNative = wincomponent[1].equals("1")
+            val useNative = wincomponent[1] == "1"
 
             if (useNative) {
                 TarCompressorUtils.extract(
-                    TarCompressorUtils.Type.ZSTD, context.assets,
-                    "wincomponents/$identifier.tzst", windowsDir, onExtractFileListener,
+                    TarCompressorUtils.Type.ZSTD,
+                    context,
+                    "wincomponents/$identifier.tzst",
+                    windowsDir,
+                    onExtractFileListener,
                 )
             } else {
                 val dlnames = wincomponentsJSONObject.getJSONArray(identifier)
@@ -1037,7 +1099,10 @@ private fun extractWinComponentFiles(
             WineUtils.setWinComponentRegistryKeys(systemRegFile, identifier, useNative)
         }
 
-        if (!dlls.isEmpty()) restoreOriginalDllFiles(container, containerManager, imageFs, *dlls.toTypedArray())
+        if (dlls.isNotEmpty()) {
+            restoreOriginalDllFiles(container, containerManager, imageFs, *dlls.toTypedArray())
+        }
+
         WineUtils.overrideWinComponentDlls(context, container, wincomponents)
     } catch (e: JSONException) {
         Timber.e("Failed to read JSON: $e")
@@ -1100,13 +1165,13 @@ private fun extractGraphicsDriverFiles(
         if (changed) {
             TarCompressorUtils.extract(
                 TarCompressorUtils.Type.ZSTD,
-                context.assets,
+                context,
                 "graphics_driver/turnip-${DefaultVersion.TURNIP}.tzst",
                 rootDir,
             )
             TarCompressorUtils.extract(
                 TarCompressorUtils.Type.ZSTD,
-                context.assets,
+                context,
                 "graphics_driver/zink-${DefaultVersion.ZINK}.tzst",
                 rootDir,
             )
@@ -1120,12 +1185,15 @@ private fun extractGraphicsDriverFiles(
         envVars.put("vblank_mode", "0")
         if (changed) {
             TarCompressorUtils.extract(
-                TarCompressorUtils.Type.ZSTD, context.assets,
-                "graphics_driver/virgl-" + DefaultVersion.VIRGL + ".tzst", rootDir,
+                TarCompressorUtils.Type.ZSTD,
+                context,
+                "graphics_driver/virgl-" + DefaultVersion.VIRGL + ".tzst",
+                rootDir,
             )
         }
     }
 }
+
 private fun changeWineAudioDriver(audioDriver: String, container: Container, imageFs: ImageFs) {
     if (audioDriver != container.getExtra("audioDriver")) {
         val rootDir = imageFs.rootDir

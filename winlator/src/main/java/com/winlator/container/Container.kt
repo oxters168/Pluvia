@@ -14,26 +14,26 @@ import org.json.JSONObject
 import timber.log.Timber
 
 class Container(val id: Int) {
-    var name: String = "Container-$id"
-    var screenSize: String? = DEFAULT_SCREEN_SIZE
-    var envVars: String = DEFAULT_ENV_VARS
-    var graphicsDriver: String? = DEFAULT_GRAPHICS_DRIVER
-    var dXWrapper: String? = DEFAULT_DXWRAPPER
-    var dXWrapperConfig: String = ""
-    var winComponents: String? = DEFAULT_WINCOMPONENTS
-    var audioDriver: String? = DEFAULT_AUDIO_DRIVER
-    var drives: String = DEFAULT_DRIVES
-    var wineVersion: String? = WineInfo.MAIN_WINE_VERSION.identifier()
-    var isShowFPS: Boolean = false
-    var isWoW64Mode: Boolean = true
-    var startupSelection: Byte = STARTUP_SELECTION_ESSENTIAL
+    var audioDriver: String = DEFAULT_AUDIO_DRIVER
+    var box64Preset: String = Box86_64Preset.COMPATIBILITY
+    var box86Preset: String = Box86_64Preset.COMPATIBILITY
     var cpuList: String? = null
     var cpuListWoW64: String? = null
-    var desktopTheme: String? = WineThemeManager.DEFAULT_DESKTOP_THEME
-    var box86Preset: String? = Box86_64Preset.COMPATIBILITY
-    var box64Preset: String? = Box86_64Preset.COMPATIBILITY
-    var rootDir: File? = null
+    var dXWrapper: String = DEFAULT_DXWRAPPER
+    var dXWrapperConfig: String = ""
+    var desktopTheme: String = WineThemeManager.DEFAULT_DESKTOP_THEME
+    var drives: String = DEFAULT_DRIVES
+    var envVars: String = DEFAULT_ENV_VARS
     var extraData: JSONObject? = null
+    var graphicsDriver: String = DEFAULT_GRAPHICS_DRIVER
+    var isShowFPS: Boolean = false
+    var isWoW64Mode: Boolean = true
+    var name: String = "Container-$id"
+    var rootDir: File? = null
+    var screenSize: String? = DEFAULT_SCREEN_SIZE
+    var startupSelection: Byte = STARTUP_SELECTION_ESSENTIAL
+    var winComponents: String = DEFAULT_WINCOMPONENTS
+    var wineVersion: String = WineInfo.MAIN_WINE_VERSION.identifier()
 
     fun getCPUList(allowFallback: Boolean = false): String? {
         return if (cpuList != null) cpuList else (if (allowFallback) fallbackCPUList else null)
@@ -47,7 +47,7 @@ class Container(val id: Int) {
         return getExtra(name, "")
     }
 
-    fun getExtra(name: String, fallback: String?): String? {
+    fun getExtra(name: String, fallback: String): String {
         try {
             return if (extraData != null && extraData!!.has(name)) extraData!!.getString(name) else fallback
         } catch (e: JSONException) {
@@ -251,7 +251,7 @@ class Container(val id: Int) {
                         }
                     }
 
-                    result += (if (!result.isEmpty()) "," else "") + wincomponent1[0] + "=" + value
+                    result += (if (result.isNotEmpty()) "," else "") + wincomponent1[0] + "=" + value
                 }
 
                 data.put("wincomponents", result)
@@ -264,7 +264,7 @@ class Container(val id: Int) {
             get() {
                 var cpuList = ""
                 val numProcessors = Runtime.getRuntime().availableProcessors()
-                for (i in 0..<numProcessors) cpuList += (if (!cpuList.isEmpty()) "," else "") + i
+                for (i in 0..<numProcessors) cpuList += (if (cpuList.isNotEmpty()) "," else "") + i
                 return cpuList
             }
 
@@ -272,7 +272,7 @@ class Container(val id: Int) {
             get() {
                 var cpuList = ""
                 val numProcessors = Runtime.getRuntime().availableProcessors()
-                for (i in numProcessors / 2..<numProcessors) cpuList += (if (!cpuList.isEmpty()) "," else "") + i
+                for (i in numProcessors / 2..<numProcessors) cpuList += (if (cpuList.isNotEmpty()) "," else "") + i
                 return cpuList
             }
     }

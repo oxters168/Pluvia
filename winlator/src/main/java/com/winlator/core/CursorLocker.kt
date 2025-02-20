@@ -1,80 +1,69 @@
-package com.winlator.core;
+package com.winlator.core
 
-import com.winlator.math.Mathf;
-import com.winlator.xserver.XServer;
+import com.winlator.math.Mathf
+import com.winlator.xserver.XServer
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.math.ceil
+import kotlin.math.floor
+import timber.log.Timber
 
-import java.util.Timer;
-import java.util.TimerTask;
+class CursorLocker(private val xServer: XServer) : TimerTask() {
 
-public class CursorLocker extends TimerTask {
-    private final XServer xServer;
-    private float damping = 0.25f;
-    private short maxDistance;
-    private boolean enabled = true;
-    private final Object pauseLock = new Object();
+    var damping: Float = 0.25f
 
-    public CursorLocker(XServer xServer) {
-        this.xServer = xServer;
-        maxDistance = (short)(xServer.screenInfo.width * 0.05f);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(this, 0, 1000 / 60);
-    }
+    var maxDistance: Short = (xServer.screenInfo.width * 0.05f).toInt().toShort()
 
-    public short getMaxDistance() {
-        return maxDistance;
-    }
+    private var enabled = true
 
-    public void setMaxDistance(short maxDistance) {
-        this.maxDistance = maxDistance;
-    }
+    private val pauseLock = Any()
 
-    public float getDamping() {
-        return damping;
-    }
-
-    public void setDamping(float damping) {
-        this.damping = damping;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        if (enabled) {
-            synchronized (pauseLock) {
-                this.enabled = true;
-                pauseLock.notifyAll();
-            }
+    init {
+        Timer().also {
+            it.schedule(this, 0, (1000 / 60).toLong())
         }
-        else this.enabled = enabled;
     }
 
-    @Override
-    public void run() {
-        synchronized (pauseLock) {
+    fun setEnabled(enabled: Boolean) {
+        if (enabled) {
+            synchronized(pauseLock) {
+                this.enabled = true
+                (pauseLock as Object).notifyAll()
+            }
+        } else {
+            this.enabled = enabled
+        }
+    }
+
+    override fun run() {
+        synchronized(pauseLock) {
             if (!enabled) {
                 try {
-                    pauseLock.wait();
+                    (pauseLock as Object).wait()
+                } catch (e: InterruptedException) {
+                    Timber.w(e)
                 }
-                catch (InterruptedException e) {}
             }
         }
 
-        short x = (short)Mathf.clamp(xServer.pointer.getX(), -maxDistance, xServer.screenInfo.width + maxDistance);
-        short y = (short)Mathf.clamp(xServer.pointer.getY(), -maxDistance, xServer.screenInfo.height + maxDistance);
+        val x = Mathf.clamp(xServer.pointer.x.toInt(), -maxDistance, xServer.screenInfo.width + maxDistance).toShort()
+
+        val y = Mathf.clamp(xServer.pointer.y.toInt(), -maxDistance, xServer.screenInfo.height + maxDistance).toShort()
 
         if (x < 0) {
-            xServer.pointer.setX((short)Math.ceil(x * damping));
+            xServer.pointer.setX(ceil((x * damping).toDouble()).toInt().toShort().toInt())
+        } else if (x >= xServer.screenInfo.width) {
+            xServer.pointer.setX(
+                floor((xServer.screenInfo.width + (x - xServer.screenInfo.width) * damping).toDouble()).toInt().toShort().toInt(),
+            )
         }
-        else if (x >= xServer.screenInfo.width) {
-            xServer.pointer.setX((short)Math.floor(xServer.screenInfo.width + (x - xServer.screenInfo.width) * damping));
-        }
+
         if (y < 0) {
-            xServer.pointer.setY((short)Math.ceil(y * damping));
-        }
-        else if (y >= xServer.screenInfo.height) {
-            xServer.pointer.setY((short)Math.floor(xServer.screenInfo.height + (y - xServer.screenInfo.height) * damping));
+            xServer.pointer.setY(ceil((y * damping).toDouble()).toInt().toShort().toInt())
+        } else if (y >= xServer.screenInfo.height) {
+            xServer.pointer.setY(
+                floor((xServer.screenInfo.height + (y - xServer.screenInfo.height) * damping).toDouble()).toInt().toShort().toInt(),
+            )
         }
     }
 }

@@ -5,4 +5,6 @@
     <string name="compatibility">Compatibility</string>
     <string name="intermediate">Intermediate</string>
     <string name="performance">Performance</string>
+    <string name="installing_system_files">Installing System Files…</string>
+    <string name="unable_to_install_system_files">Unable to install system files.</string>
 </resources>

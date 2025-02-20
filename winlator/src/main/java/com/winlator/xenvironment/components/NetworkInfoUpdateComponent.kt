@@ -1,68 +1,73 @@
-package com.winlator.xenvironment.components;
+package com.winlator.xenvironment.components
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.ConnectivityManager
+import com.winlator.core.FileUtils.writeString
+import com.winlator.core.NetworkHelper
+import com.winlator.xenvironment.EnvironmentComponent
+import java.io.File
 
-import com.winlator.core.FileUtils;
-import com.winlator.core.NetworkHelper;
-import com.winlator.xenvironment.EnvironmentComponent;
+class NetworkInfoUpdateComponent : EnvironmentComponent() {
 
-import java.io.File;
+    private var broadcastReceiver: BroadcastReceiver? = null
 
-public class NetworkInfoUpdateComponent extends EnvironmentComponent {
-    private BroadcastReceiver broadcastReceiver;
+    override fun start() {
+        val context = environment!!.context
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkHelper = NetworkHelper(context)
 
-    @Override
-    public void start() {
-        Context context = environment.getContext();
-        final ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkHelper networkHelper = new NetworkHelper(context);
-        updateAdapterInfoFile(0, 0, 0);
+        updateAdapterInfoFile(0, 0, 0)
 
-        broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                int ipAddress = 0;
-                int netmask = 0;
-                int gateway = 0;
+        broadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                var ipAddress = 0
+                var netmask = 0
+                var gateway = 0
 
-                NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-                if (networkInfo != null && networkInfo.isAvailable() && networkInfo.isConnected() && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                    ipAddress = networkHelper.getIpAddress();
-                    netmask = networkHelper.getNetmask();
-                    gateway = networkHelper.getGateway();
+                val networkInfo = connectivityManager.activeNetworkInfo
+                if (networkInfo != null &&
+                    networkInfo.isAvailable &&
+                    networkInfo.isConnected &&
+                    networkInfo.type == ConnectivityManager.TYPE_WIFI
+                ) {
+                    ipAddress = networkHelper.ipAddress
+                    netmask = networkHelper.netmask
+                    gateway = networkHelper.gateway
                 }
 
-                updateAdapterInfoFile(ipAddress, netmask, gateway);
-                updateEtcHostsFile(ipAddress);
+                updateAdapterInfoFile(ipAddress, netmask, gateway)
+                updateEtcHostsFile(ipAddress)
             }
-        };
+        }
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        context.registerReceiver(broadcastReceiver, filter);
+        val filter = IntentFilter()
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION)
+        context.registerReceiver(broadcastReceiver, filter)
     }
 
-    @Override
-    public void stop() {
+    override fun stop() {
         if (broadcastReceiver != null) {
-            environment.getContext().unregisterReceiver(broadcastReceiver);
-            broadcastReceiver = null;
+            environment!!.context.unregisterReceiver(broadcastReceiver)
+            broadcastReceiver = null
         }
     }
 
-    private void updateAdapterInfoFile(int ipAddress, int netmask, int gateway) {
-        File file = new File(environment.getImageFs().getTmpDir(), "adapterinfo");
-        FileUtils.writeString(file, "Android Wi-Fi Adapter,"+NetworkHelper.formatIpAddress(ipAddress)+","+NetworkHelper.formatNetmask(netmask)+","+NetworkHelper.formatIpAddress(gateway));
+    private fun updateAdapterInfoFile(ipAddress: Int, netmask: Int, gateway: Int) {
+        val file = File(environment!!.imageFs.tmpDir, "adapterinfo")
+        writeString(
+            file = file,
+            data = "Android Wi-Fi Adapter," + NetworkHelper.formatIpAddress(ipAddress) + "," +
+                NetworkHelper.formatNetmask(netmask) + "," + NetworkHelper.formatIpAddress(gateway),
+        )
     }
 
-    private void updateEtcHostsFile(int ipAddress) {
-        String ip = ipAddress != 0 ? NetworkHelper.formatIpAddress(ipAddress) : "127.0.0.1";
-        File file = new File(environment.getImageFs().getRootDir(), "etc/hosts");
-        FileUtils.writeString(file, ip+"\tlocalhost\n");
+    private fun updateEtcHostsFile(ipAddress: Int) {
+        val ip = if (ipAddress != 0) NetworkHelper.formatIpAddress(ipAddress) else "127.0.0.1"
+        val file = File(environment!!.imageFs.rootDir, "etc/hosts")
+
+        writeString(file, "$ip\tlocalhost\n")
     }
 }

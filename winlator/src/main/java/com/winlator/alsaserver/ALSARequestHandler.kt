@@ -72,7 +72,7 @@ class ALSARequestHandler : RequestHandler {
         }
 
         try {
-            outputStream.lock().use { lock ->
+            outputStream.lock().use {
                 outputStream.writeByte(0.toByte())
                 outputStream.setAncillaryFd(fd)
             }

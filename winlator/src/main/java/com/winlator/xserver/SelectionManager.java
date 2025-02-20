@@ -2,6 +2,8 @@ package com.winlator.xserver;
 
 import android.util.SparseArray;
 
+import androidx.annotation.Nullable;
+
 import com.winlator.xserver.events.SelectionClear;
 
 public class SelectionManager implements XResourceManager.OnResourceLifecycleListener {
@@ -31,6 +33,10 @@ public class SelectionManager implements XResourceManager.OnResourceLifecycleLis
         selection = new Selection();
         selections.put(atom, selection);
         return selection;
+    }
+
+    @Override
+    public void onCreateResource(@Nullable XResource resource) {
     }
 
     @Override

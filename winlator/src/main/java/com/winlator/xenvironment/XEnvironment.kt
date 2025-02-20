@@ -1,74 +1,65 @@
-package com.winlator.xenvironment;
+package com.winlator.xenvironment
 
-import android.content.Context;
+import android.content.Context
+import com.winlator.core.FileUtils.chmod
+import com.winlator.core.FileUtils.clear
+import com.winlator.xenvironment.components.GuestProgramLauncherComponent
+import java.io.File
 
-import com.winlator.core.FileUtils;
-import com.winlator.xenvironment.components.GuestProgramLauncherComponent;
+class XEnvironment(val context: Context, val imageFs: ImageFs) : Iterable<EnvironmentComponent?> {
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
+    private val components = ArrayList<EnvironmentComponent>()
 
-public class XEnvironment implements Iterable<EnvironmentComponent> {
-    private final Context context;
-    private final ImageFs imageFs;
-    private final ArrayList<EnvironmentComponent> components = new ArrayList<>();
-
-    public XEnvironment(Context context, ImageFs imageFs) {
-        this.context = context;
-        this.imageFs = imageFs;
+    fun addComponent(environmentComponent: EnvironmentComponent) {
+        environmentComponent.environment = this
+        components.add(environmentComponent)
     }
 
-    public Context getContext() {
-        return context;
-    }
-
-    public ImageFs getImageFs() {
-        return imageFs;
-    }
-
-    public void addComponent(EnvironmentComponent environmentComponent) {
-        environmentComponent.environment = this;
-        components.add(environmentComponent);
-    }
-
-    public <T extends EnvironmentComponent> T getComponent(Class<T> componentClass) {
-        for (EnvironmentComponent component : components) {
-            if (component.getClass() == componentClass) return (T)component;
+    fun <T : EnvironmentComponent> getComponent(componentClass: Class<T>): T? {
+        for (component in components) {
+            if (component.javaClass == componentClass) {
+                return component as T
+            }
         }
-        return null;
+
+        return null
     }
 
-    @Override
-    public Iterator<EnvironmentComponent> iterator() {
-        return components.iterator();
-    }
+    override fun iterator(): MutableIterator<EnvironmentComponent> = components.iterator()
 
-    public File getTmpDir() {
-        File tmpDir = new File(context.getFilesDir(), "tmp");
-        if (!tmpDir.isDirectory()) {
-            tmpDir.mkdirs();
-            FileUtils.chmod(tmpDir, 0771);
+    val tmpDir: File
+        get() {
+            val tmpDir = File(context.filesDir, "tmp")
+
+            if (!tmpDir.isDirectory) {
+                tmpDir.mkdirs()
+                chmod(tmpDir, 505)
+            }
+
+            return tmpDir
         }
-        return tmpDir;
+
+    fun startEnvironmentComponents() {
+        clear(tmpDir)
+
+        for (environmentComponent in this) {
+            environmentComponent.start()
+        }
     }
 
-    public void startEnvironmentComponents() {
-        FileUtils.clear(getTmpDir());
-        for (EnvironmentComponent environmentComponent : this) environmentComponent.start();
+    fun stopEnvironmentComponents() {
+        for (environmentComponent in this) {
+            environmentComponent.stop()
+        }
     }
 
-    public void stopEnvironmentComponents() {
-        for (EnvironmentComponent environmentComponent : this) environmentComponent.stop();
+    fun onPause() {
+        val guestProgramLauncherComponent = getComponent(GuestProgramLauncherComponent::class.java)
+        guestProgramLauncherComponent?.suspendProcess()
     }
 
-    public void onPause() {
-        GuestProgramLauncherComponent guestProgramLauncherComponent = getComponent(GuestProgramLauncherComponent.class);
-        if (guestProgramLauncherComponent != null) guestProgramLauncherComponent.suspendProcess();
-    }
-
-    public void onResume() {
-        GuestProgramLauncherComponent guestProgramLauncherComponent = getComponent(GuestProgramLauncherComponent.class);
-        if (guestProgramLauncherComponent != null) guestProgramLauncherComponent.resumeProcess();
+    fun onResume() {
+        val guestProgramLauncherComponent = getComponent(GuestProgramLauncherComponent::class.java)
+        guestProgramLauncherComponent?.resumeProcess()
     }
 }

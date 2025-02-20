@@ -1,31 +1,36 @@
-package com.winlator.core;
+package com.winlator.core
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import timber.log.Timber
 
-public abstract class ElfHelper {
-    private static final byte ELF_CLASS_32 = 1;
-    private static final byte ELF_CLASS_64 = 2;
+object ElfHelper {
+    private const val ELF_CLASS_32: Byte = 1
+    private const val ELF_CLASS_64: Byte = 2
 
-    private static int getEIClass(File binFile) {
-        try (InputStream inStream = new FileInputStream(binFile)) {
-            byte[] header = new byte[52];
-            inStream.read(header);
-            if (header[0] == 0x7F && header[1] == 'E' && header[2] == 'L' && header[3] == 'F') {
-                return header[4];
+    private fun getEIClass(binFile: File): Int {
+        try {
+            FileInputStream(binFile).use { inStream ->
+                val header = ByteArray(52)
+
+                inStream.read(header)
+
+                if (header[0].toInt() == 0x7F &&
+                    header[1] == 'E'.code.toByte() &&
+                    header[2] == 'L'.code.toByte() &&
+                    header[3] == 'F'.code.toByte()
+                ) {
+                    return header[4].toInt()
+                }
             }
+        } catch (e: IOException) {
+            Timber.w(e)
         }
-        catch (IOException e) {}
-        return 0;
+        return 0
     }
 
-    public static boolean is32Bit(File binFile) {
-        return getEIClass(binFile) == ELF_CLASS_32;
-    }
+    fun is32Bit(binFile: File): Boolean = getEIClass(binFile) == ELF_CLASS_32.toInt()
 
-    public static boolean is64Bit(File binFile) {
-        return getEIClass(binFile) == ELF_CLASS_64;
-    }
+    fun is64Bit(binFile: File): Boolean = getEIClass(binFile) == ELF_CLASS_64.toInt()
 }

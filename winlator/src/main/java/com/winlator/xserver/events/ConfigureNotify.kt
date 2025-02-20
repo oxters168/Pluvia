@@ -1,51 +1,43 @@
-package com.winlator.xserver.events;
+package com.winlator.xserver.events
 
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Window;
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Window
+import java.io.IOException
 
-import java.io.IOException;
+class ConfigureNotify(
+    private val event: Window,
+    private val window: Window,
+    private val aboveSibling: Window?,
+    x: Int,
+    y: Int,
+    width: Int,
+    height: Int,
+    borderWidth: Int,
+    private val overrideRedirect: Boolean,
+) : Event(22) {
+    private val x = x.toShort()
+    private val y = y.toShort()
+    private val height = height.toShort()
 
-public class ConfigureNotify extends Event {
-    private final Window event;
-    private final Window window;
-    private final Window aboveSibling;
-    private final short x;
-    private final short y;
-    private final short height;
-    private final short width;
-    private final short borderWidth;
-    private final boolean overrideRedirect;
+    private val width = width.toShort()
+    private val borderWidth = borderWidth.toShort()
 
-    public ConfigureNotify(Window event, Window window, Window aboveSibling, int x, int y, int width, int height, int borderWidth, boolean overrideRedirect) {
-        super(22);
-        this.event = event;
-        this.window = window;
-        this.aboveSibling = aboveSibling;
-        this.x = (short)x;
-        this.y = (short)y;
-        this.width = (short)width;
-        this.height = (short)height;
-        this.borderWidth = (short)borderWidth;
-        this.overrideRedirect = overrideRedirect;
-    }
-
-    @Override
-    public void send(short sequenceNumber, XOutputStream outputStream) throws IOException {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(code);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(sequenceNumber);
-            outputStream.writeInt(event.id);
-            outputStream.writeInt(window.id);
-            outputStream.writeInt(aboveSibling != null ? aboveSibling.id : 0);
-            outputStream.writeShort(x);
-            outputStream.writeShort(y);
-            outputStream.writeShort(width);
-            outputStream.writeShort(height);
-            outputStream.writeShort(borderWidth);
-            outputStream.writeByte((byte)(overrideRedirect ? 1 : 0));
-            outputStream.writePad(5);
+    @Throws(IOException::class)
+    override fun send(sequenceNumber: Short, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.writeByte(code)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(sequenceNumber)
+            outputStream.writeInt(event.id)
+            outputStream.writeInt(window.id)
+            outputStream.writeInt(aboveSibling?.id ?: 0)
+            outputStream.writeShort(x)
+            outputStream.writeShort(y)
+            outputStream.writeShort(width)
+            outputStream.writeShort(height)
+            outputStream.writeShort(borderWidth)
+            outputStream.writeByte((if (overrideRedirect) 1 else 0).toByte())
+            outputStream.writePad(5)
         }
     }
 }

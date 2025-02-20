@@ -1,26 +1,47 @@
-package com.winlator.renderer;
+package com.winlator.renderer
 
-public class ViewTransformation {
-    public int viewOffsetX;
-    public int viewOffsetY;
-    public int viewWidth;
-    public int viewHeight;
-    public float aspect;
-    public float sceneScaleX;
-    public float sceneScaleY;
-    public float sceneOffsetX;
-    public float sceneOffsetY;
+import kotlin.math.ceil
+import kotlin.math.min
 
-    public void update(int outerWidth, int outerHeight, int innerWidth, int innerHeight) {
-        aspect = Math.min((float)outerWidth / innerWidth, (float)outerHeight / innerHeight);
-        viewWidth = (int)Math.ceil(innerWidth * aspect);
-        viewHeight = (int)Math.ceil(innerHeight * aspect);
-        viewOffsetX = (int)((outerWidth - innerWidth * aspect) * 0.5f);
-        viewOffsetY = (int)((outerHeight - innerHeight * aspect) * 0.5f);
+class ViewTransformation {
+    @JvmField
+    var viewOffsetX: Int = 0
 
-        sceneScaleX = (innerWidth * aspect) / outerWidth;
-        sceneScaleY = (innerHeight * aspect) / outerHeight;
-        sceneOffsetX = (innerWidth - innerWidth * sceneScaleX) * 0.5f;
-        sceneOffsetY = (innerHeight - innerHeight * sceneScaleY) * 0.5f;
+    @JvmField
+    var viewOffsetY: Int = 0
+
+    @JvmField
+    var viewWidth: Int = 0
+
+    @JvmField
+    var viewHeight: Int = 0
+
+    @JvmField
+    var aspect: Float = 0f
+
+    @JvmField
+    var sceneScaleX: Float = 0f
+
+    @JvmField
+    var sceneScaleY: Float = 0f
+
+    @JvmField
+    var sceneOffsetX: Float = 0f
+
+    @JvmField
+    var sceneOffsetY: Float = 0f
+
+    fun update(outerWidth: Int, outerHeight: Int, innerWidth: Int, innerHeight: Int) {
+        aspect = min((outerWidth.toFloat() / innerWidth).toDouble(), (outerHeight.toFloat() / innerHeight).toDouble()).toFloat()
+
+        viewWidth = ceil((innerWidth * aspect).toDouble()).toInt()
+        viewHeight = ceil((innerHeight * aspect).toDouble()).toInt()
+        viewOffsetX = ((outerWidth - innerWidth * aspect) * 0.5f).toInt()
+        viewOffsetY = ((outerHeight - innerHeight * aspect) * 0.5f).toInt()
+
+        sceneScaleX = (innerWidth * aspect) / outerWidth
+        sceneScaleY = (innerHeight * aspect) / outerHeight
+        sceneOffsetX = (innerWidth - innerWidth * sceneScaleX) * 0.5f
+        sceneOffsetY = (innerHeight - innerHeight * sceneScaleY) * 0.5f
     }
 }

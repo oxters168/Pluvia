@@ -1,120 +1,124 @@
-package com.winlator.xenvironment.components;
+package com.winlator.xenvironment.components
 
-import androidx.annotation.Keep;
+import androidx.annotation.Keep
+import com.winlator.xconnector.Client
+import com.winlator.xconnector.ConnectionHandler
+import com.winlator.xconnector.RequestHandler
+import com.winlator.xconnector.UnixSocketConfig
+import com.winlator.xconnector.XConnectorEpoll
+import com.winlator.xenvironment.EnvironmentComponent
+import com.winlator.xserver.XServer
+import java.io.IOException
 
-import com.winlator.renderer.GLRenderer;
-import com.winlator.renderer.Texture;
-import com.winlator.xconnector.Client;
-import com.winlator.xconnector.ConnectionHandler;
-import com.winlator.xconnector.RequestHandler;
-import com.winlator.xconnector.UnixSocketConfig;
-import com.winlator.xconnector.XConnectorEpoll;
-import com.winlator.xenvironment.EnvironmentComponent;
-import com.winlator.xserver.Drawable;
-import com.winlator.xserver.XServer;
+class VirGLRendererComponent(
+    private val xServer: XServer,
+    private val socketConfig: UnixSocketConfig,
+) : EnvironmentComponent(),
+    ConnectionHandler,
+    RequestHandler {
 
-import java.io.IOException;
-
-public class VirGLRendererComponent extends EnvironmentComponent implements ConnectionHandler, RequestHandler {
-    private final XServer xServer;
-    private final UnixSocketConfig socketConfig;
-    private XConnectorEpoll connector;
-    private long sharedEGLContextPtr;
-
-    static {
-        System.loadLibrary("virglrenderer");
-    }
-
-    public VirGLRendererComponent(XServer xServer, UnixSocketConfig socketConfig) {
-        this.xServer = xServer;
-        this.socketConfig = socketConfig;
-    }
-
-    @Override
-    public void start() {
-        if (connector != null) return;
-        connector = new XConnectorEpoll(socketConfig, this, this);
-        connector.start();
-    }
-
-    @Override
-    public void stop() {
-        if (connector != null) {
-            connector.stop();
-            connector = null;
+    companion object {
+        init {
+            System.loadLibrary("virglrenderer")
         }
     }
 
-    @Keep
-    private void killConnection(int fd) {
-        connector.killConnection(connector.getClient(fd));
+    private var connector: XConnectorEpoll? = null
+
+    private var sharedEGLContextPtr: Long = 0
+
+    override fun start() {
+        if (connector != null) {
+            return
+        }
+
+        connector = XConnectorEpoll(socketConfig, this, this).apply {
+            start()
+        }
+    }
+
+    override fun stop() {
+        connector?.stop()
+        connector = null
     }
 
     @Keep
-    private long getSharedEGLContext() {
-        if (sharedEGLContextPtr != 0) return sharedEGLContextPtr;
-        final Thread thread = Thread.currentThread();
+    private fun killConnection(fd: Int) {
+        connector?.killConnection(connector!!.getClient(fd))
+    }
+
+    @Keep
+    private fun getSharedEGLContext(): Long {
+        if (sharedEGLContextPtr != 0L) return sharedEGLContextPtr
+        val thread = Thread.currentThread()
         try {
-            GLRenderer renderer = xServer.getRenderer();
-            renderer.xServerView.queueEvent(() -> {
-                sharedEGLContextPtr = getCurrentEGLContextPtr();
+            val renderer = xServer.renderer
+
+            renderer.xServerView.queueEvent {
+                sharedEGLContextPtr = getCurrentEGLContextPtr()
 
                 synchronized(thread) {
-                    thread.notify();
+                    (thread as Object).notify()
                 }
-            });
-            synchronized (thread) {
-                thread.wait();
             }
+
+            synchronized(thread) {
+                (thread as Object).wait()
+            }
+        } catch (e: Exception) {
+            return 0
         }
-        catch (Exception e) {
-            return 0;
-        }
-        return sharedEGLContextPtr;
+
+        return sharedEGLContextPtr
     }
 
-    @Override
-    public void handleConnectionShutdown(Client client) {
-        long clientPtr = (long)client.getTag();
-        destroyClient(clientPtr);
+    override fun handleConnectionShutdown(client: Client) {
+        val clientPtr = client.tag as Long
+
+        destroyClient(clientPtr)
     }
 
-    @Override
-    public void handleNewConnection(Client client) {
-        getSharedEGLContext();
-        long clientPtr = handleNewConnection(client.clientSocket.fd);
-        client.setTag(clientPtr);
+    override fun handleNewConnection(client: Client) {
+        getSharedEGLContext()
+
+        val clientPtr = handleNewConnection(client.clientSocket.fd)
+
+        client.tag = clientPtr
     }
 
-    @Override
-    public boolean handleRequest(Client client) throws IOException {
-        long clientPtr = (long)client.getTag();
-        handleRequest(clientPtr);
-        return true;
+    @Throws(IOException::class)
+    override fun handleRequest(client: Client): Boolean {
+        val clientPtr = client.tag as Long
+
+        handleRequest(clientPtr)
+
+        return true
     }
 
     @Keep
-    private void flushFrontbuffer(int drawableId, int framebuffer) {
-        Drawable drawable = xServer.drawableManager.getDrawable(drawableId);
-        if (drawable == null) return;
+    private fun flushFrontbuffer(drawableId: Int, framebuffer: Int) {
+        val drawable = xServer.drawableManager.getDrawable(drawableId) ?: return
 
-        synchronized (drawable.renderLock) {
-            drawable.setData(null);
-            Texture texture = drawable.getTexture();
-            texture.copyFromFramebuffer(framebuffer, drawable.width, drawable.height);
+        synchronized(drawable.renderLock) {
+            drawable.data = null
+
+            drawable.texture.copyFromFramebuffer(framebuffer, drawable.width, drawable.height)
         }
 
-        Runnable onDrawListener = drawable.getOnDrawListener();
-        if (onDrawListener != null) onDrawListener.run();
+        drawable.onDrawListener?.run()
     }
 
-    private native long handleNewConnection(int fd);
+    /**
+     * Native Methods
+     */
 
-    private native void handleRequest(long clientPtr);
+    private external fun handleNewConnection(fd: Int): Long
 
-    private native long getCurrentEGLContextPtr();
+    private external fun handleRequest(clientPtr: Long)
 
-    private native void destroyClient(long clientPtr);
+    private external fun getCurrentEGLContextPtr(): Long
 
-    private native void destroyRenderer(long clientPtr);
+    private external fun destroyClient(clientPtr: Long)
+
+    private external fun destroyRenderer(clientPtr: Long)
 }
