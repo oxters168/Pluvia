@@ -1,34 +1,29 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import com.winlator.sysvshm.SysVSharedMemory
+import java.nio.ByteBuffer
 
-import com.winlator.sysvshm.SysVSharedMemory;
+class SHMSegmentManager(private val sysVSharedMemory: SysVSharedMemory) {
 
-import java.nio.ByteBuffer;
+    private val shmSegments = SparseArray<ByteBuffer?>()
 
-public class SHMSegmentManager {
-    private final SysVSharedMemory sysVSharedMemory;
-    private final SparseArray<ByteBuffer> shmSegments = new SparseArray<>();
+    fun attach(xid: Int, shmid: Int) {
+        if (shmSegments.indexOfKey(xid) >= 0) {
+            detach(xid)
+        }
 
-    public SHMSegmentManager(SysVSharedMemory sysVSharedMemory) {
-        this.sysVSharedMemory = sysVSharedMemory;
-    }
-
-    public void attach(int xid, int shmid) {
-        if (shmSegments.indexOfKey(xid) >= 0) detach(xid);
-        ByteBuffer data = sysVSharedMemory.attach(shmid);
-        if (data != null) shmSegments.put(xid, data);
-    }
-
-    public void detach(int xid) {
-        ByteBuffer data = shmSegments.get(xid);
-        if (data != null) {
-            sysVSharedMemory.detach(data);
-            shmSegments.remove(xid);
+        sysVSharedMemory.attach(shmid)?.let { data ->
+            shmSegments.put(xid, data)
         }
     }
 
-    public ByteBuffer getData(int xid) {
-        return shmSegments.get(xid);
+    fun detach(xid: Int) {
+        shmSegments.get(xid)?.let { data ->
+            sysVSharedMemory.detach(data)
+            shmSegments.remove(xid)
+        }
     }
+
+    fun getData(xid: Int): ByteBuffer? = shmSegments.get(xid)
 }

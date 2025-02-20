@@ -1,166 +1,145 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import androidx.annotation.Nullable;
-import androidx.collection.ArrayMap;
+import androidx.collection.ArrayMap
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.XResourceManager.OnResourceLifecycleListener
+import com.winlator.xserver.events.Event
+import java.io.IOException
+import timber.log.Timber
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xserver.events.Event;
+class XClient(
+    val xServer: XServer,
+    val inputStream: XInputStream,
+    val outputStream: XOutputStream,
+) : OnResourceLifecycleListener {
 
-import java.io.IOException;
-import java.util.ArrayList;
+    var isAuthenticated: Boolean = false
 
-public class XClient implements XResourceManager.OnResourceLifecycleListener {
-    public final XServer xServer;
-    private boolean authenticated = false;
-    public final Integer resourceIDBase;
-    private short sequenceNumber = 0;
-    private int requestLength;
-    private byte requestData;
-    private int initialLength;
-    private final XInputStream inputStream;
-    private final XOutputStream outputStream;
-    private final ArrayMap<Window, EventListener> eventListeners = new ArrayMap<>();
-    private final ArrayList<XResource> resources = new ArrayList<>();
+    var resourceIDBase: Int = -1
 
-    public XClient(XServer xServer, XInputStream inputStream, XOutputStream outputStream) {
-        this.xServer = xServer;
-        this.inputStream = inputStream;
-        this.outputStream = outputStream;
+    var sequenceNumber: Short = 0
+        private set
 
-        try (XLock lock = xServer.lockAll()) {
-            resourceIDBase = xServer.resourceIDs.get();
-            xServer.windowManager.addOnResourceLifecycleListener(this);
-            xServer.pixmapManager.addOnResourceLifecycleListener(this);
-            xServer.graphicsContextManager.addOnResourceLifecycleListener(this);
-            xServer.cursorManager.addOnResourceLifecycleListener(this);
+    var requestLength = 0
+        private set
+
+    var requestData: Byte = 0
+
+    private var initialLength = 0
+
+    private val eventListeners = ArrayMap<Window?, EventListener?>()
+
+    private val resources = ArrayList<XResource?>()
+
+    val remainingRequestLength: Int
+        get() {
+            val actualLength = initialLength - inputStream.available()
+            return requestLength - actualLength
+        }
+
+    init {
+        xServer.lockAll().use {
+            resourceIDBase = xServer.resourceIDs.get()
+            xServer.windowManager.addOnResourceLifecycleListener(this)
+            xServer.pixmapManager.addOnResourceLifecycleListener(this)
+            xServer.graphicsContextManager.addOnResourceLifecycleListener(this)
+            xServer.cursorManager.addOnResourceLifecycleListener(this)
         }
     }
 
-    public void registerAsOwnerOfResource(XResource resource) {
-        resources.add(resource);
+    fun registerAsOwnerOfResource(resource: XResource?) {
+        resources.add(resource)
     }
 
-    public void setEventListenerForWindow(Window window, Bitmask eventMask) {
-        EventListener eventListener = eventListeners.get(window);
-        if (eventListener != null) window.removeEventListener(eventListener);
-        if (eventMask.isEmpty()) return;
-        eventListener = new EventListener(this, eventMask);
-        eventListeners.put(window, eventListener);
-        window.addEventListener(eventListener);
+    fun setEventListenerForWindow(window: Window, eventMask: Bitmask) {
+        var eventListener = eventListeners.get(window)
+
+        if (eventListener != null) {
+            window.removeEventListener(eventListener)
+        }
+
+        if (eventMask.isEmpty) {
+            return
+        }
+
+        eventListener = EventListener(this, eventMask)
+
+        eventListeners.put(window, eventListener)
+
+        window.addEventListener(eventListener)
     }
 
-    public void sendEvent(Event event) {
+    fun sendEvent(event: Event) {
         try {
-            event.send(sequenceNumber, outputStream);
+            event.send(sequenceNumber, outputStream)
+        } catch (e: IOException) {
+            Timber.e(e)
         }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
-    public boolean isInterestedIn(int eventId, Window window) {
-        EventListener eventListener = eventListeners.get(window);
-        return eventListener != null && eventListener.isInterestedIn(eventId);
+    fun isInterestedIn(eventId: Int, window: Window?): Boolean {
+        val eventListener = eventListeners[window]
+        return eventListener != null && eventListener.isInterestedIn(eventId)
     }
 
-    public boolean isAuthenticated() {
-        return authenticated;
-    }
-
-    public void setAuthenticated(boolean authenticated) {
-        this.authenticated = authenticated;
-    }
-
-    public void freeResources() {
-        try (XLock lock = xServer.lockAll()) {
+    fun freeResources() {
+        xServer.lockAll().use {
             while (!resources.isEmpty()) {
-                XResource resource = resources.remove(resources.size()-1);
-                if (resource instanceof Window) {
-                    xServer.windowManager.destroyWindow(resource.id);
-                }
-                else if (resource instanceof Pixmap) {
-                    xServer.pixmapManager.freePixmap(resource.id);
-                }
-                else if (resource instanceof GraphicsContext) {
-                    xServer.graphicsContextManager.freeGraphicsContext(resource.id);
-                }
-                else if (resource instanceof Cursor) {
-                    xServer.cursorManager.freeCursor(resource.id);
+                val resource = resources.removeAt(resources.size - 1)
+
+                if (resource is Window) {
+                    xServer.windowManager.destroyWindow(resource.id)
+                } else if (resource is Pixmap) {
+                    xServer.pixmapManager.freePixmap(resource.id)
+                } else if (resource is GraphicsContext) {
+                    xServer.graphicsContextManager.freeGraphicsContext(resource.id)
+                } else if (resource is Cursor) {
+                    xServer.cursorManager.freeCursor(resource.id)
                 }
             }
 
             while (!eventListeners.isEmpty()) {
-                int i = eventListeners.size()-1;
-                eventListeners.keyAt(i).removeEventListener(eventListeners.removeAt(i));
+                val i: Int = eventListeners.size - 1
+                eventListeners.keyAt(i)!!.removeEventListener(eventListeners.removeAt(i))
             }
 
-            xServer.windowManager.removeOnResourceLifecycleListener(this);
-            xServer.pixmapManager.removeOnResourceLifecycleListener(this);
-            xServer.graphicsContextManager.removeOnResourceLifecycleListener(this);
-            xServer.cursorManager.removeOnResourceLifecycleListener(this);
-            xServer.resourceIDs.free(resourceIDBase);
+            xServer.windowManager.removeOnResourceLifecycleListener(this)
+            xServer.pixmapManager.removeOnResourceLifecycleListener(this)
+            xServer.graphicsContextManager.removeOnResourceLifecycleListener(this)
+            xServer.cursorManager.removeOnResourceLifecycleListener(this)
+            xServer.resourceIDs.free(resourceIDBase)
         }
     }
 
-    public void generateSequenceNumber() {
-        sequenceNumber++;
+    fun generateSequenceNumber() {
+        sequenceNumber++
     }
 
-    public short getSequenceNumber() {
-        return sequenceNumber;
+    fun setRequestLength(requestLength: Int) {
+        this.requestLength = requestLength
+        initialLength = inputStream.available()
     }
 
-    public int getRequestLength() {
-        return requestLength;
+    fun skipRequest() {
+        inputStream.skip(this.remainingRequestLength)
     }
 
-    public void setRequestLength(int requestLength) {
-        this.requestLength = requestLength;
-        initialLength = inputStream.available();
+    fun getEventMaskForWindow(window: Window?): Bitmask {
+        val eventListener = eventListeners.get(window)
+        return eventListener?.eventMask ?: Bitmask()
     }
 
-    public byte getRequestData() {
-        return requestData;
+    override fun onCreateResource(resource: XResource?) {
     }
 
-    public void setRequestData(byte requestData) {
-        this.requestData = requestData;
+    override fun onFreeResource(resource: XResource?) {
+        if (resource is Window) {
+            eventListeners.remove(resource)
+        }
+
+        resources.remove(resource)
     }
 
-    public int getRemainingRequestLength() {
-        int actualLength = initialLength - inputStream.available();
-        return requestLength - actualLength;
-    }
-
-    public void skipRequest() {
-        inputStream.skip(getRemainingRequestLength());
-    }
-
-    public XInputStream getInputStream() {
-        return inputStream;
-    }
-
-    public XOutputStream getOutputStream() {
-        return outputStream;
-    }
-
-    public Bitmask getEventMaskForWindow(Window window) {
-        EventListener eventListener = eventListeners.get(window);
-        return eventListener != null ? eventListener.eventMask : new Bitmask();
-    }
-
-    @Override
-    public void onCreateResource(@Nullable XResource resource) {
-    }
-
-    @Override
-    public void onFreeResource(XResource resource) {
-        if (resource instanceof Window) eventListeners.remove(resource);
-        resources.remove(resource);
-    }
-
-    public boolean isValidResourceId(int id) {
-        return xServer.resourceIDs.isInInterval(id, resourceIDBase);
-    }
+    fun isValidResourceId(id: Int): Boolean = xServer.resourceIDs.isInInterval(id, resourceIDBase)
 }

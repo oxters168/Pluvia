@@ -1,221 +1,231 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import androidx.annotation.Keep
+import androidx.core.util.isNotEmpty
+import androidx.core.util.size
+import java.io.IOException
+import java.nio.ByteBuffer
+import timber.log.Timber
 
-import androidx.annotation.Keep;
+class XConnectorEpoll(
+    socketConfig: UnixSocketConfig,
+    private val connectionHandler: ConnectionHandler,
+    private val requestHandler: RequestHandler,
+) : Runnable {
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
-public class XConnectorEpoll implements Runnable {
-    private final ConnectionHandler connectionHandler;
-    private final RequestHandler requestHandler;
-    private final int epollFd;
-    private final int serverFd;
-    private final int shutdownFd;
-    private Thread epollThread;
-    private boolean running = false;
-    private boolean multithreadedClients = false;
-    private boolean canReceiveAncillaryMessages = false;
-    private int initialInputBufferCapacity = 4096;
-    private int initialOutputBufferCapacity = 4096;
-    private final SparseArray<Client> connectedClients = new SparseArray<>();
-
-    static {
-        System.loadLibrary("winlator");
-    }
-
-    public XConnectorEpoll(UnixSocketConfig socketConfig, ConnectionHandler connectionHandler, RequestHandler requestHandler) {
-        this.connectionHandler = connectionHandler;
-        this.requestHandler = requestHandler;
-
-        serverFd = createAFUnixSocket(socketConfig.path);
-        if (serverFd < 0) {
-            throw new RuntimeException("Failed to create an AF_UNIX socket.");
+    companion object {
+        init {
+            System.loadLibrary("winlator")
         }
 
-        epollFd = createEpollFd();
+        external fun closeFd(fd: Int)
+    }
+
+    private val connectedClients = SparseArray<Client>()
+
+    private val epollFd: Int
+
+    private val serverFd: Int
+
+    private val shutdownFd: Int
+
+    private var epollThread: Thread?
+
+    private var running = false
+
+    var initialInputBufferCapacity: Int = 4096
+
+    var initialOutputBufferCapacity: Int = 4096
+
+    var isCanReceiveAncillaryMessages: Boolean = false
+
+    var isMultithreadedClients: Boolean = false
+
+    init {
+        serverFd = createAFUnixSocket(socketConfig.path)
+        if (serverFd < 0) {
+            throw RuntimeException("Failed to create an AF_UNIX socket.")
+        }
+
+        epollFd = createEpollFd()
         if (epollFd < 0) {
-            closeFd(serverFd);
-            throw new RuntimeException("Failed to create epoll fd.");
+            closeFd(serverFd)
+            throw RuntimeException("Failed to create epoll fd.")
         }
 
         if (!addFdToEpoll(epollFd, serverFd)) {
-            closeFd(serverFd);
-            closeFd(epollFd);
-            throw new RuntimeException("Failed to add server fd to epoll.");
+            closeFd(serverFd)
+            closeFd(epollFd)
+            throw RuntimeException("Failed to add server fd to epoll.")
         }
 
-        shutdownFd = createEventFd();
+        shutdownFd = createEventFd()
         if (!addFdToEpoll(epollFd, shutdownFd)) {
-            closeFd(serverFd);
-            closeFd(shutdownFd);
-            closeFd(epollFd);
-            throw new RuntimeException("Failed to add shutdown fd to epoll.");
+            closeFd(serverFd)
+            closeFd(shutdownFd)
+            closeFd(epollFd)
+            throw RuntimeException("Failed to add shutdown fd to epoll.")
         }
 
-        epollThread = new Thread(this);
+        epollThread = Thread(this)
     }
 
-    public synchronized void start() {
-        if (running || epollThread == null) return;
-        running = true;
-        epollThread.start();
+    @Synchronized
+    fun start() {
+        if (running || epollThread == null) {
+            return
+        }
+
+        running = true
+        epollThread!!.start()
     }
 
-    public synchronized void stop() {
-        if (!running || epollThread == null) return;
-        running = false;
-        requestShutdown();
+    @Synchronized
+    fun stop() {
+        if (!running || epollThread == null) {
+            return
+        }
 
-        while (epollThread.isAlive()) {
+        running = false
+        requestShutdown()
+
+        while (epollThread!!.isAlive) {
             try {
-                epollThread.join();
+                epollThread!!.join()
+            } catch (_: InterruptedException) {
             }
-            catch (InterruptedException e) {}
         }
-        epollThread = null;
+
+        epollThread = null
     }
 
-    @Override
-    public void run() {
-        while (running && doEpollIndefinitely(epollFd, serverFd, !multithreadedClients));
-        shutdown();
+    override fun run() {
+        while (running && doEpollIndefinitely(epollFd, serverFd, !this.isMultithreadedClients)) {
+            shutdown()
+        }
     }
 
     @Keep
-    private void handleNewConnection(int fd) {
-        final Client client = new Client(this, new ClientSocket(fd));
-        client.connected = true;
-        if (multithreadedClients) {
-            client.shutdownFd = createEventFd();
-            client.pollThread = new Thread(() -> {
-                connectionHandler.handleNewConnection(client);
-                while (client.connected && waitForSocketRead(client.clientSocket.fd, client.shutdownFd));
-            });
-            client.pollThread.start();
+    private fun handleNewConnection(fd: Int) {
+        val client = Client(this, ClientSocket(fd))
+        client.connected = true
+        if (this.isMultithreadedClients) {
+            client.shutdownFd = createEventFd()
+            client.pollThread = Thread(
+                Runnable {
+                    connectionHandler.handleNewConnection(client)
+                    while (client.connected && waitForSocketRead(client.clientSocket!!.fd, client.shutdownFd));
+                },
+            )
+
+            client.pollThread!!.start()
+        } else {
+            connectionHandler.handleNewConnection(client)
         }
-        else connectionHandler.handleNewConnection(client);
-        connectedClients.put(fd, client);
+
+        connectedClients.put(fd, client)
     }
 
     @Keep
-    private void handleExistingConnection(int fd) {
-        Client client = connectedClients.get(fd);
-        if (client == null) return;
+    private fun handleExistingConnection(fd: Int) {
+        val client = connectedClients.get(fd)
 
-        XInputStream inputStream = client.getInputStream();
+        if (client == null) {
+            return
+        }
+
+        val inputStream = client.inputStream
         try {
             if (inputStream != null) {
-                if (inputStream.readMoreData(canReceiveAncillaryMessages) > 0) {
-                    int activePosition = 0;
-                    while (running && requestHandler.handleRequest(client)) activePosition = inputStream.getActivePosition();
-                    inputStream.setActivePosition(activePosition);
-                }
-                else killConnection(client);
-            }
-            else requestHandler.handleRequest(client);
-        }
-        catch (IOException e) {
-            killConnection(client);
-        }
-    }
+                if (inputStream.readMoreData(this.isCanReceiveAncillaryMessages) > 0) {
+                    var activePosition = 0
 
-    public Client getClient(int fd) {
-        return connectedClients.get(fd);
-    }
-
-    public void killConnection(Client client) {
-        client.connected = false;
-        connectionHandler.handleConnectionShutdown(client);
-        if (multithreadedClients) {
-            if (Thread.currentThread() != client.pollThread) {
-                client.requestShutdown();
-
-                while (client.pollThread.isAlive()) {
-                    try {
-                        client.pollThread.join();
+                    while (running && requestHandler.handleRequest(client)) {
+                        activePosition = inputStream.activePosition
                     }
-                    catch (InterruptedException e) {}
+
+                    inputStream.activePosition = activePosition
+                } else {
+                    killConnection(client)
+                }
+            } else {
+                requestHandler.handleRequest(client)
+            }
+        } catch (e: IOException) {
+            Timber.w(e)
+            killConnection(client)
+        }
+    }
+
+    fun getClient(fd: Int): Client? = connectedClients.get(fd)
+
+    fun killConnection(client: Client) {
+        client.connected = false
+        connectionHandler.handleConnectionShutdown(client)
+
+        if (this.isMultithreadedClients) {
+            if (Thread.currentThread() != client.pollThread) {
+                client.requestShutdown()
+
+                while (client.pollThread!!.isAlive) {
+                    try {
+                        client.pollThread!!.join()
+                    } catch (_: InterruptedException) {
+                    }
                 }
 
-                client.pollThread = null;
+                client.pollThread = null
             }
-            closeFd(client.shutdownFd);
-        }
-        else removeFdFromEpoll(epollFd, client.clientSocket.fd);
-        closeFd(client.clientSocket.fd);
-        connectedClients.remove(client.clientSocket.fd);
-    }
 
-    private void shutdown() {
-        while (connectedClients.size() > 0) {
-            Client client = connectedClients.valueAt(connectedClients.size()-1);
-            killConnection(client);
+            closeFd(client.shutdownFd)
+        } else {
+            removeFdFromEpoll(epollFd, client.clientSocket!!.fd)
         }
 
-        removeFdFromEpoll(epollFd, serverFd);
-        removeFdFromEpoll(epollFd, shutdownFd);
-        closeFd(serverFd);
-        closeFd(shutdownFd);
-        closeFd(epollFd);
+        closeFd(client.clientSocket!!.fd)
+        connectedClients.remove(client.clientSocket.fd)
     }
 
-    public int getInitialInputBufferCapacity() {
-        return initialInputBufferCapacity;
+    private fun shutdown() {
+        while (connectedClients.isNotEmpty()) {
+            val client = connectedClients.valueAt(connectedClients.size - 1)
+            killConnection(client)
+        }
+
+        removeFdFromEpoll(epollFd, serverFd)
+        removeFdFromEpoll(epollFd, shutdownFd)
+
+        closeFd(serverFd)
+        closeFd(shutdownFd)
+        closeFd(epollFd)
     }
 
-    public void setInitialInputBufferCapacity(int initialInputBufferCapacity) {
-        this.initialInputBufferCapacity = initialInputBufferCapacity;
-    }
-
-    public int getInitialOutputBufferCapacity() {
-        return initialOutputBufferCapacity;
-    }
-
-    public void setInitialOutputBufferCapacity(int initialOutputBufferCapacity) {
-        this.initialOutputBufferCapacity = initialOutputBufferCapacity;
-    }
-
-    public boolean isMultithreadedClients() {
-        return multithreadedClients;
-    }
-
-    public void setMultithreadedClients(boolean multithreadedClients) {
-        this.multithreadedClients = multithreadedClients;
-    }
-
-    public boolean isCanReceiveAncillaryMessages() {
-        return canReceiveAncillaryMessages;
-    }
-
-    public void setCanReceiveAncillaryMessages(boolean canReceiveAncillaryMessages) {
-        this.canReceiveAncillaryMessages = canReceiveAncillaryMessages;
-    }
-
-    private void requestShutdown() {
+    private fun requestShutdown() {
         try {
-            ByteBuffer data = ByteBuffer.allocateDirect(8);
-            data.asLongBuffer().put(1);
-            (new ClientSocket(shutdownFd)).write(data);
+            val data = ByteBuffer.allocateDirect(8)
+            data.asLongBuffer().put(1)
+            (ClientSocket(shutdownFd)).write(data)
+        } catch (e: IOException) {
+            Timber.e(e)
         }
-        catch (IOException e) {}
     }
 
-    public static native void closeFd(int fd);
+    /**
+     * Native Methods
+     */
 
-    private native int createEpollFd();
+    private external fun createEpollFd(): Int
 
-    private native int createEventFd();
+    private external fun createEventFd(): Int
 
-    private native boolean doEpollIndefinitely(int epollFd, int serverFd, boolean addClientToEpoll);
+    private external fun doEpollIndefinitely(epollFd: Int, serverFd: Int, addClientToEpoll: Boolean): Boolean
 
-    private native boolean addFdToEpoll(int epollFd, int fd);
+    private external fun addFdToEpoll(epollFd: Int, fd: Int): Boolean
 
-    private native void removeFdFromEpoll(int epollFd, int fd);
+    private external fun removeFdFromEpoll(epollFd: Int, fd: Int)
 
-    private native boolean waitForSocketRead(int clientFd, int shutdownFd);
+    private external fun waitForSocketRead(clientFd: Int, shutdownFd: Int): Boolean
 
-    private native int createAFUnixSocket(String path);
+    private external fun createAFUnixSocket(path: String?): Int
 }

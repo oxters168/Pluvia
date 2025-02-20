@@ -1,292 +1,439 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import com.winlator.winhandler.MouseEventFlags;
-import com.winlator.winhandler.WinHandler;
-import com.winlator.xserver.events.ButtonPress;
-import com.winlator.xserver.events.ButtonRelease;
-import com.winlator.xserver.events.EnterNotify;
-import com.winlator.xserver.events.Event;
-import com.winlator.xserver.events.KeyPress;
-import com.winlator.xserver.events.KeyRelease;
-import com.winlator.xserver.events.LeaveNotify;
-import com.winlator.xserver.events.MappingNotify;
-import com.winlator.xserver.events.MotionNotify;
-import com.winlator.xserver.events.PointerWindowEvent;
+import com.winlator.winhandler.MouseEventFlags.getFlagFor
+import com.winlator.xserver.Keyboard.OnKeyboardListener
+import com.winlator.xserver.Pointer.OnPointerMotionListener
+import com.winlator.xserver.WindowManager.OnWindowModificationListener
+import com.winlator.xserver.XResourceManager.OnResourceLifecycleListener
+import com.winlator.xserver.events.ButtonPress
+import com.winlator.xserver.events.ButtonRelease
+import com.winlator.xserver.events.EnterNotify
+import com.winlator.xserver.events.Event
+import com.winlator.xserver.events.KeyPress
+import com.winlator.xserver.events.KeyRelease
+import com.winlator.xserver.events.LeaveNotify
+import com.winlator.xserver.events.MappingNotify
+import com.winlator.xserver.events.MotionNotify
+import com.winlator.xserver.events.PointerWindowEvent
+import com.winlator.xserver.events.PointerWindowEvent.Detail
 
-public class InputDeviceManager implements Pointer.OnPointerMotionListener, Keyboard.OnKeyboardListener, WindowManager.OnWindowModificationListener, XResourceManager.OnResourceLifecycleListener {
-    private static final byte MOUSE_WHEEL_DELTA = 120;
-    private Window pointWindow;
-    private final XServer xServer;
+class InputDeviceManager(private val xServer: XServer) :
+    OnPointerMotionListener,
+    OnKeyboardListener,
+    OnWindowModificationListener,
+    OnResourceLifecycleListener {
 
-    public InputDeviceManager(XServer xServer) {
-        this.xServer = xServer;
-        pointWindow = xServer.windowManager.rootWindow;
-        xServer.windowManager.addOnWindowModificationListener(this);
-        xServer.windowManager.addOnResourceLifecycleListener(this);
-        xServer.pointer.addOnPointerMotionListener(this);
-        xServer.keyboard.addOnKeyboardListener(this);
+    companion object {
+        private const val MOUSE_WHEEL_DELTA: Byte = 120
     }
 
-    @Override
-    public void onMapWindow(Window window) {
-        updatePointWindow();
+    var pointWindow: Window?
+        private set
+
+    init {
+        pointWindow = xServer.windowManager.rootWindow
+
+        xServer.windowManager.addOnWindowModificationListener(this)
+        xServer.windowManager.addOnResourceLifecycleListener(this)
+        xServer.pointer.addOnPointerMotionListener(this)
+        xServer.keyboard.addOnKeyboardListener(this)
     }
 
-    @Override
-    public void onUnmapWindow(Window window) {
-        updatePointWindow();
+    override fun onMapWindow(window: Window) {
+        updatePointWindow()
     }
 
-    @Override
-    public void onChangeWindowZOrder(Window window) {
-        updatePointWindow();
+    override fun onUnmapWindow(window: Window) {
+        updatePointWindow()
     }
 
-    @Override
-    public void onUpdateWindowGeometry(Window window, boolean resized) {
-        updatePointWindow();
+    override fun onChangeWindowZOrder(window: Window) {
+        updatePointWindow()
     }
 
-    @Override
-    public void onCreateResource(XResource resource) {
-        updatePointWindow();
+    override fun onUpdateWindowGeometry(window: Window?, resized: Boolean) {
+        updatePointWindow()
     }
 
-    @Override
-    public void onFreeResource(XResource resource) {
-        updatePointWindow();
+    override fun onCreateResource(resource: XResource?) {
+        updatePointWindow()
     }
 
-    private void updatePointWindow() {
-        Window pointWindow = xServer.windowManager.findPointWindow(xServer.pointer.getClampedX(), xServer.pointer.getClampedY());
-        this.pointWindow = pointWindow != null ? pointWindow : xServer.windowManager.rootWindow;
+    override fun onFreeResource(resource: XResource?) {
+        updatePointWindow()
     }
 
-    public Window getPointWindow() {
-        return pointWindow;
+    private fun updatePointWindow() {
+        val pointWindow = xServer.windowManager.findPointWindow(xServer.pointer.clampedX, xServer.pointer.clampedY)
+        this.pointWindow = pointWindow ?: xServer.windowManager.rootWindow
     }
 
-    private void sendEvent(Window window, int eventId, Event event) {
-        Window grabWindow = xServer.grabManager.getWindow();
-        if (grabWindow != null && grabWindow.attributes.isEnabled()) {
-            EventListener eventListener = xServer.grabManager.getEventListener();
-            if (xServer.grabManager.isOwnerEvents() && window != null) {
-                window.sendEvent(eventId, event, xServer.grabManager.getClient());
+    private fun sendEvent(window: Window?, eventId: Int, event: Event) {
+        val grabWindow = xServer.grabManager.window
+        if (grabWindow != null && grabWindow.attributes.isEnabled) {
+            val eventListener = xServer.grabManager.eventListener
+            if (xServer.grabManager.isOwnerEvents && window != null) {
+                window.sendEvent(eventId, event, xServer.grabManager.client)
+            } else if (eventListener!!.isInterestedIn(eventId)) {
+                eventListener.sendEvent(event)
             }
-            else if (eventListener.isInterestedIn(eventId)) {
-                eventListener.sendEvent(event);
-            }
-        }
-        else if (window != null && window.attributes.isEnabled()) {
-            window.sendEvent(eventId, event);
-        }
-    }
-
-    private void sendEvent(Window window, Bitmask eventMask, Event event) {
-        Window grabWindow = xServer.grabManager.getWindow();
-        if (grabWindow != null && grabWindow.attributes.isEnabled()) {
-            EventListener eventListener = xServer.grabManager.getEventListener();
-            if (xServer.grabManager.isOwnerEvents() && window != null) {
-                window.sendEvent(eventMask, event, eventListener.client);
-            }
-            else if (eventListener.isInterestedIn(eventMask)) {
-                eventListener.sendEvent(event);
-            }
-        }
-        else if (window != null && window.attributes.isEnabled()) {
-            window.sendEvent(eventMask, event);
+        } else if (window != null && window.attributes.isEnabled) {
+            window.sendEvent(eventId, event)
         }
     }
 
-    public void sendEnterLeaveNotify(Window windowA, Window windowB, PointerWindowEvent.Mode mode) {
-        if (windowA == windowB) return;
-        short x = xServer.pointer.getX();
-        short y = xServer.pointer.getY();
+    private fun sendEvent(window: Window?, eventMask: Bitmask, event: Event) {
+        val grabWindow = xServer.grabManager.window
+        if (grabWindow != null && grabWindow.attributes.isEnabled) {
+            val eventListener = xServer.grabManager.eventListener
+            if (xServer.grabManager.isOwnerEvents && window != null) {
+                window.sendEvent(eventMask, event, eventListener!!.client)
+            } else if (eventListener!!.isInterestedIn(eventMask)) {
+                eventListener.sendEvent(event)
+            }
+        } else if (window != null && window.attributes.isEnabled) {
+            window.sendEvent(eventMask, event)
+        }
+    }
 
-        short[] localPointA = windowA.rootPointToLocal(x, y);
-        short[] localPointB = windowB.rootPointToLocal(x, y);
+    fun sendEnterLeaveNotify(windowA: Window, windowB: Window, mode: PointerWindowEvent.Mode) {
+        if (windowA == windowB) return
+        val x = xServer.pointer.x
+        val y = xServer.pointer.y
 
-        boolean sameScreenAndFocus = windowB.isAncestorOf(xServer.windowManager.getFocusedWindow());
-        PointerWindowEvent.Detail detailA = PointerWindowEvent.Detail.NONLINEAR;
-        PointerWindowEvent.Detail detailB = PointerWindowEvent.Detail.NONLINEAR;
+        val localPointA = windowA.rootPointToLocal(x, y)
+        val localPointB = windowB.rootPointToLocal(x, y)
+
+        val sameScreenAndFocus = windowB.isAncestorOf(xServer.windowManager.focusedWindow)
+        var detailA = Detail.NONLINEAR
+        var detailB = Detail.NONLINEAR
 
         if (windowA.isAncestorOf(windowB)) {
-            detailA = PointerWindowEvent.Detail.ANCESTOR;
-            detailB = PointerWindowEvent.Detail.INFERIOR;
-        }
-        else if (windowB.isAncestorOf(windowA)) {
-            detailB = PointerWindowEvent.Detail.ANCESTOR;
-            detailA = PointerWindowEvent.Detail.INFERIOR;
+            detailA = Detail.ANCESTOR
+            detailB = Detail.INFERIOR
+        } else if (windowB.isAncestorOf(windowA)) {
+            detailB = Detail.ANCESTOR
+            detailA = Detail.INFERIOR
         }
 
-        Bitmask keyButMask = getKeyButMask();
-        sendEvent(windowA, Event.LEAVE_WINDOW, new LeaveNotify(detailA, xServer.windowManager.rootWindow, windowA, null, x, y, localPointA[0], localPointA[1], keyButMask, mode, sameScreenAndFocus));
-        sendEvent(windowB, Event.ENTER_WINDOW, new EnterNotify(detailB, xServer.windowManager.rootWindow, windowB, null, x, y, localPointB[0], localPointB[1], keyButMask, mode, sameScreenAndFocus));
+        val keyButMask = this.keyButMask
+        sendEvent(
+            window = windowA,
+            eventId = Event.LEAVE_WINDOW,
+            event = LeaveNotify(
+                detail = detailA,
+                root = xServer.windowManager.rootWindow,
+                event = windowA,
+                child = null,
+                rootX = x,
+                rootY = y,
+                eventX = localPointA[0],
+                eventY = localPointA[1],
+                state = keyButMask,
+                mode = mode,
+                sameScreenAndFocus = sameScreenAndFocus,
+            ),
+        )
+        sendEvent(
+            window = windowB,
+            eventId = Event.ENTER_WINDOW,
+            event = EnterNotify(
+                detail = detailB,
+                root = xServer.windowManager.rootWindow,
+                event = windowB,
+                child = null,
+                rootX = x,
+                rootY = y,
+                eventX = localPointB[0],
+                eventY = localPointB[1],
+                state = keyButMask,
+                mode = mode,
+                sameScreenAndFocus = sameScreenAndFocus,
+            ),
+        )
     }
 
-    @Override
-    public void onPointerButtonPress(Pointer.Button button) {
-        if (xServer.isRelativeMouseMovement()) {
-            WinHandler winHandler = xServer.getWinHandler();
-            int wheelDelta = button == Pointer.Button.BUTTON_SCROLL_UP ? MOUSE_WHEEL_DELTA : (button == Pointer.Button.BUTTON_SCROLL_DOWN ? -MOUSE_WHEEL_DELTA : 0);
-            winHandler.mouseEvent(MouseEventFlags.getFlagFor(button, true), 0, 0, wheelDelta);
-        }
-        else {
-            Window grabWindow = xServer.grabManager.getWindow();
+    override fun onPointerButtonPress(button: Pointer.Button) {
+        if (xServer.isRelativeMouseMovement) {
+            val winHandler = xServer.winHandler
+            val wheelDelta = if (button == Pointer.Button.BUTTON_SCROLL_UP) {
+                MOUSE_WHEEL_DELTA.toInt()
+            } else {
+                if (button == Pointer.Button.BUTTON_SCROLL_DOWN) {
+                    -MOUSE_WHEEL_DELTA
+                } else {
+                    0
+                }
+            }
+            winHandler!!.mouseEvent(getFlagFor(button, true), 0, 0, wheelDelta)
+        } else {
+            var grabWindow = xServer.grabManager.window
             if (grabWindow == null) {
-                grabWindow = pointWindow.getAncestorWithEventId(Event.BUTTON_PRESS);
-                if (grabWindow != null) xServer.grabManager.activatePointerGrab(grabWindow);
+                grabWindow = pointWindow!!.getAncestorWithEventId(Event.BUTTON_PRESS)
+                if (grabWindow != null) {
+                    xServer.grabManager.activatePointerGrab(grabWindow)
+                }
             }
 
-            if (grabWindow != null && grabWindow.attributes.isEnabled()) {
-                Bitmask eventMask = createPointerEventMask();
-                eventMask.unset(button.flag());
+            if (grabWindow != null && grabWindow.attributes.isEnabled) {
+                val eventMask = createPointerEventMask()
 
-                short x = xServer.pointer.getX();
-                short y = xServer.pointer.getY();
-                short[] localPoint = grabWindow.rootPointToLocal(x, y);
+                eventMask.unset(button.flag())
 
-                Window child = grabWindow.isAncestorOf(pointWindow) ? pointWindow : null;
-                grabWindow.sendEvent(Event.BUTTON_PRESS, new ButtonPress(button.code(), xServer.windowManager.rootWindow, grabWindow, child, x, y, localPoint[0], localPoint[1], eventMask));
+                val x = xServer.pointer.x
+                val y = xServer.pointer.y
+                val localPoint = grabWindow.rootPointToLocal(x, y)
+
+                val child = if (grabWindow.isAncestorOf(pointWindow)) pointWindow else null
+                grabWindow.sendEvent(
+                    eventId = Event.BUTTON_PRESS,
+                    event = ButtonPress(
+                        detail = button.code(),
+                        root = xServer.windowManager.rootWindow,
+                        event = grabWindow,
+                        child = child,
+                        rootX = x,
+                        rootY = y,
+                        eventX = localPoint[0],
+                        eventY = localPoint[1],
+                        state = eventMask,
+                    ),
+                )
             }
         }
     }
 
-    @Override
-    public void onPointerButtonRelease(Pointer.Button button) {
-        if (xServer.isRelativeMouseMovement()) {
-            WinHandler winHandler = xServer.getWinHandler();
-            winHandler.mouseEvent(MouseEventFlags.getFlagFor(button, false), 0, 0, 0);
-        }
-        else {
-            Bitmask eventMask = createPointerEventMask();
-            Window grabWindow = xServer.grabManager.getWindow();
-            Window window = grabWindow == null || xServer.grabManager.isOwnerEvents() ? pointWindow.getAncestorWithEventMask(eventMask) : null;
+    override fun onPointerButtonRelease(button: Pointer.Button) {
+        if (xServer.isRelativeMouseMovement) {
+            val winHandler = xServer.winHandler
+            winHandler!!.mouseEvent(getFlagFor(button, false), 0, 0, 0)
+        } else {
+            val eventMask = createPointerEventMask()
+            val grabWindow = xServer.grabManager.window
+            val window =
+                if (grabWindow == null || xServer.grabManager.isOwnerEvents) {
+                    pointWindow!!.getAncestorWithEventMask(
+                        eventMask,
+                    )
+                } else {
+                    null
+                }
 
             if (grabWindow != null || window != null) {
-                Window eventWindow = window != null ? window : grabWindow;
+                val eventWindow: Window = (window ?: grabWindow)!!
 
-                short x = xServer.pointer.getX();
-                short y = xServer.pointer.getY();
-                short[] localPoint = eventWindow.rootPointToLocal(x, y);
+                val x = xServer.pointer.x
+                val y = xServer.pointer.y
+                val localPoint = eventWindow.rootPointToLocal(x, y)
 
-                Window child = eventWindow.isAncestorOf(pointWindow) ? pointWindow : null;
-                ButtonRelease buttonRelease = new ButtonRelease(button.code(), xServer.windowManager.rootWindow, eventWindow, child, x, y, localPoint[0], localPoint[1], eventMask);
-                sendEvent(window, eventMask, buttonRelease);
+                val child = if (eventWindow.isAncestorOf(pointWindow)) {
+                    pointWindow
+                } else {
+                    null
+                }
+                val buttonRelease = ButtonRelease(
+                    detail = button.code(),
+                    root = xServer.windowManager.rootWindow,
+                    event = eventWindow,
+                    child = child,
+                    rootX = x,
+                    rootY = y,
+                    eventX = localPoint[0],
+                    eventY = localPoint[1],
+                    state = eventMask,
+                )
+
+                sendEvent(window, eventMask, buttonRelease)
             }
 
-            if (xServer.pointer.getButtonMask().isEmpty() && xServer.grabManager.isReleaseWithButtons()) {
-                xServer.grabManager.deactivatePointerGrab();
+            if (xServer.pointer.buttonMask.isEmpty && xServer.grabManager.isReleaseWithButtons) {
+                xServer.grabManager.deactivatePointerGrab()
             }
         }
     }
 
-    @Override
-    public void onPointerMove(short x, short y) {
-        updatePointWindow();
-        Bitmask eventMask = createPointerEventMask();
-        Window grabWindow = xServer.grabManager.getWindow();
-        Window window = grabWindow == null || xServer.grabManager.isOwnerEvents() ? pointWindow.getAncestorWithEventMask(eventMask) : null;
+    override fun onPointerMove(x: Short, y: Short) {
+        updatePointWindow()
+
+        val eventMask = createPointerEventMask()
+        val grabWindow = xServer.grabManager.window
+
+        val window =
+            if (grabWindow == null || xServer.grabManager.isOwnerEvents) {
+                pointWindow!!.getAncestorWithEventMask(eventMask)
+            } else {
+                null
+            }
 
         if (grabWindow != null || window != null) {
-            Window eventWindow = window != null ? window : grabWindow;
-            short[] localPoint = eventWindow.rootPointToLocal(x, y);
+            val eventWindow: Window = (window ?: grabWindow)!!
+            val localPoint = eventWindow.rootPointToLocal(x, y)
 
-            Window child = eventWindow.isAncestorOf(pointWindow) ? pointWindow : null;
-            sendEvent(window, eventMask, new MotionNotify(false, xServer.windowManager.rootWindow, eventWindow, child, x, y, localPoint[0], localPoint[1], getKeyButMask()));
+            val child = if (eventWindow.isAncestorOf(pointWindow)) {
+                pointWindow
+            } else {
+                null
+            }
+
+            sendEvent(
+                window, eventMask,
+                MotionNotify(
+                    detail = false,
+                    root = xServer.windowManager.rootWindow,
+                    event = eventWindow,
+                    child = child,
+                    rootX = x,
+                    rootY = y,
+                    eventX = localPoint[0],
+                    eventY = localPoint[1],
+                    state = this.keyButMask,
+                ),
+            )
         }
     }
 
-    @Override
-    public void onKeyPress(byte keycode, int keysym) {
-        Window focusedWindow = xServer.windowManager.getFocusedWindow();
-        if (focusedWindow == null) return;
-        updatePointWindow();
+    override fun onKeyPress(keycode: Byte, keysym: Int) {
+        val focusedWindow = xServer.windowManager.focusedWindow
+        if (focusedWindow == null) {
+            return
+        }
 
-        Window eventWindow = null;
-        Window child = null;
+        updatePointWindow()
+
+        var eventWindow: Window? = null
+        var child: Window? = null
+
         if (focusedWindow.isAncestorOf(pointWindow)) {
-            eventWindow = pointWindow.getAncestorWithEventId(Event.KEY_PRESS, focusedWindow);
-            child = eventWindow.isAncestorOf(pointWindow) ? pointWindow : null;
+            eventWindow = pointWindow!!.getAncestorWithEventId(Event.KEY_PRESS, focusedWindow)
+            child = if (eventWindow!!.isAncestorOf(pointWindow)) {
+                pointWindow
+            } else {
+                null
+            }
         }
+
         if (eventWindow == null) {
-            if (!focusedWindow.hasEventListenerFor(Event.KEY_PRESS)) return;
-            eventWindow = focusedWindow;
+            if (!focusedWindow.hasEventListenerFor(Event.KEY_PRESS)) {
+                return
+            }
+
+            eventWindow = focusedWindow
         }
 
-        if (!eventWindow.attributes.isEnabled()) return;
+        if (!eventWindow.attributes.isEnabled) {
+            return
+        }
 
-        Bitmask keyButMask = getKeyButMask();
-        short x = xServer.pointer.getX();
-        short y = xServer.pointer.getY();
-        short[] localPoint = eventWindow.rootPointToLocal(x, y);
+        val keyButMask = this.keyButMask
+        val x = xServer.pointer.x
+        val y = xServer.pointer.y
+        val localPoint = eventWindow.rootPointToLocal(x, y)
 
         if (keysym != 0 && !xServer.keyboard.hasKeysym(keycode, keysym)) {
-            xServer.keyboard.setKeysyms(keycode, keysym, keysym);
-            eventWindow.sendEvent(new MappingNotify(MappingNotify.Request.KEYBOARD, keycode, 1));
+            xServer.keyboard.setKeysyms(keycode, keysym, keysym)
+            eventWindow.sendEvent(MappingNotify(MappingNotify.Request.KEYBOARD, keycode, 1))
         }
 
-        eventWindow.sendEvent(Event.KEY_PRESS, new KeyPress(keycode, xServer.windowManager.rootWindow, eventWindow, child, x, y, localPoint[0], localPoint[1], keyButMask));
+        eventWindow.sendEvent(
+            Event.KEY_PRESS,
+            KeyPress(
+                keycode = keycode,
+                root = xServer.windowManager.rootWindow,
+                event = eventWindow,
+                child = child,
+                rootX = x,
+                rootY = y,
+                eventX = localPoint[0],
+                eventY = localPoint[1],
+                state = keyButMask,
+            ),
+        )
     }
 
-    @Override
-    public void onKeyRelease(byte keycode) {
-        Window focusedWindow = xServer.windowManager.getFocusedWindow();
-        if (focusedWindow == null) return;
-        updatePointWindow();
+    override fun onKeyRelease(keycode: Byte) {
+        val focusedWindow = xServer.windowManager.focusedWindow
+        if (focusedWindow == null) {
+            return
+        }
 
-        Window eventWindow = null;
-        Window child = null;
+        updatePointWindow()
+
+        var eventWindow: Window? = null
+        var child: Window? = null
+
         if (focusedWindow.isAncestorOf(pointWindow)) {
-            eventWindow = pointWindow.getAncestorWithEventId(Event.KEY_RELEASE, focusedWindow);
-            child = eventWindow.isAncestorOf(pointWindow) ? pointWindow : null;
+            eventWindow = pointWindow!!.getAncestorWithEventId(Event.KEY_RELEASE, focusedWindow)
+            child = if (eventWindow!!.isAncestorOf(pointWindow)) {
+                pointWindow
+            } else {
+                null
+            }
         }
+
         if (eventWindow == null) {
-            if (!focusedWindow.hasEventListenerFor(Event.KEY_RELEASE)) return;
-            eventWindow = focusedWindow;
+            if (!focusedWindow.hasEventListenerFor(Event.KEY_RELEASE)) {
+                return
+            }
+
+            eventWindow = focusedWindow
         }
 
-        if (!eventWindow.attributes.isEnabled()) return;
+        if (!eventWindow.attributes.isEnabled) return
 
-        Bitmask keyButMask = getKeyButMask();
-        short x = xServer.pointer.getX();
-        short y = xServer.pointer.getY();
-        short[] localPoint = eventWindow.rootPointToLocal(x, y);
+        val keyButMask = this.keyButMask
+        val x = xServer.pointer.x
+        val y = xServer.pointer.y
+        val localPoint = eventWindow.rootPointToLocal(x, y)
 
-        eventWindow.sendEvent(Event.KEY_RELEASE, new KeyRelease(keycode, xServer.windowManager.rootWindow, eventWindow, child, x, y, localPoint[0], localPoint[1], keyButMask));
+        eventWindow.sendEvent(
+            Event.KEY_RELEASE,
+            KeyRelease(
+                keycode = keycode,
+                root = xServer.windowManager.rootWindow,
+                event = eventWindow,
+                child = child,
+                rootX = x,
+                rootY = y,
+                eventX = localPoint[0],
+                eventY = localPoint[1],
+                state = keyButMask,
+            ),
+        )
     }
 
-    private Bitmask createPointerEventMask() {
-        Bitmask eventMask = new Bitmask();
-        eventMask.set(Event.POINTER_MOTION);
+    private fun createPointerEventMask(): Bitmask {
+        val eventMask = Bitmask()
+        eventMask.set(Event.POINTER_MOTION)
 
-        Bitmask buttonMask = xServer.pointer.getButtonMask();
-        if (!buttonMask.isEmpty()) {
-            eventMask.set(Event.BUTTON_MOTION);
+        val buttonMask = xServer.pointer.buttonMask
+        if (!buttonMask.isEmpty) {
+            eventMask.set(Event.BUTTON_MOTION)
 
             if (buttonMask.isSet(Pointer.Button.BUTTON_LEFT.flag())) {
-                eventMask.set(Event.BUTTON1_MOTION);
+                eventMask.set(Event.BUTTON1_MOTION)
             }
             if (buttonMask.isSet(Pointer.Button.BUTTON_MIDDLE.flag())) {
-                eventMask.set(Event.BUTTON2_MOTION);
+                eventMask.set(Event.BUTTON2_MOTION)
             }
             if (buttonMask.isSet(Pointer.Button.BUTTON_RIGHT.flag())) {
-                eventMask.set(Event.BUTTON3_MOTION);
+                eventMask.set(Event.BUTTON3_MOTION)
             }
             if (buttonMask.isSet(Pointer.Button.BUTTON_SCROLL_UP.flag())) {
-                eventMask.set(Event.BUTTON4_MOTION);
+                eventMask.set(Event.BUTTON4_MOTION)
             }
             if (buttonMask.isSet(Pointer.Button.BUTTON_SCROLL_DOWN.flag())) {
-                eventMask.set(Event.BUTTON5_MOTION);
+                eventMask.set(Event.BUTTON5_MOTION)
             }
         }
-        return eventMask;
+
+        return eventMask
     }
 
-    public Bitmask getKeyButMask() {
-        Bitmask keyButMask = new Bitmask();
-        keyButMask.join(xServer.pointer.getButtonMask());
-        keyButMask.join(xServer.keyboard.getModifiersMask());
-        return keyButMask;
-    }
+    val keyButMask: Bitmask
+        get() {
+            val keyButMask = Bitmask()
+            keyButMask.join(xServer.pointer.buttonMask)
+            keyButMask.join(xServer.keyboard.modifiersMask)
+            return keyButMask
+        }
 }

@@ -1,30 +1,27 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-public class ScreenInfo {
-    public final short width;
-    public final short height;
+class ScreenInfo {
 
-    public ScreenInfo(String value) {
-        String[] parts = value.split("x");
-        width = Short.parseShort(parts[0]);
-        height = Short.parseShort(parts[1]);
+    val width: Short
+
+    val height: Short
+
+    val widthInMillimeters: Short
+        get() = (width / 10).toShort()
+
+    val heightInMillimeters: Short
+        get() = (height / 10).toShort()
+
+    constructor(value: String) {
+        val parts = value.split("x".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        width = parts[0].toShort()
+        height = parts[1].toShort()
     }
 
-    public ScreenInfo(int width, int height) {
-        this.width = (short)width;
-        this.height = (short)height;
+    constructor(width: Int, height: Int) {
+        this.width = width.toShort()
+        this.height = height.toShort()
     }
 
-    public short getWidthInMillimeters() {
-        return (short)(width / 10);
-    }
-
-    public short getHeightInMillimeters() {
-        return (short)(height / 10);
-    }
-
-    @Override
-    public String toString() {
-        return width+"x"+height;
-    }
+    override fun toString(): String = width.toString() + "x" + height
 }

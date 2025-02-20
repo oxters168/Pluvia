@@ -95,7 +95,7 @@ class SysVSharedMemory {
             for (i in 0..<shmemories.size()) {
                 val shmemory = shmemories.valueAt(i)
                 if (shmemory.data == data) {
-                    unmapSHMSegment(shmemory.data, shmemory.size)
+                    unmapSHMSegment(shmemory.data!!, shmemory.size)
                     shmemory.data = null
                     break
                 }
@@ -143,6 +143,6 @@ class SysVSharedMemory {
 
         external fun mapSHMSegment(fd: Int, size: Long, offset: Int, readonly: Boolean): ByteBuffer?
 
-        external fun unmapSHMSegment(data: ByteBuffer?, size: Long)
+        external fun unmapSHMSegment(data: ByteBuffer, size: Long)
     }
 }

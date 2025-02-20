@@ -115,8 +115,8 @@ fun XServerScreen(
                 XServerState(
                     graphicsDriver = container.graphicsDriver,
                     audioDriver = container.audioDriver,
-                    dxwrapper = container.dxWrapper,
-                    dxwrapperConfig = DXVKHelper.parseConfig(container.dxWrapperConfig),
+                    dxwrapper = container.dxwrapper,
+                    dxwrapperConfig = DXVKHelper.parseConfig(container.dxwrapperConfig),
                     screenSize = container.screenSize,
                 ),
             )
@@ -155,13 +155,13 @@ fun XServerScreen(
 
     BackHandler {
         Timber.i("BackHandler")
-        exit(xServerView!!.getxServer().winHandler, PluviaApp.xEnvironment, onExit)
+        exit(xServerView!!.xServer.winHandler, PluviaApp.xEnvironment, onExit)
     }
 
     DisposableEffect(lifecycleOwner) {
         val onActivityDestroyed: (AndroidEvent.ActivityDestroyed) -> Unit = {
             Timber.i("onActivityDestroyed")
-            exit(xServerView!!.getxServer().winHandler, PluviaApp.xEnvironment, onExit)
+            exit(xServerView!!.xServer.winHandler, PluviaApp.xEnvironment, onExit)
         }
         val onKeyEvent: (AndroidEvent.KeyEvent) -> Boolean = {
             val isKeyboard = Keyboard.isKeyboardDevice(it.event.device)
@@ -170,7 +170,7 @@ fun XServerScreen(
 
             var handled = false
             if (isGamepad) {
-                handled = xServerView!!.getxServer().winHandler.onKeyEvent(it.event)
+                handled = xServerView!!.xServer.winHandler.onKeyEvent(it.event)
                 // handled = ExternalController.onKeyEvent(xServer.winHandler, it.event)
             }
             if (!handled && isKeyboard) {
@@ -185,7 +185,7 @@ fun XServerScreen(
 
             var handled = false
             if (isGamepad) {
-                handled = xServerView!!.getxServer().winHandler.onGenericMotionEvent(it.event)
+                handled = xServerView!!.xServer.winHandler.onGenericMotionEvent(it.event)
                 // handled = ExternalController.onMotionEvent(xServer.winHandler, it.event)
             }
             if (!handled && isMouse) {
@@ -195,12 +195,12 @@ fun XServerScreen(
         }
         val onGuestProgramTerminated: (AndroidEvent.GuestProgramTerminated) -> Unit = {
             Timber.i("onGuestProgramTerminated")
-            exit(xServerView!!.getxServer().winHandler, PluviaApp.xEnvironment, onExit)
+            exit(xServerView!!.xServer.winHandler, PluviaApp.xEnvironment, onExit)
             navigateBack()
         }
         val onForceCloseApp: (SteamEvent.ForceCloseApp) -> Unit = {
             Timber.i("onForceCloseApp")
-            exit(xServerView!!.getxServer().winHandler, PluviaApp.xEnvironment, onExit)
+            exit(xServerView!!.xServer.winHandler, PluviaApp.xEnvironment, onExit)
             navigateBack()
         }
         val debugCallback = Callback<String> { outputLine ->
@@ -275,17 +275,17 @@ fun XServerScreen(
                 // this.background = ColorDrawable(Color.Green.toArgb())
                 val renderer = this.renderer
                 renderer.isCursorVisible = false
-                getxServer().renderer = renderer
-                getxServer().winHandler = WinHandler(getxServer(), this)
-                touchMouse = TouchMouse(getxServer())
-                keyboard = Keyboard(getxServer())
+                xServer.renderer = renderer
+                xServer.winHandler = WinHandler(xServer, this)
+                touchMouse = TouchMouse(xServer)
+                keyboard = Keyboard(xServer)
                 if (!bootToContainer) {
                     renderer.setUnviewableWMClasses("explorer.exe")
                     // TODO: make 'force fullscreen' be an option of the app being launched
                     appLaunchInfo?.let { renderer.forceFullscreenWMClass = Paths.get(it.executable).name }
                 }
 
-                getxServer().windowManager.addOnWindowModificationListener(
+                xServer.windowManager.addOnWindowModificationListener(
                     object : WindowManager.OnWindowModificationListener {
                         override fun onUpdateWindowContent(window: Window) {
                             // Timber.v("onUpdateWindowContent:" +
@@ -321,7 +321,7 @@ fun XServerScreen(
                                     "\n\thasParent: ${window.parent != null}" +
                                     "\n\tchildrenSize: ${window.children.size}",
                             )
-                            assignTaskAffinity(window, getxServer().winHandler, taskAffinityMask, taskAffinityMaskWoW64)
+                            assignTaskAffinity(window, xServer.winHandler, taskAffinityMask, taskAffinityMaskWoW64)
                             onWindowMapped?.invoke(window)
                         }
 
@@ -344,7 +344,7 @@ fun XServerScreen(
                     PluviaApp.xEnvironment = shiftXEnvironmentToContext(
                         context,
                         xEnvironment = PluviaApp.xEnvironment!!,
-                        getxServer(),
+                        xServer,
                     )
                 } else {
                     val containerManager = ContainerManager(context)
@@ -387,7 +387,7 @@ fun XServerScreen(
                     setupWineSystemFiles(
                         context,
                         firstTimeBoot,
-                        xServerView!!.getxServer().screenInfo,
+                        xServerView!!.xServer.screenInfo,
                         xServerState,
                         container,
                         containerManager,
@@ -411,7 +411,7 @@ fun XServerScreen(
                         envVars,
                         container,
                         appLaunchInfo,
-                        xServerView!!.getxServer(),
+                        xServerView!!.xServer,
                     )
                 }
             }

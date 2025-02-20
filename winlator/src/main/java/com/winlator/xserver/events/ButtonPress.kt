@@ -7,7 +7,7 @@ class ButtonPress(
     detail: Byte,
     root: Window,
     event: Window,
-    child: Window,
+    child: Window?,
     rootX: Short,
     rootY: Short,
     eventX: Short,

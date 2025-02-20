@@ -1,63 +1,77 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.graphics.Bitmap;
-import android.util.SparseArray;
+import android.graphics.Bitmap
+import android.util.SparseArray
+import com.winlator.xserver.IDGenerator.generate
 
-public class PixmapManager extends XResourceManager {
-    public final Visual visual;
-    public final Visual[] supportedVisuals;
-    public final PixmapFormat[] supportedPixmapFormats;
-    private final SparseArray<Pixmap> pixmaps = new SparseArray<>();
+class PixmapManager : XResourceManager() {
 
-    public PixmapManager() {
-        visual = new Visual(IDGenerator.generate(), true, 32, 24, 0xff0000, 0x00ff00, 0x0000ff);
-        supportedVisuals = new Visual[]{visual, new Visual(IDGenerator.generate(), false, 1, 1, 0, 0, 0)};
+    val visual: Visual = Visual(generate(), true, 32, 24, 0xff0000, 0x00ff00, 0x0000ff)
 
-        supportedPixmapFormats = new PixmapFormat[] {
-            new PixmapFormat(1, 1, 32),
-            new PixmapFormat(24, 32, 32),
-            new PixmapFormat(32, 32, 32)
-        };
-    }
+    val supportedVisuals: Array<Visual> = arrayOf<Visual>(visual, Visual(generate(), false, 1, 1, 0, 0, 0))
 
-    public Pixmap getPixmap(int id) {
-        return pixmaps.get(id);
-    }
+    val supportedPixmapFormats: Array<PixmapFormat> = arrayOf<PixmapFormat>(
+        PixmapFormat(1, 1, 32),
+        PixmapFormat(24, 32, 32),
+        PixmapFormat(32, 32, 32),
+    )
 
-    public Pixmap createPixmap(Drawable drawable) {
-        if (pixmaps.indexOfKey(drawable.id) >= 0) return null;
-        Pixmap pixmap = new Pixmap(drawable);
-        pixmaps.put(drawable.id, pixmap);
-        triggerOnCreateResourceListener(pixmap);
-        return pixmap;
-    }
+    private val pixmaps = SparseArray<Pixmap>()
 
-    public void freePixmap(int id) {
-        triggerOnFreeResourceListener(pixmaps.get(id));
-        pixmaps.remove(id);
-    }
+    fun getPixmap(id: Int): Pixmap? = pixmaps.get(id)
 
-    public Visual getVisualForDepth(byte depth) {
-        if (depth == visual.depth) return visual;
-        for (Visual visual : supportedVisuals) {
-            if (depth == visual.depth) return visual;
+    fun createPixmap(drawable: Drawable): Pixmap? {
+        if (pixmaps.indexOfKey(drawable.id) >= 0) {
+            return null
         }
-        return null;
+
+        val pixmap = Pixmap(drawable)
+
+        pixmaps.put(drawable.id, pixmap)
+        triggerOnCreateResourceListener(pixmap)
+
+        return pixmap
     }
 
-    public Visual getVisual(int id) {
-        if (id == visual.id) return visual;
-        for (Visual visual : supportedVisuals) {
-            if (id == visual.id && visual.displayable) return visual;
+    fun freePixmap(id: Int) {
+        triggerOnFreeResourceListener(pixmaps.get(id))
+        pixmaps.remove(id)
+    }
+
+    fun getVisualForDepth(depth: Byte): Visual? {
+        if (depth == visual.depth) {
+            return visual
         }
-        return null;
+
+        for (visual in supportedVisuals) {
+            if (depth == visual.depth) {
+                return visual
+            }
+        }
+
+        return null
     }
 
-    public Bitmap getWindowIcon(Window window) {
-        int colorPixmapId = window.getWMHintsValue(Window.WMHints.ICON_PIXMAP);
-        int maskPixmapId = window.getWMHintsValue(Window.WMHints.ICON_MASK);
-        Pixmap colorPixmap = colorPixmapId != 0 ? getPixmap(colorPixmapId) : null;
-        Pixmap maskPixmap = maskPixmapId != 0 ? getPixmap(maskPixmapId) : null;
-        return colorPixmap != null ? colorPixmap.toBitmap(maskPixmap) : null;
+    fun getVisual(id: Int): Visual? {
+        if (id == visual.id) {
+            return visual
+        }
+
+        for (visual in supportedVisuals) {
+            if (id == visual.id && visual.displayable) {
+                return visual
+            }
+        }
+
+        return null
+    }
+
+    fun getWindowIcon(window: Window): Bitmap? {
+        val colorPixmapId = window.getWMHintsValue(Window.WMHints.ICON_PIXMAP)
+        val maskPixmapId = window.getWMHintsValue(Window.WMHints.ICON_MASK)
+        val colorPixmap = if (colorPixmapId != 0) getPixmap(colorPixmapId) else null
+        val maskPixmap = if (maskPixmapId != 0) getPixmap(maskPixmapId) else null
+
+        return colorPixmap?.toBitmap(maskPixmap)
     }
 }

@@ -1,7 +1,8 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector
 
-import java.io.IOException;
+import java.io.IOException
 
-public interface XStreamLock extends AutoCloseable {
-    void close() throws IOException;
+fun interface XStreamLock : AutoCloseable {
+    @Throws(IOException::class)
+    override fun close()
 }

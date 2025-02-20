@@ -28,7 +28,7 @@ class SysVSharedMemoryComponent(
             start()
         }
 
-        xServer.shmSegmentManager = SHMSegmentManager(sysVSharedMemory)
+        xServer.shmSegmentManager = SHMSegmentManager(sysVSharedMemory!!)
     }
 
     override fun stop() {

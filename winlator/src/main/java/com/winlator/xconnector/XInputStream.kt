@@ -1,128 +1,119 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector
 
-import com.winlator.xserver.XServer;
+import com.winlator.xserver.XServer
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+class XInputStream(val clientSocket: ClientSocket?, initialCapacity: Int) {
 
-public class XInputStream {
-    private ByteBuffer activeBuffer;
-    private ByteBuffer buffer;
-    public final ClientSocket clientSocket;
+    private var activeBuffer: ByteBuffer? = null
 
-    public XInputStream(int initialCapacity) {
-        this(null, initialCapacity);
-    }
+    private var buffer: ByteBuffer = ByteBuffer.allocateDirect(initialCapacity)
 
-    public XInputStream(ClientSocket clientSocket, int initialCapacity) {
-        this.clientSocket = clientSocket;
-        this.buffer = ByteBuffer.allocateDirect(initialCapacity);
-    }
+    constructor(initialCapacity: Int) : this(null, initialCapacity)
 
-    public int readMoreData(boolean canReceiveAncillaryMessages) throws IOException {
+    @Throws(IOException::class)
+    fun readMoreData(canReceiveAncillaryMessages: Boolean): Int {
         if (activeBuffer != null) {
-            if (!activeBuffer.hasRemaining()) {
-                buffer.clear();
+            if (!activeBuffer!!.hasRemaining()) {
+                buffer.clear()
+            } else if (activeBuffer!!.position() > 0) {
+                val newLimit = buffer.position()
+                buffer.position(activeBuffer!!.position()).limit(newLimit)
+                buffer.compact()
             }
-            else if (activeBuffer.position() > 0) {
-                int newLimit = buffer.position();
-                buffer.position(activeBuffer.position()).limit(newLimit);
-                buffer.compact();
-            }
-            activeBuffer = null;
+
+            activeBuffer = null
         }
 
-        growInputBufferIfNecessary();
-        int bytesRead = canReceiveAncillaryMessages ? clientSocket.recvAncillaryMsg(buffer) : clientSocket.read(buffer);
+        growInputBufferIfNecessary()
+
+        val bytesRead = if (canReceiveAncillaryMessages) {
+            clientSocket!!.recvAncillaryMsg(buffer)
+        } else {
+            clientSocket!!.read(buffer)
+        }
 
         if (bytesRead > 0) {
-            int position = buffer.position();
-            buffer.flip();
-            activeBuffer = buffer.slice().order(buffer.order());
-            buffer.limit(buffer.capacity()).position(position);
+            val position = buffer.position()
+
+            buffer.flip()
+            activeBuffer = buffer.slice().order(buffer.order())
+            buffer.limit(buffer.capacity()).position(position)
         }
-        return bytesRead;
+
+        return bytesRead
     }
 
-    public int getAncillaryFd() {
-        return clientSocket.getAncillaryFd();
-    }
+    val ancillaryFd: Int
+        get() = clientSocket!!.ancillaryFd
 
-    private void growInputBufferIfNecessary() {
+    private fun growInputBufferIfNecessary() {
         if (buffer.position() == buffer.capacity()) {
-            ByteBuffer newBuffer = ByteBuffer.allocateDirect(buffer.capacity() * 2).order(buffer.order());
-            buffer.rewind();
-            newBuffer.put(buffer);
-            buffer = newBuffer;
+            val newBuffer = ByteBuffer.allocateDirect(buffer.capacity() * 2).order(buffer.order())
+            buffer.rewind()
+            newBuffer.put(buffer)
+            buffer = newBuffer
         }
     }
 
-    public void setByteOrder(ByteOrder byteOrder) {
-        buffer.order(byteOrder);
-        if (activeBuffer != null) activeBuffer.order(byteOrder);
+    fun setByteOrder(byteOrder: ByteOrder) {
+        buffer.order(byteOrder)
+
+        if (activeBuffer != null) {
+            activeBuffer!!.order(byteOrder)
+        }
     }
 
-    public int getActivePosition() {
-        return activeBuffer.position();
+    var activePosition: Int
+        get() = activeBuffer!!.position()
+        set(activePosition) {
+            activeBuffer!!.position(activePosition)
+        }
+
+    fun available(): Int = activeBuffer!!.remaining()
+
+    fun readByte(): Byte = activeBuffer!!.get()
+
+    fun readUnsignedByte(): Int = activeBuffer!!.get().toInt() and 0xFF
+
+    fun readShort(): Short = activeBuffer!!.getShort()
+
+    fun readUnsignedShort(): Int = activeBuffer!!.getShort().toInt() and 0xFFFF
+
+    fun readInt(): Int = activeBuffer!!.getInt()
+
+    fun readUnsignedInt(): Long = Integer.toUnsignedLong(activeBuffer!!.getInt())
+
+    fun readLong(): Long = activeBuffer!!.getLong()
+
+    fun read(result: ByteArray) {
+        activeBuffer!!.get(result)
     }
 
-    public void setActivePosition(int activePosition) {
-        activeBuffer.position(activePosition);
+    fun readByteBuffer(length: Int): ByteBuffer {
+        val newBuffer = activeBuffer!!.slice().order(activeBuffer!!.order())
+        newBuffer.limit(length)
+        activeBuffer!!.position(activeBuffer!!.position() + length)
+
+        return newBuffer
     }
 
-    public int available() {
-        return activeBuffer.remaining();
+    fun readString8(length: Int): String {
+        val bytes = ByteArray(length)
+        read(bytes)
+
+        val str = String(bytes, XServer.LATIN1_CHARSET)
+
+        if ((-length and 3) > 0) {
+            skip(-length and 3)
+        }
+
+        return str
     }
 
-    public byte readByte() {
-        return activeBuffer.get();
-    }
-
-    public int readUnsignedByte() {
-        return Byte.toUnsignedInt(activeBuffer.get());
-    }
-
-    public short readShort() {
-        return activeBuffer.getShort();
-    }
-
-    public int readUnsignedShort() {
-        return Short.toUnsignedInt(activeBuffer.getShort());
-    }
-
-    public int readInt() {
-        return activeBuffer.getInt();
-    }
-
-    public long readUnsignedInt() {
-        return Integer.toUnsignedLong(activeBuffer.getInt());
-    }
-
-    public long readLong() {
-        return activeBuffer.getLong();
-    }
-
-    public void read(byte[] result) {
-        activeBuffer.get(result);
-    }
-
-    public ByteBuffer readByteBuffer(int length) {
-        ByteBuffer newBuffer = activeBuffer.slice().order(activeBuffer.order());
-        newBuffer.limit(length);
-        activeBuffer.position(activeBuffer.position() + length);
-        return newBuffer;
-    }
-
-    public String readString8(int length) {
-        byte[] bytes = new byte[length];
-        read(bytes);
-        String str = new String(bytes, XServer.LATIN1_CHARSET);
-        if ((-length & 3) > 0) skip(-length & 3);
-        return str;
-    }
-
-    public void skip(int length) {
-        activeBuffer.position(activeBuffer.position() + length);
+    fun skip(length: Int) {
+        activeBuffer!!.position(activeBuffer!!.position() + length)
     }
 }

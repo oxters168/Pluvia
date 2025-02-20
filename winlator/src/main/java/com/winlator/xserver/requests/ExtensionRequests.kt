@@ -1,38 +1,36 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.XClient
+import com.winlator.xserver.XClientRequestHandler
+import com.winlator.xserver.errors.XRequestError
+import java.io.IOException
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.XRequestError;
-import com.winlator.xserver.extensions.Extension;
+object ExtensionRequests {
+    @Throws(IOException::class, XRequestError::class)
+    fun queryExtension(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val length = inputStream.readShort()
 
-import java.io.IOException;
+        inputStream.skip(2)
 
-public abstract class ExtensionRequests {
-    public static void queryExtension(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        short length = inputStream.readShort();
-        inputStream.skip(2);
-        String name = inputStream.readString8(length);
-        Extension extension = client.xServer.getExtensionByName(name);
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
+        val name = inputStream.readString8(length.toInt())
+        val extension = client.xServer.getExtensionByName(name)
 
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
             if (extension != null) {
-                outputStream.writeByte((byte)1);
-                outputStream.writeByte(extension.getMajorOpcode());
-                outputStream.writeByte(extension.getFirstEventId());
-                outputStream.writeByte(extension.getFirstErrorId());
-                outputStream.writePad(20);
-            }
-            else {
-                outputStream.writeByte((byte)0);
-                outputStream.writePad(23);
+                outputStream.writeByte(1.toByte())
+                outputStream.writeByte(extension.majorOpcode)
+                outputStream.writeByte(extension.firstEventId)
+                outputStream.writeByte(extension.firstErrorId)
+                outputStream.writePad(20)
+            } else {
+                outputStream.writeByte(0.toByte())
+                outputStream.writePad(23)
             }
         }
     }

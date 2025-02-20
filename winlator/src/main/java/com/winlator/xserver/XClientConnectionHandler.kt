@@ -1,23 +1,15 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import com.winlator.xconnector.Client;
-import com.winlator.xconnector.ConnectionHandler;
+import com.winlator.xconnector.Client
+import com.winlator.xconnector.ConnectionHandler
 
-public class XClientConnectionHandler implements ConnectionHandler {
-    private final XServer xServer;
-
-    public XClientConnectionHandler(XServer xServer) {
-        this.xServer = xServer;
+class XClientConnectionHandler(private val xServer: XServer) : ConnectionHandler {
+    override fun handleNewConnection(client: Client?) {
+        client?.createIOStreams()
+        client?.tag = XClient(xServer, client.inputStream!!, client.outputStream!!)
     }
 
-    @Override
-    public void handleNewConnection(Client client) {
-        client.createIOStreams();
-        client.setTag(new XClient(xServer, client.getInputStream(), client.getOutputStream()));
-    }
-
-    @Override
-    public void handleConnectionShutdown(Client client) {
-        ((XClient)client.getTag()).freeResources();
+    override fun handleConnectionShutdown(client: Client?) {
+        (client?.tag as XClient).freeResources()
     }
 }

@@ -1,446 +1,553 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Bitmask
+import com.winlator.xserver.Property
+import com.winlator.xserver.Window
+import com.winlator.xserver.WindowAttributes
+import com.winlator.xserver.WindowAttributes.WindowClass
+import com.winlator.xserver.WindowManager.FocusRevertTo
+import com.winlator.xserver.XClient
+import com.winlator.xserver.XClientRequestHandler
+import com.winlator.xserver.errors.BadAccess
+import com.winlator.xserver.errors.BadDrawable
+import com.winlator.xserver.errors.BadIdChoice
+import com.winlator.xserver.errors.BadMatch
+import com.winlator.xserver.errors.BadValue
+import com.winlator.xserver.errors.BadWindow
+import com.winlator.xserver.errors.XRequestError
+import com.winlator.xserver.events.CreateNotify
+import com.winlator.xserver.events.Event
+import com.winlator.xserver.events.RawEvent
+import java.io.IOException
+import kotlin.math.min
 
-import com.winlator.core.CursorLocker;
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Drawable;
-import com.winlator.xserver.Bitmask;
-import com.winlator.xserver.WindowAttributes;
-import com.winlator.xserver.errors.BadDrawable;
-import com.winlator.xserver.errors.BadIdChoice;
-import com.winlator.xserver.errors.BadValue;
-import com.winlator.xserver.events.CreateNotify;
-import com.winlator.xserver.events.Event;
-import com.winlator.xserver.Property;
-import com.winlator.xserver.Visual;
-import com.winlator.xserver.Window;
-import com.winlator.xserver.WindowManager;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.BadAccess;
-import com.winlator.xserver.errors.BadMatch;
-import com.winlator.xserver.errors.BadWindow;
-import com.winlator.xserver.errors.XRequestError;
-import com.winlator.xserver.events.RawEvent;
+object WindowRequests {
+    @Throws(XRequestError::class)
+    fun createWindow(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val depth = client.requestData
+        val windowId = inputStream.readInt()
+        val parentId = inputStream.readInt()
 
-import java.io.IOException;
-import java.util.List;
+        if (!client.isValidResourceId(windowId)) {
+            throw BadIdChoice(windowId)
+        }
 
-public abstract class WindowRequests {
-    public static void createWindow(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        byte depth = client.getRequestData();
-        int windowId = inputStream.readInt();
-        int parentId = inputStream.readInt();
+        val parent = client.xServer.windowManager.getWindow(parentId)
+        if (parent == null) {
+            throw BadWindow(parentId)
+        }
 
-        if (!client.isValidResourceId(windowId)) throw new BadIdChoice(windowId);
+        val x = inputStream.readShort()
+        val y = inputStream.readShort()
+        val width = inputStream.readShort()
+        val height = inputStream.readShort()
+        val borderWidth = inputStream.readShort()
+        val windowClass = WindowClass.entries.toTypedArray()[inputStream.readShort().toByte().toInt()]
+        val visual = client.xServer.pixmapManager.getVisual(inputStream.readInt())
+        val valueMask = Bitmask(inputStream.readInt())
 
-        Window parent = client.xServer.windowManager.getWindow(parentId);
-        if (parent == null) throw new BadWindow(parentId);
+        val window = client.xServer.windowManager.createWindow(windowId, parent, x, y, width, height, windowClass, visual, depth, client)
+        window.borderWidth = borderWidth
 
-        short x = inputStream.readShort();
-        short y = inputStream.readShort();
-        short width = inputStream.readShort();
-        short height = inputStream.readShort();
-        short borderWidth = inputStream.readShort();
-        WindowAttributes.WindowClass windowClass = WindowAttributes.WindowClass.values()[(byte)inputStream.readShort()];
-        Visual visual = client.xServer.pixmapManager.getVisual(inputStream.readInt());
-        Bitmask valueMask = new Bitmask(inputStream.readInt());
+        if (!valueMask.isEmpty) {
+            window.attributes.update(valueMask, inputStream, client)
+        }
 
-        Window window = client.xServer.windowManager.createWindow(windowId, parent, x, y, width, height, windowClass, visual, depth, client);
-        window.setBorderWidth(borderWidth);
-        if (!valueMask.isEmpty()) window.attributes.update(valueMask, inputStream, client);
-        client.setEventListenerForWindow(window, window.attributes.getEventMask());
-        client.registerAsOwnerOfResource(window);
-        parent.sendEvent(Event.SUBSTRUCTURE_NOTIFY, new CreateNotify(parent, window));
+        client.setEventListenerForWindow(window, window.attributes.eventMask)
+        client.registerAsOwnerOfResource(window)
+
+        parent.sendEvent(Event.SUBSTRUCTURE_NOTIFY, CreateNotify(parent, window))
     }
 
-    public static void getWindowAttributes(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
+    @Throws(IOException::class, XRequestError::class)
+    fun getWindowAttributes(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val windowId = inputStream.readInt()
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)window.attributes.getBackingStore().ordinal());
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(3);
-            outputStream.writeInt(window.isInputOutput() ? window.getContent().visual.id : 0);
-            outputStream.writeShort((short)window.attributes.getWindowClass().ordinal());
-            outputStream.writeByte((byte)window.attributes.getBitGravity().ordinal());
-            outputStream.writeByte((byte)window.attributes.getWinGravity().ordinal());
-            outputStream.writeInt(window.attributes.getBackingPlanes());
-            outputStream.writeInt(window.attributes.getBackingPixel());
-            outputStream.writeByte((byte)(window.attributes.isSaveUnder() ? 1 : 0));
-            outputStream.writeByte((byte)1);
-            outputStream.writeByte((byte)window.getMapState().ordinal());
-            outputStream.writeByte((byte)(window.attributes.isOverrideRedirect() ? 1 : 0));
-            outputStream.writeInt(0);
-            outputStream.writeInt(window.getAllEventMasks().getBits());
-            outputStream.writeInt(client.getEventMaskForWindow(window).getBits());
-            outputStream.writeShort((short)window.attributes.getDoNotPropagateMask().getBits());
-            outputStream.writeShort((short)0);
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(window.attributes.backingStore!!.ordinal.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(3)
+            outputStream.writeInt(if (window.isInputOutput) window.content!!.visual!!.id else 0)
+            outputStream.writeShort(window.attributes.windowClass!!.ordinal.toShort())
+            outputStream.writeByte(window.attributes.bitGravity!!.ordinal.toByte())
+            outputStream.writeByte(window.attributes.winGravity!!.ordinal.toByte())
+            outputStream.writeInt(window.attributes.backingPlanes)
+            outputStream.writeInt(window.attributes.backingPixel)
+            outputStream.writeByte((if (window.attributes.isSaveUnder) 1 else 0).toByte())
+            outputStream.writeByte(1.toByte())
+            outputStream.writeByte(window.mapState.ordinal.toByte())
+            outputStream.writeByte((if (window.attributes.isOverrideRedirect) 1 else 0).toByte())
+            outputStream.writeInt(0)
+            outputStream.writeInt(window.allEventMasks.bits)
+            outputStream.writeInt(client.getEventMaskForWindow(window).bits)
+            outputStream.writeShort(window.attributes.doNotPropagateMask.bits.toShort())
+            outputStream.writeShort(0.toShort())
         }
     }
 
-    public static void changeWindowAttributes(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int windowId = inputStream.readInt();
-        Bitmask valueMask = new Bitmask(inputStream.readInt());
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
-        if (!valueMask.isEmpty()) {
-            window.attributes.update(valueMask, inputStream, client);
+    @Throws(XRequestError::class)
+    fun changeWindowAttributes(
+        client: XClient,
+        inputStream: XInputStream,
+        outputStream: XOutputStream?,
+    ) {
+        val windowId = inputStream.readInt()
+        val valueMask = Bitmask(inputStream.readInt())
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
+
+        if (!valueMask.isEmpty) {
+            window.attributes.update(valueMask, inputStream, client)
 
             if (valueMask.isSet(WindowAttributes.FLAG_EVENT_MASK)) {
                 if (isClientCanSelectFor(Event.SUBSTRUCTURE_REDIRECT, window, client) &&
                     isClientCanSelectFor(Event.RESIZE_REDIRECT, window, client) &&
-                    isClientCanSelectFor(Event.BUTTON_PRESS, window, client)) {
-                    client.setEventListenerForWindow(window, window.attributes.getEventMask());
+                    isClientCanSelectFor(Event.BUTTON_PRESS, window, client)
+                ) {
+                    client.setEventListenerForWindow(window, window.attributes.eventMask)
+                } else {
+                    throw BadAccess()
                 }
-                else throw new BadAccess();
             }
         }
     }
 
-    private static boolean isClientCanSelectFor(int eventId, Window window, XClient client) {
-        return !window.attributes.getEventMask().isSet(eventId) || !(window.hasEventListenerFor(eventId) && !client.isInterestedIn(eventId, window));
+    private fun isClientCanSelectFor(eventId: Int, window: Window, client: XClient): Boolean {
+        return !window.attributes.eventMask.isSet(eventId) ||
+            !(window.hasEventListenerFor(eventId) && !client.isInterestedIn(eventId, window))
     }
 
-    public static void destroyWindow(XClient client, XInputStream inputStream, XOutputStream outputStream) {
-        client.xServer.windowManager.destroyWindow(inputStream.readInt());
+    fun destroyWindow(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        client.xServer.windowManager.destroyWindow(inputStream.readInt())
     }
 
-    public static void reparentWindow(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int windowId = inputStream.readInt();
-        int parentId = inputStream.readInt();
-        inputStream.skip(4);
+    @Throws(XRequestError::class)
+    fun reparentWindow(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val windowId = inputStream.readInt()
+        val parentId = inputStream.readInt()
 
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
+        inputStream.skip(4)
 
-        Window parent = client.xServer.windowManager.getWindow(parentId);
-        if (parent == null) throw new BadWindow(parentId);
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
 
-        client.xServer.windowManager.reparentWindow(window, parent);
+        val parent = client.xServer.windowManager.getWindow(parentId)
+        if (parent == null) {
+            throw BadWindow(parentId)
+        }
+
+        client.xServer.windowManager.reparentWindow(window, parent)
     }
 
-    public static void mapWindow(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
-        client.xServer.windowManager.mapWindow(window);
+    @Throws(XRequestError::class)
+    fun mapWindow(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val windowId = inputStream.readInt()
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
+
+        client.xServer.windowManager.mapWindow(window)
     }
 
-    public static void unmapWindow(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
-        client.xServer.windowManager.unmapWindow(window);
+    @Throws(XRequestError::class)
+    fun unmapWindow(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val windowId = inputStream.readInt()
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
+
+        client.xServer.windowManager.unmapWindow(window)
     }
 
-    public static void changeProperty(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        Property.Mode mode = Property.Mode.values()[client.getRequestData()];
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
+    @Throws(XRequestError::class)
+    fun changeProperty(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val mode: Property.Mode? = Property.Mode.entries.toTypedArray()[client.requestData.toInt()]
 
-        int atom = inputStream.readInt();
-        int type = inputStream.readInt();
-        byte format = inputStream.readByte();
-        inputStream.skip(3);
-        int length  = inputStream.readInt();
-        int totalSize = length * (format >> 3);
+        val windowId = inputStream.readInt()
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
 
-        byte[] data = null;
+        val atom = inputStream.readInt()
+        val type = inputStream.readInt()
+        val format = inputStream.readByte()
+
+        inputStream.skip(3)
+
+        val length = inputStream.readInt()
+        val totalSize = length * (format.toInt() shr 3)
+
+        var data: ByteArray? = null
         if (totalSize > 0) {
-            data = new byte[totalSize];
-            inputStream.read(data);
-            inputStream.skip(-totalSize & 3);
+            data = ByteArray(totalSize)
+            inputStream.read(data)
+            inputStream.skip(-totalSize and 3)
         }
 
-        Property property = window.modifyProperty(atom, type, Property.Format.valueOf(format), mode, data);
-        if (property == null) throw new BadMatch();
+        val property = window.modifyProperty(atom, type, Property.Format.valueOf(format.toInt())!!, mode, data!!)
+        if (property == null) {
+            throw BadMatch()
+        }
 
-        client.xServer.windowManager.triggerOnModifyWindowProperty(window, property);
+        client.xServer.windowManager.triggerOnModifyWindowProperty(window, property)
     }
 
-    public static void deleteProperty(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
-        window.removeProperty(inputStream.readInt());
+    @Throws(XRequestError::class)
+    fun deleteProperty(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val windowId = inputStream.readInt()
+
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
+
+        window.removeProperty(inputStream.readInt())
     }
 
-    public static void getProperty(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        boolean delete = client.getRequestData() == 1;
-        short sequenceNumber = client.getSequenceNumber();
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
+    @Throws(IOException::class, XRequestError::class)
+    fun getProperty(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val delete = client.requestData.toInt() == 1
+        val sequenceNumber = client.sequenceNumber
+        val windowId = inputStream.readInt()
 
-        int atom = inputStream.readInt();
-        int type = inputStream.readInt();
-        int longOffset = inputStream.readInt();
-        int longLength = inputStream.readInt();
-        Property property = window.getProperty(atom);
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
 
-        int bytesAfter = 0;
-        try (XStreamLock lock = outputStream.lock()) {
+        val atom = inputStream.readInt()
+        val type = inputStream.readInt()
+        val longOffset = inputStream.readInt()
+        val longLength = inputStream.readInt()
+        val property = window.getProperty(atom)
+
+        var bytesAfter = 0
+        outputStream.lock().use {
             if (property == null) {
-                outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-                outputStream.writeByte((byte)0);
-                outputStream.writeShort(sequenceNumber);
-                outputStream.writeInt(0);
-                outputStream.writeInt(0);
-                outputStream.writeInt(0);
-                outputStream.writeInt(0);
-                outputStream.writePad(12);
-            }
-            else if (property.type != type && type != 0) {
-                outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-                outputStream.writeByte(property.format.value);
-                outputStream.writeShort(sequenceNumber);
-                outputStream.writeInt(0);
-                outputStream.writeInt(property.type);
-                outputStream.writeInt(0);
-                outputStream.writeInt(0);
-                outputStream.writePad(12);
-            }
-            else {
-                byte[] data = property.data.array();
-                int offset = longOffset * 4;
-                int length = Math.min(data.length - offset, longLength * 4);
-                if (length < 0) throw new BadValue(longOffset);
-                bytesAfter = data.length - (offset + length);
+                outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+                outputStream.writeByte(0.toByte())
+                outputStream.writeShort(sequenceNumber)
+                outputStream.writeInt(0)
+                outputStream.writeInt(0)
+                outputStream.writeInt(0)
+                outputStream.writeInt(0)
+                outputStream.writePad(12)
+            } else if (property.type != type && type != 0) {
+                outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+                outputStream.writeByte(property.format.value)
+                outputStream.writeShort(sequenceNumber)
+                outputStream.writeInt(0)
+                outputStream.writeInt(property.type)
+                outputStream.writeInt(0)
+                outputStream.writeInt(0)
+                outputStream.writePad(12)
+            } else {
+                val data = property.data!!.array()
+                val offset = longOffset * 4
 
-                outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-                outputStream.writeByte(property.format.value);
-                outputStream.writeShort(sequenceNumber);
-                outputStream.writeInt((length + 3) / 4);
-                outputStream.writeInt(property.type);
-                outputStream.writeInt(bytesAfter);
-                outputStream.writeInt(length / (property.format.value / 8));
-                outputStream.writePad(12);
-                outputStream.write(data, offset, length);
-                if ((-length & 3) > 0) outputStream.writePad(-length & 3);
+                val length = min((data.size - offset).toDouble(), (longLength * 4).toDouble()).toInt()
+                if (length < 0) {
+                    throw BadValue(longOffset)
+                }
+
+                bytesAfter = data.size - (offset + length)
+
+                outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+                outputStream.writeByte(property.format.value)
+                outputStream.writeShort(sequenceNumber)
+                outputStream.writeInt((length + 3) / 4)
+                outputStream.writeInt(property.type)
+                outputStream.writeInt(bytesAfter)
+                outputStream.writeInt(length / (property.format.value / 8))
+                outputStream.writePad(12)
+                outputStream.write(data, offset, length)
+
+                if ((-length and 3) > 0) {
+                    outputStream.writePad(-length and 3)
+                }
             }
         }
 
         if (delete && property != null && bytesAfter == 0) {
-            window.removeProperty(atom);
+            window.removeProperty(atom)
         }
     }
 
-    public static void queryPointer(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
-        short rootX = client.xServer.pointer.getClampedX();
-        short rootY = client.xServer.pointer.getClampedY();
-        Window child = window.getChildByCoords(rootX, rootY);
-        short[] localPoint = window.rootPointToLocal(rootX, rootY);
+    @Throws(IOException::class, XRequestError::class)
+    fun queryPointer(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val windowId = inputStream.readInt()
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)(!client.xServer.isRelativeMouseMovement() ? 1 : 0));
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
-            outputStream.writeInt(client.xServer.windowManager.rootWindow.id);
-            outputStream.writeInt(child != null ? child.id : 0);
-            outputStream.writeShort(rootX);
-            outputStream.writeShort(rootY);
-            outputStream.writeShort(localPoint[0]);
-            outputStream.writeShort(localPoint[1]);
-            outputStream.writeShort((short)client.xServer.inputDeviceManager.getKeyButMask().getBits());
-            outputStream.writePad(6);
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
+
+        val rootX = client.xServer.pointer.clampedX
+        val rootY = client.xServer.pointer.clampedY
+        val child = window.getChildByCoords(rootX, rootY)
+        val localPoint = window.rootPointToLocal(rootX, rootY)
+
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte((if (!client.xServer.isRelativeMouseMovement) 1 else 0).toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
+            outputStream.writeInt(client.xServer.windowManager.rootWindow.id)
+            outputStream.writeInt(child?.id ?: 0)
+            outputStream.writeShort(rootX)
+            outputStream.writeShort(rootY)
+            outputStream.writeShort(localPoint[0])
+            outputStream.writeShort(localPoint[1])
+            outputStream.writeShort(client.xServer.inputDeviceManager.keyButMask.bits.toShort())
+            outputStream.writePad(6)
         }
     }
 
-    public static void translateCoordinates(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        int srcWindowId = inputStream.readInt();
-        int dstWindowId = inputStream.readInt();
-        short srcX = inputStream.readShort();
-        short srcY = inputStream.readShort();
+    @Throws(IOException::class, XRequestError::class)
+    fun translateCoordinates(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val srcWindowId = inputStream.readInt()
+        val dstWindowId = inputStream.readInt()
+        val srcX = inputStream.readShort()
+        val srcY = inputStream.readShort()
 
-        Window srcWindow = client.xServer.windowManager.getWindow(srcWindowId);
-        Window dstWindow = client.xServer.windowManager.getWindow(dstWindowId);
+        val srcWindow = client.xServer.windowManager.getWindow(srcWindowId)
+        if (srcWindow == null) {
+            throw BadWindow(srcWindowId)
+        }
 
-        if (srcWindow == null) throw new BadWindow(srcWindowId);
-        if (dstWindow == null) throw new BadWindow(dstWindowId);
+        val dstWindow = client.xServer.windowManager.getWindow(dstWindowId)
+        if (dstWindow == null) {
+            throw BadWindow(dstWindowId)
+        }
 
-        short[] rootPoint = srcWindow.localPointToRoot(srcX, srcY);
-        short[] localPoint = dstWindow.rootPointToLocal(rootPoint[0], rootPoint[1]);
-        Window child = dstWindow.getChildByCoords(rootPoint[0], rootPoint[1]);
+        val rootPoint = srcWindow.localPointToRoot(srcX, srcY)
+        val localPoint = dstWindow.rootPointToLocal(rootPoint!![0], rootPoint[1])
+        val child = dstWindow.getChildByCoords(rootPoint[0], rootPoint[1])
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)1);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
-            outputStream.writeInt(child != null ? child.id : 0);
-            outputStream.writeShort(localPoint[0]);
-            outputStream.writeShort(localPoint[1]);
-            outputStream.writePad(16);
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(1.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
+            outputStream.writeInt(child?.id ?: 0)
+            outputStream.writeShort(localPoint[0])
+            outputStream.writeShort(localPoint[1])
+            outputStream.writePad(16)
         }
     }
 
-    public static void warpPointer(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        if (client.xServer.isRelativeMouseMovement()) {
-            client.skipRequest();
-            return;
+    @Throws(IOException::class, XRequestError::class)
+    fun warpPointer(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        if (client.xServer.isRelativeMouseMovement) {
+            client.skipRequest()
+            return
         }
 
-        Window srcWindow = client.xServer.windowManager.getWindow(inputStream.readInt());
-        Window dstWindow = client.xServer.windowManager.getWindow(inputStream.readInt());
-        short srcX = inputStream.readShort();
-        short srcY = inputStream.readShort();
-        short srcWidth = inputStream.readShort();
-        short srcHeight = inputStream.readShort();
-        short dstX = inputStream.readShort();
-        short dstY = inputStream.readShort();
+        val srcWindow = client.xServer.windowManager.getWindow(inputStream.readInt())
+        val dstWindow = client.xServer.windowManager.getWindow(inputStream.readInt())
+        val srcX = inputStream.readShort()
+        val srcY = inputStream.readShort()
+        var srcWidth = inputStream.readShort()
+        var srcHeight = inputStream.readShort()
+        val dstX = inputStream.readShort()
+        val dstY = inputStream.readShort()
 
         if (srcWindow != null) {
-            if (srcWidth == 0) srcWidth = (short)(srcWindow.getWidth() - srcX);
-            if (srcHeight == 0) srcHeight = (short)(srcWindow.getHeight() - srcY);
+            if (srcWidth.toInt() == 0) {
+                srcWidth = (srcWindow.width - srcX).toShort()
+            }
 
-            short[] localPoint = srcWindow.rootPointToLocal(client.xServer.pointer.getX(), client.xServer.pointer.getY());
-            boolean isContained = localPoint[0] >= srcX && localPoint[1] >= srcY && localPoint[0] < (srcX + srcWidth) && localPoint[1] < (srcY + srcHeight);
-            if (!isContained) return;
+            if (srcHeight.toInt() == 0) {
+                srcHeight = (srcWindow.height - srcY).toShort()
+            }
+
+            val localPoint = srcWindow.rootPointToLocal(client.xServer.pointer.x, client.xServer.pointer.y)
+            val isContained = localPoint[0] >= srcX &&
+                localPoint[1] >= srcY &&
+                localPoint[0] < (srcX + srcWidth) &&
+                localPoint[1] < (srcY + srcHeight)
+            if (!isContained) {
+                return
+            }
         }
 
         if (dstWindow == null) {
-            client.xServer.pointer.setX(client.xServer.pointer.getX() + dstX);
-            client.xServer.pointer.setY(client.xServer.pointer.getY() + dstY);
-        }
-        else {
-            short[] localPoint = dstWindow.localPointToRoot(dstX, dstY);
-            client.xServer.pointer.setX(localPoint[0]);
-            client.xServer.pointer.setY(localPoint[1]);
-        }
-    }
-
-    public static void setInputFocus(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        WindowManager.FocusRevertTo focusRevertTo = WindowManager.FocusRevertTo.values()[client.getRequestData()];
-        int windowId = inputStream.readInt();
-        inputStream.skip(4);
-
-        switch (focusRevertTo) {
-            case NONE:
-                client.xServer.windowManager.setFocus(null, focusRevertTo);
-                break;
-            case POINTER_ROOT:
-                client.xServer.windowManager.setFocus(client.xServer.windowManager.rootWindow, focusRevertTo);
-                break;
-            case PARENT:
-                Window window = client.xServer.windowManager.getWindow(windowId);
-                if (window == null) throw new BadWindow(windowId);
-                client.xServer.windowManager.setFocus(window, focusRevertTo);
-                break;
+            client.xServer.pointer.setX(client.xServer.pointer.x + dstX)
+            client.xServer.pointer.setY(client.xServer.pointer.y + dstY)
+        } else {
+            val localPoint = dstWindow.localPointToRoot(dstX, dstY)
+            client.xServer.pointer.setX(localPoint!![0].toInt())
+            client.xServer.pointer.setY(localPoint[1].toInt())
         }
     }
 
-    public static void getInputFocus(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        Window focusedWindow = client.xServer.windowManager.getFocusedWindow();
+    @Throws(XRequestError::class)
+    fun setInputFocus(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val focusRevertTo: FocusRevertTo = FocusRevertTo.entries.toTypedArray()[client.requestData.toInt()]
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)client.xServer.windowManager.getFocusRevertTo().ordinal());
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
-            outputStream.writeInt(focusedWindow != null ? focusedWindow.id : 0);
-            outputStream.writePad(20);
+        val windowId = inputStream.readInt()
+
+        inputStream.skip(4)
+
+        when (focusRevertTo) {
+            FocusRevertTo.NONE -> client.xServer.windowManager.setFocus(null, focusRevertTo)
+            FocusRevertTo.POINTER_ROOT -> client.xServer.windowManager.setFocus(client.xServer.windowManager.rootWindow, focusRevertTo)
+
+            FocusRevertTo.PARENT -> {
+                val window = client.xServer.windowManager.getWindow(windowId)
+                if (window == null) {
+                    throw BadWindow(windowId)
+                }
+
+                client.xServer.windowManager.setFocus(window, focusRevertTo)
+            }
         }
     }
 
-    public static void configureWindow(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
-        Bitmask valueMask = new Bitmask(inputStream.readShort());
-        inputStream.skip(2);
-        if (!valueMask.isEmpty()) client.xServer.windowManager.configureWindow(window, valueMask, inputStream);
-    }
+    @Throws(IOException::class, XRequestError::class)
+    fun getInputFocus(client: XClient, inputStream: XInputStream?, outputStream: XOutputStream) {
+        val focusedWindow = client.xServer.windowManager.focusedWindow
 
-    public static void getGeometry(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        int drawableId = inputStream.readInt();
-        Drawable drawable =  client.xServer.drawableManager.getDrawable(drawableId);
-        if (drawable == null) throw new BadDrawable(drawableId);
-        Window window = client.xServer.windowManager.getWindow(drawableId);
-        short x = window != null ? window.getX() : 0;
-        short y = window != null ? window.getY() : 0;
-        short borderWidth = window != null ? window.getBorderWidth() : 0;
-
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte(drawable.visual.depth);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
-            outputStream.writeInt(client.xServer.windowManager.rootWindow.id);
-            outputStream.writeShort(x);
-            outputStream.writeShort(y);
-            outputStream.writeShort(drawable.width);
-            outputStream.writeShort(drawable.height);
-            outputStream.writeShort(borderWidth);
-            outputStream.writePad(10);
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(client.xServer.windowManager.focusRevertTo.ordinal.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
+            outputStream.writeInt(focusedWindow?.id ?: 0)
+            outputStream.writePad(20)
         }
     }
 
-    public static void queryTree(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        int windowId = inputStream.readInt();
-        Window window = client.xServer.windowManager.getWindow(windowId);
-        if (window == null) throw new BadWindow(windowId);
-        Window parent = window.getParent();
-        List<Window> children = window.getChildren();
+    @Throws(XRequestError::class)
+    fun configureWindow(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val windowId = inputStream.readInt()
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(children.size());
-            outputStream.writeInt(client.xServer.windowManager.rootWindow.id);
-            outputStream.writeInt(parent != null ? parent.id : 0);
-            outputStream.writeShort((short)children.size());
-            outputStream.writePad(14);
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
 
-            for (int i = children.size()-1; i >= 0; i--) outputStream.writeInt(children.get(i).id);
+        val valueMask = Bitmask(inputStream.readShort().toInt())
+
+        inputStream.skip(2)
+
+        if (!valueMask.isEmpty) {
+            client.xServer.windowManager.configureWindow(window, valueMask, inputStream)
         }
     }
 
-    public static void sendEvent(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        int windowId = inputStream.readInt();
+    @Throws(IOException::class, XRequestError::class)
+    fun getGeometry(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val drawableId = inputStream.readInt()
+
+        val drawable = client.xServer.drawableManager.getDrawable(drawableId)
+        if (drawable == null) {
+            throw BadDrawable(drawableId)
+        }
+
+        val window = client.xServer.windowManager.getWindow(drawableId)
+        val x = window?.x ?: 0
+        val y = window?.y ?: 0
+        val borderWidth = window?.borderWidth ?: 0
+
+        outputStream.lock().use { lock ->
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(drawable.visual!!.depth)
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
+            outputStream.writeInt(client.xServer.windowManager.rootWindow.id)
+            outputStream.writeShort(x)
+            outputStream.writeShort(y)
+            outputStream.writeShort(drawable.width)
+            outputStream.writeShort(drawable.height)
+            outputStream.writeShort(borderWidth)
+            outputStream.writePad(10)
+        }
+    }
+
+    @Throws(IOException::class, XRequestError::class)
+    fun queryTree(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val windowId = inputStream.readInt()
+
+        val window = client.xServer.windowManager.getWindow(windowId)
+        if (window == null) {
+            throw BadWindow(windowId)
+        }
+
+        val parent = window.parent
+        val children = window.children
+
+        outputStream.lock().use { lock ->
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(children.size)
+            outputStream.writeInt(client.xServer.windowManager.rootWindow.id)
+            outputStream.writeInt(parent?.id ?: 0)
+            outputStream.writeShort(children.size.toShort())
+            outputStream.writePad(14)
+
+            for (i in children.indices.reversed()) {
+                outputStream.writeInt(children[i].id)
+            }
+        }
+    }
+
+    @Throws(IOException::class, XRequestError::class)
+    fun sendEvent(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val windowId = inputStream.readInt()
 
         if (windowId == 0 || windowId == 1) {
-            client.skipRequest();
-            return;
+            client.skipRequest()
+            return
         }
 
-        Window destination = client.xServer.windowManager.getWindow(windowId);
-        if (destination == null) throw new BadWindow(windowId);
-
-        Bitmask eventMask = new Bitmask(inputStream.readInt());
-
-        byte[] data = new byte[32];
-        inputStream.read(data);
-        Event event = new RawEvent(data);
-
-        if (eventMask.isEmpty()) {
-            destination.originClient.sendEvent(event);
+        val destination = client.xServer.windowManager.getWindow(windowId)
+        if (destination == null) {
+            throw BadWindow(windowId)
         }
-        else destination.sendEvent(eventMask, event);
+
+        val eventMask = Bitmask(inputStream.readInt())
+
+        val data = ByteArray(32)
+
+        inputStream.read(data)
+
+        val event: Event = RawEvent(data)
+
+        if (eventMask.isEmpty) {
+            destination.originClient?.sendEvent(event)
+        } else {
+            destination.sendEvent(eventMask, event)
+        }
     }
 
-    public static void getScreenSaver(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
-            outputStream.writeShort((short)600);
-            outputStream.writeShort((short)600);
-            outputStream.writeByte((byte)1);
-            outputStream.writeByte((byte)1);
-            outputStream.writePad(18);
+    @Throws(IOException::class, XRequestError::class)
+    fun getScreenSaver(client: XClient, inputStream: XInputStream?, outputStream: XOutputStream) {
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
+            outputStream.writeShort(600.toShort())
+            outputStream.writeShort(600.toShort())
+            outputStream.writeByte(1.toByte())
+            outputStream.writeByte(1.toByte())
+            outputStream.writePad(18)
         }
     }
 }

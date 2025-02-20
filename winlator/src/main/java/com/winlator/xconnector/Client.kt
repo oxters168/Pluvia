@@ -1,54 +1,46 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import timber.log.Timber
 
-public class Client {
-    public final ClientSocket clientSocket;
-    private final XConnectorEpoll connector;
-    private XInputStream inputStream;
-    private XOutputStream outputStream;
-    private Object tag;
-    protected Thread pollThread;
-    protected int shutdownFd;
-    protected boolean connected;
+class Client(private val connector: XConnectorEpoll, val clientSocket: ClientSocket?) {
 
-    public Client(XConnectorEpoll connector, ClientSocket clientSocket) {
-        this.connector = connector;
-        this.clientSocket = clientSocket;
-    }
+    var inputStream: XInputStream? = null
+        private set
 
-    public void createIOStreams() {
-        if (inputStream != null || outputStream != null) return;
-        inputStream = new XInputStream(clientSocket, connector.getInitialInputBufferCapacity());
-        outputStream = new XOutputStream(clientSocket, connector.getInitialOutputBufferCapacity());
-        inputStream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
-        outputStream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
-    }
+    var outputStream: XOutputStream? = null
+        private set
 
-    public XInputStream getInputStream() {
-        return inputStream;
-    }
+    var tag: Any? = null
 
-    public XOutputStream getOutputStream() {
-        return outputStream;
-    }
+    var pollThread: Thread? = null
 
-    public Object getTag() {
-        return tag;
-    }
+    var shutdownFd: Int = 0
 
-    public void setTag(Object tag) {
-        this.tag = tag;
-    }
+    var connected: Boolean = false
 
-    protected void requestShutdown() {
-        try {
-            ByteBuffer data = ByteBuffer.allocateDirect(8);
-            data.asLongBuffer().put(1);
-            (new ClientSocket(shutdownFd)).write(data);
+    fun createIOStreams() {
+        if (inputStream != null || outputStream != null) {
+            return
         }
-        catch (IOException e) {}
+
+        inputStream = XInputStream(clientSocket, connector.initialInputBufferCapacity).apply {
+            setByteOrder(ByteOrder.LITTLE_ENDIAN)
+        }
+        outputStream = XOutputStream(clientSocket, connector.initialOutputBufferCapacity).apply {
+            setByteOrder(ByteOrder.LITTLE_ENDIAN)
+        }
+    }
+
+    fun requestShutdown() {
+        try {
+            val data = ByteBuffer.allocateDirect(8)
+            data.asLongBuffer().put(1)
+            (ClientSocket(shutdownFd)).write(data)
+        } catch (e: IOException) {
+            Timber.w(e)
+        }
     }
 }

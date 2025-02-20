@@ -1,32 +1,20 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import com.winlator.xserver.events.Event;
+import com.winlator.xserver.events.Event
+import java.io.IOException
+import timber.log.Timber
 
-import java.io.IOException;
+class EventListener(val client: XClient, val eventMask: Bitmask) {
 
-public class EventListener {
-    public final XClient client;
-    public final Bitmask eventMask;
+    fun isInterestedIn(eventId: Int): Boolean = eventMask.isSet(eventId)
 
-    public EventListener(XClient client, Bitmask eventMask) {
-        this.client = client;
-        this.eventMask = eventMask;
-    }
+    fun isInterestedIn(mask: Bitmask): Boolean = this.eventMask.intersects(mask)
 
-    public boolean isInterestedIn(int eventId) {
-        return eventMask.isSet(eventId);
-    }
-
-    public boolean isInterestedIn(Bitmask mask) {
-        return this.eventMask.intersects(mask);
-    }
-
-    public void sendEvent(Event event) {
+    fun sendEvent(event: Event) {
         try {
-            event.send(client.getSequenceNumber(), client.getOutputStream());
-        }
-        catch (IOException e) {
-            e.printStackTrace();
+            event.send(client.sequenceNumber, client.outputStream)
+        } catch (e: IOException) {
+            Timber.e(e)
         }
     }
 }

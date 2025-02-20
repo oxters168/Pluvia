@@ -1,60 +1,58 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import com.winlator.xserver.XResourceManager.OnResourceLifecycleListener
 
-import androidx.annotation.Nullable;
+class DrawableManager(private val xServer: XServer) : XResourceManager(), OnResourceLifecycleListener {
 
-import com.winlator.core.Callback;
-import com.winlator.renderer.Texture;
+    private val drawables = SparseArray<Drawable>()
 
-public class DrawableManager extends XResourceManager implements XResourceManager.OnResourceLifecycleListener {
-    private final XServer xServer;
-    private final SparseArray<Drawable> drawables = new SparseArray<>();
+    val visual: Visual?
+        get() = xServer.pixmapManager.visual
 
-    public DrawableManager(XServer xServer) {
-        this.xServer = xServer;
-        xServer.pixmapManager.addOnResourceLifecycleListener(this);
+    init {
+        xServer.pixmapManager.addOnResourceLifecycleListener(this)
     }
 
-    public Drawable getDrawable(int id) {
-        return drawables.get(id);
+    fun getDrawable(id: Int): Drawable? = drawables.get(id)
+
+    fun createDrawable(id: Int, width: Short, height: Short, depth: Byte): Drawable? =
+        createDrawable(id, width, height, xServer.pixmapManager.getVisualForDepth(depth))
+
+    fun createDrawable(id: Int, width: Short, height: Short, visual: Visual?): Drawable? {
+        if (id == 0) {
+            return Drawable(id, width.toInt(), height.toInt(), visual)
+        }
+
+        if (drawables.indexOfKey(id) >= 0) {
+            return null
+        }
+
+        val drawable = Drawable(id, width.toInt(), height.toInt(), visual)
+
+        drawables.put(id, drawable)
+
+        return drawable
     }
 
-    public Drawable createDrawable(int id, short width, short height, byte depth) {
-        return createDrawable(id, width, height, xServer.pixmapManager.getVisualForDepth(depth));
+    fun removeDrawable(id: Int) {
+        val drawable = drawables.get(id)
+
+        val texture = drawable.texture
+        xServer.renderer?.xServerView?.queueEvent(Runnable { texture?.destroy() })
+
+        drawable.onDestroyListener?.call(drawable)
+        drawable.onDrawListener = null
+
+        drawables.remove(id)
     }
 
-    public Drawable createDrawable(int id, short width, short height, Visual visual) {
-        if (id == 0) return new Drawable(id, width, height, visual);
-        if (drawables.indexOfKey(id) >= 0) return null;
-        Drawable drawable = new Drawable(id, width, height, visual);
-        drawables.put(id, drawable);
-        return drawable;
+    override fun onCreateResource(resource: XResource?) {
     }
 
-    public void removeDrawable(int id) {
-        Drawable drawable = drawables.get(id);
-
-        final Texture texture = drawable.getTexture();
-        if (texture != null) xServer.getRenderer().xServerView.queueEvent(texture::destroy);
-
-        Callback<Drawable> onDestroyListener = drawable.getOnDestroyListener();
-        if (onDestroyListener != null) onDestroyListener.call(drawable);
-
-        drawable.setOnDrawListener(null);
-        drawables.remove(id);
-    }
-
-    @Override
-    public void onCreateResource(@Nullable XResource resource) {
-    }
-
-    @Override
-    public void onFreeResource(XResource resource) {
-        if (resource instanceof Pixmap) removeDrawable(((Pixmap)resource).drawable.id);
-    }
-
-    public Visual getVisual() {
-        return xServer.pixmapManager.visual;
+    override fun onFreeResource(resource: XResource?) {
+        if (resource is Pixmap) {
+            removeDrawable(resource.drawable.id)
+        }
     }
 }

@@ -187,8 +187,14 @@ class ContainerManager(private val context: Context) {
         return shortcuts
     }
 
-    fun getNextContainerId(): Int {
-        return maxContainerId + 1
+    fun getNextContainerId(): Int = maxContainerId + 1
+
+    fun hasContainer(id: Int): Boolean {
+        containers.forEach { container ->
+            return container.id == id
+        }
+
+        return false
     }
 
     fun getContainerById(id: Int): Container? {

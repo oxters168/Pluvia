@@ -1,13 +1,7 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-public class PixmapFormat {
-    public final byte depth;
-    public final byte bitsPerPixel;
-    public final byte scanlinePad;
-
-    public PixmapFormat(int depth, int bitsPerPixel, int scanlinePad) {
-        this.depth = (byte)depth;
-        this.bitsPerPixel = (byte)bitsPerPixel;
-        this.scanlinePad = (byte)scanlinePad;
-    }
+class PixmapFormat(depth: Int, bitsPerPixel: Int, scanlinePad: Int) {
+    val depth: Byte = depth.toByte()
+    val bitsPerPixel: Byte = bitsPerPixel.toByte()
+    val scanlinePad: Byte = scanlinePad.toByte()
 }

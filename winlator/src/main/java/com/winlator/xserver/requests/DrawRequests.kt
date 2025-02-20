@@ -1,164 +1,213 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.GraphicsContext
+import com.winlator.xserver.XClient
+import com.winlator.xserver.XClientRequestHandler
+import com.winlator.xserver.errors.BadDrawable
+import com.winlator.xserver.errors.BadGraphicsContext
+import com.winlator.xserver.errors.BadMatch
+import com.winlator.xserver.errors.XRequestError
+import java.io.IOException
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Drawable;
-import com.winlator.xserver.GraphicsContext;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.BadDrawable;
-import com.winlator.xserver.errors.BadGraphicsContext;
-import com.winlator.xserver.errors.BadMatch;
-import com.winlator.xserver.errors.XRequestError;
+object DrawRequests {
+    @Throws(XRequestError::class)
+    fun putImage(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val format = Format.entries[client.requestData.toInt()]
+        val drawableId = inputStream.readInt()
+        val gcId = inputStream.readInt()
+        val width = inputStream.readShort()
+        val height = inputStream.readShort()
+        val dstX = inputStream.readShort()
+        val dstY = inputStream.readShort()
+        val leftPad = inputStream.readByte()
+        val depth = inputStream.readByte()
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+        inputStream.skip(2)
 
-public abstract class DrawRequests {
-    public enum Format {BITMAP, XY_PIXMAP, Z_PIXMAP}
-    private enum CoordinateMode {ORIGIN, PREVIOUS}
+        val length = client.remainingRequestLength
+        val data = inputStream.readByteBuffer(length)
 
-    public static void putImage(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        Format format = Format.values()[client.getRequestData()];
-        int drawableId = inputStream.readInt();
-        int gcId = inputStream.readInt();
-        short width = inputStream.readShort();
-        short height = inputStream.readShort();
-        short dstX = inputStream.readShort();
-        short dstY = inputStream.readShort();
-        byte leftPad = inputStream.readByte();
-        byte depth = inputStream.readByte();
-        inputStream.skip(2);
-        int length = client.getRemainingRequestLength();
-        ByteBuffer data = inputStream.readByteBuffer(length);
-
-        Drawable drawable =  client.xServer.drawableManager.getDrawable(drawableId);
-        if (drawable == null) throw new BadDrawable(drawableId);
-
-        GraphicsContext graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId);
-        if (graphicsContext == null) throw new BadGraphicsContext(gcId);
-
-        if (!(graphicsContext.getFunction() == GraphicsContext.Function.COPY || format == Format.Z_PIXMAP)) {
-            throw new UnsupportedOperationException("GC Function other than COPY is not supported.");
+        val drawable = client.xServer.drawableManager.getDrawable(drawableId)
+        if (drawable == null) {
+            throw BadDrawable(drawableId)
         }
 
-        switch (format) {
-            case BITMAP:
-                if (leftPad != 0) throw new UnsupportedOperationException("PutImage.leftPad cannot be != 0.");
-                if (depth == 1) {
-                    drawable.drawImage((short)0, (short)0, dstX, dstY, width, height, (byte)1, data, width, height);
+        val graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId)
+        if (graphicsContext == null) {
+            throw BadGraphicsContext(gcId)
+        }
+
+        if (!(graphicsContext.function == GraphicsContext.Function.COPY || format == Format.Z_PIXMAP)) {
+            throw UnsupportedOperationException("GC Function other than COPY is not supported.")
+        }
+
+        when (format) {
+            Format.BITMAP -> {
+                if (leftPad.toInt() != 0) {
+                    throw UnsupportedOperationException("PutImage.leftPad cannot be != 0.")
                 }
-                else throw new BadMatch();
-                break;
-            case XY_PIXMAP:
-                if (drawable.visual.depth != depth) throw new BadMatch();
-                break;
-            case Z_PIXMAP:
-                if (leftPad == 0) {
-                    drawable.drawImage((short)0, (short)0, dstX, dstY, width, height, depth, data, width, height);
+                if (depth.toInt() == 1) {
+                    drawable.drawImage(0.toShort(), 0.toShort(), dstX, dstY, width, height, 1.toByte(), data, width, height)
+                } else {
+                    throw BadMatch()
                 }
-                else throw new BadMatch();
-                break;
+            }
+
+            Format.XY_PIXMAP -> if (drawable.visual!!.depth != depth) {
+                throw BadMatch()
+            }
+
+            Format.Z_PIXMAP -> if (leftPad.toInt() == 0) {
+                drawable.drawImage(0.toShort(), 0.toShort(), dstX, dstY, width, height, depth, data, width, height)
+            } else {
+                throw BadMatch()
+            }
         }
     }
 
-    public static void getImage(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        Format format = Format.values()[client.getRequestData()];
-        int drawableId = inputStream.readInt();
-        short x = inputStream.readShort();
-        short y = inputStream.readShort();
-        short width = inputStream.readShort();
-        short height = inputStream.readShort();
-        inputStream.skip(4);
+    @Throws(IOException::class, XRequestError::class)
+    fun getImage(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val format: Format? = Format.entries[client.requestData.toInt()]
+        val drawableId = inputStream.readInt()
+        val x = inputStream.readShort()
+        val y = inputStream.readShort()
+        val width = inputStream.readShort()
+        val height = inputStream.readShort()
 
-        if (format != Format.Z_PIXMAP) throw new UnsupportedOperationException("Only Z_PIXMAP is supported.");
+        inputStream.skip(4)
 
-        Drawable drawable =  client.xServer.drawableManager.getDrawable(drawableId);
-        if (drawable == null) throw new BadDrawable(drawableId);
-        int visualId = client.xServer.pixmapManager.getPixmap(drawableId) == null ? drawable.visual.id : 0;
-        ByteBuffer data = drawable.getImage(x, y, width, height);
-        int length = data.limit();
+        if (format != Format.Z_PIXMAP) {
+            throw UnsupportedOperationException("Only Z_PIXMAP is supported.")
+        }
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte(drawable.visual.depth);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt((length + 3) / 4);
-            outputStream.writeInt(visualId);
-            outputStream.writePad(20);
-            outputStream.write(data);
-            if ((-length & 3) > 0) outputStream.writePad(-length & 3);
+        val drawable = client.xServer.drawableManager.getDrawable(drawableId)
+        if (drawable == null) {
+            throw BadDrawable(drawableId)
+        }
+
+        val visualId = if (client.xServer.pixmapManager.getPixmap(drawableId) == null) drawable.visual!!.id else 0
+        val data = drawable.getImage(x, y, width, height)
+        val length = data.limit()
+
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(drawable.visual!!.depth)
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt((length + 3) / 4)
+            outputStream.writeInt(visualId)
+            outputStream.writePad(20)
+            outputStream.write(data)
+
+            if ((-length and 3) > 0) {
+                outputStream.writePad(-length and 3)
+            }
         }
     }
 
-    public static void copyArea(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int srcDrawableId = inputStream.readInt();
-        int dstDrawableId = inputStream.readInt();
-        int gcId = inputStream.readInt();
-        short srcX = inputStream.readShort();
-        short srcY = inputStream.readShort();
-        short dstX = inputStream.readShort();
-        short dstY = inputStream.readShort();
-        short width = inputStream.readShort();
-        short height = inputStream.readShort();
+    @Throws(XRequestError::class)
+    fun copyArea(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val srcDrawableId = inputStream.readInt()
+        val dstDrawableId = inputStream.readInt()
+        val gcId = inputStream.readInt()
+        val srcX = inputStream.readShort()
+        val srcY = inputStream.readShort()
+        val dstX = inputStream.readShort()
+        val dstY = inputStream.readShort()
+        val width = inputStream.readShort()
+        val height = inputStream.readShort()
 
-        Drawable srcDrawable =  client.xServer.drawableManager.getDrawable(srcDrawableId);
-        if (srcDrawable == null) throw new BadDrawable(srcDrawableId);
+        val srcDrawable = client.xServer.drawableManager.getDrawable(srcDrawableId)
+        if (srcDrawable == null) {
+            throw BadDrawable(srcDrawableId)
+        }
 
-        Drawable dstDrawable =  client.xServer.drawableManager.getDrawable(dstDrawableId);
-        if (dstDrawable == null) throw new BadDrawable(dstDrawableId);
+        val dstDrawable = client.xServer.drawableManager.getDrawable(dstDrawableId)
+        if (dstDrawable == null) {
+            throw BadDrawable(dstDrawableId)
+        }
 
-        GraphicsContext graphicsContext =  client.xServer.graphicsContextManager.getGraphicsContext(gcId);
-        if (graphicsContext == null) throw new BadGraphicsContext(gcId);
+        val graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId)
+        if (graphicsContext == null) {
+            throw BadGraphicsContext(gcId)
+        }
 
-        if (srcDrawable.visual.depth != dstDrawable.visual.depth) throw new BadMatch();
+        if (srcDrawable.visual!!.depth != dstDrawable.visual!!.depth) {
+            throw BadMatch()
+        }
 
-        dstDrawable.copyArea(srcX, srcY, dstX, dstY, width, height, srcDrawable, graphicsContext.getFunction());
+        dstDrawable.copyArea(srcX, srcY, dstX, dstY, width, height, srcDrawable, graphicsContext.function!!)
     }
 
-    public static void polyLine(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        CoordinateMode coordinateMode = CoordinateMode.values()[client.getRequestData()];
-        int drawableId = inputStream.readInt();
-        int gcId = inputStream.readInt();
+    @Throws(XRequestError::class)
+    fun polyLine(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val coordinateMode: CoordinateMode? = CoordinateMode.entries[client.requestData.toInt()]
+        val drawableId = inputStream.readInt()
+        val gcId = inputStream.readInt()
 
-        Drawable drawable = client.xServer.drawableManager.getDrawable(drawableId);
-        if (drawable == null) throw new BadDrawable(drawableId);
-        GraphicsContext graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId);
-        if (graphicsContext == null) throw new BadGraphicsContext(gcId);
-        int length = client.getRemainingRequestLength();
+        val drawable = client.xServer.drawableManager.getDrawable(drawableId)
+        if (drawable == null) {
+            throw BadDrawable(drawableId)
+        }
 
-        short[] points = new short[length / 2];
-        int i = 0;
+        val graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId)
+        if (graphicsContext == null) {
+            throw BadGraphicsContext(gcId)
+        }
+
+        var length = client.remainingRequestLength
+
+        val points = ShortArray(length / 2)
+        var i = 0
         while (length != 0) {
-            points[i++] = inputStream.readShort();
-            points[i++] = inputStream.readShort();
-            length -= 4;
+            points[i++] = inputStream.readShort()
+            points[i++] = inputStream.readShort()
+            length -= 4
         }
 
-        if (coordinateMode == CoordinateMode.ORIGIN && graphicsContext.getLineWidth() > 0) {
-            drawable.drawLines(graphicsContext.getForeground(), graphicsContext.getLineWidth(), points);
+        if (coordinateMode == CoordinateMode.ORIGIN && graphicsContext.lineWidth > 0) {
+            drawable.drawLines(graphicsContext.foreground, graphicsContext.lineWidth, *points)
         }
     }
 
-    public static void polyFillRectangle(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int drawableId = inputStream.readInt();
-        int gcId = inputStream.readInt();
+    @Throws(XRequestError::class)
+    fun polyFillRectangle(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val drawableId = inputStream.readInt()
+        val gcId = inputStream.readInt()
 
-        Drawable drawable = client.xServer.drawableManager.getDrawable(drawableId);
-        if (drawable == null) throw new BadDrawable(drawableId);
-        GraphicsContext graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId);
-        if (graphicsContext == null) throw new BadGraphicsContext(gcId);
-        int length = client.getRemainingRequestLength();
+        val drawable = client.xServer.drawableManager.getDrawable(drawableId)
+        if (drawable == null) {
+            throw BadDrawable(drawableId)
+        }
+
+        val graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId)
+        if (graphicsContext == null) {
+            throw BadGraphicsContext(gcId)
+        }
+
+        var length = client.remainingRequestLength
 
         while (length != 0) {
-            short x = inputStream.readShort();
-            short y = inputStream.readShort();
-            short width = inputStream.readShort();
-            short height = inputStream.readShort();
-            drawable.fillRect(x, y, width, height, graphicsContext.getBackground());
-            length -= 8;
+            val x = inputStream.readShort()
+            val y = inputStream.readShort()
+            val width = inputStream.readShort()
+            val height = inputStream.readShort()
+
+            drawable.fillRect(x.toInt(), y.toInt(), width.toInt(), height.toInt(), graphicsContext.background)
+
+            length -= 8
         }
+    }
+
+    enum class Format {
+        BITMAP,
+        XY_PIXMAP,
+        Z_PIXMAP,
+    }
+
+    private enum class CoordinateMode {
+        ORIGIN,
+        PREVIOUS,
     }
 }

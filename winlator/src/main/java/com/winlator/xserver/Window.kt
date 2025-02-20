@@ -1,417 +1,467 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import androidx.core.util.size
+import com.winlator.xserver.Atom.getId
+import com.winlator.xserver.events.Event
+import com.winlator.xserver.events.PropertyNotify
+import java.util.Collections
+import java.util.Stack
 
-import com.winlator.xserver.events.Event;
-import com.winlator.xserver.events.PropertyNotify;
+class Window(
+    id: Int,
+    var content: Drawable?,
+    x: Int,
+    y: Int,
+    width: Int,
+    height: Int,
+    val originClient: XClient?,
+) : XResource(id) {
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Stack;
-
-public class Window extends XResource {
-    public static final int FLAG_X = 1;
-    public static final int FLAG_Y = 1<<1;
-    public static final int FLAG_WIDTH = 1<<2;
-    public static final int FLAG_HEIGHT = 1<<3;
-    public static final int FLAG_BORDER_WIDTH = 1<<4;
-    public static final int FLAG_SIBLING = 1<<5;
-    public static final int FLAG_STACK_MODE = 1<<6;
-    public enum StackMode {ABOVE, BELOW, TOP_IF, BOTTOM_IF, OPPOSITE}
-    public enum MapState {UNMAPPED, UNVIEWABLE, VIEWABLE}
-    public enum WMHints {FLAGS, INPUT, INITIAL_STATE, ICON_PIXMAP, ICON_WINDOW, ICON_X, ICON_Y, ICON_MASK, WINDOW_GROUP}
-    private Drawable content;
-    private short x;
-    private short y;
-    private short width;
-    private short height;
-    private short borderWidth;
-    private Window parent;
-    public final XClient originClient;
-    public final WindowAttributes attributes = new WindowAttributes(this);
-    private final SparseArray<Property> properties = new SparseArray<>();
-    private final ArrayList<Window> children = new ArrayList<>();
-    private final List<Window> immutableChildren = Collections.unmodifiableList(children);
-    private final ArrayList<EventListener> eventListeners = new ArrayList<>();
-
-    public Window(int id, Drawable content, int x, int y, int width, int height, XClient originClient) {
-        super(id);
-        this.content = content;
-        this.x = (short)x;
-        this.y = (short)y;
-        this.width = (short)width;
-        this.height = (short)height;
-        this.originClient = originClient;
+    companion object {
+        const val FLAG_X: Int = 1
+        const val FLAG_Y: Int = 1 shl 1
+        const val FLAG_WIDTH: Int = 1 shl 2
+        const val FLAG_HEIGHT: Int = 1 shl 3
+        const val FLAG_BORDER_WIDTH: Int = 1 shl 4
+        const val FLAG_SIBLING: Int = 1 shl 5
+        const val FLAG_STACK_MODE: Int = 1 shl 6
     }
 
-    public short getX() {
-        return x;
+    enum class StackMode {
+        ABOVE,
+        BELOW,
+        TOP_IF,
+        BOTTOM_IF,
+        OPPOSITE,
     }
 
-    public void setX(short x) {
-        this.x = x;
+    enum class MapState {
+        UNMAPPED,
+        UNVIEWABLE,
+        VIEWABLE,
     }
 
-    public short getY() {
-        return y;
+    enum class WMHints {
+        FLAGS,
+        INPUT,
+        INITIAL_STATE,
+        ICON_PIXMAP,
+        ICON_WINDOW,
+        ICON_X,
+        ICON_Y,
+        ICON_MASK,
+        WINDOW_GROUP,
     }
 
-    public void setY(short y) {
-        this.y = y;
+    var x: Short
+
+    var y: Short
+
+    var width: Short
+
+    var height: Short
+
+    var borderWidth: Short = 0
+
+    var parent: Window? = null
+        private set
+
+    val attributes: WindowAttributes = WindowAttributes(this)
+
+    private val properties = SparseArray<Property>()
+
+    val children = ArrayList<Window>()
+
+    private val immutableChildren: MutableList<Window?> = Collections.unmodifiableList<Window?>(children)
+
+    private val eventListeners = ArrayList<EventListener>()
+
+    init {
+        this.x = x.toShort()
+        this.y = y.toShort()
+        this.width = width.toShort()
+        this.height = height.toShort()
     }
 
-    public short getWidth() {
-        return width;
+    fun getProperty(id: Int): Property? = properties.get(id)
+
+    fun addProperty(property: Property) {
+        properties.put(property.name, property)
     }
 
-    public void setWidth(short width) {
-        this.width = width;
+    fun removeProperty(id: Int) {
+        properties.remove(id)
+        sendEvent(Event.PROPERTY_CHANGE, PropertyNotify(this, id, true))
     }
 
-    public short getHeight() {
-        return height;
-    }
-
-    public void setHeight(short height) {
-        this.height = height;
-    }
-
-    public short getBorderWidth() {
-        return borderWidth;
-    }
-
-    public void setBorderWidth(short borderWidth) {
-        this.borderWidth = borderWidth;
-    }
-
-    public Drawable getContent() {
-        return content;
-    }
-
-    public void setContent(Drawable content) {
-        this.content = content;
-    }
-
-    public Window getParent() {
-        return parent;
-    }
-
-    public void setParent(Window parent) {
-        this.parent = parent;
-    }
-
-    public Property getProperty(int id) {
-        return properties.get(id);
-    }
-
-    public void addProperty(Property property) {
-        properties.put(property.name, property);
-    }
-
-    public void removeProperty(int id) {
-        properties.remove(id);
-        sendEvent(Event.PROPERTY_CHANGE, new PropertyNotify(this, id, true));
-    }
-
-    public Property modifyProperty(int atom, int type, Property.Format format, Property.Mode mode, byte[] data) {
-        Property property = getProperty(atom);
-        boolean modified = false;
+    fun modifyProperty(atom: Int, type: Int, format: Property.Format, mode: Property.Mode?, data: ByteArray): Property? {
+        var property = getProperty(atom)
+        var modified = false
         if (property == null) {
-            addProperty((property = new Property(atom, type, format, data)));
-            modified = true;
-        }
-        else if (mode == Property.Mode.REPLACE) {
+            addProperty((Property(atom, type, format, data).also { property = it }))
+            modified = true
+        } else if (mode == Property.Mode.REPLACE) {
             if (property.format == format) {
-                property.replace(data);
+                property.replace(data)
+            } else {
+                properties.put(atom, Property(atom, type, format, data))
             }
-            else properties.put(atom, new Property(atom, type, format, data));
-            modified = true;
-        }
-        else if (property.format == format && property.type == type) {
+            modified = true
+        } else if (property.format == format && property.type == type) {
             if (mode == Property.Mode.PREPEND) {
-                property.prepend(data);
+                property.prepend(data)
+            } else if (mode == Property.Mode.APPEND) {
+                property.append(data)
             }
-            else if (mode == Property.Mode.APPEND) {
-                property.append(data);
-            }
-            modified = true;
+            modified = true
         }
 
         if (modified) {
-            sendEvent(Event.PROPERTY_CHANGE, new PropertyNotify(this, atom, false));
-            return property;
+            sendEvent(Event.PROPERTY_CHANGE, PropertyNotify(this, atom, false))
+            return property
+        } else {
+            return null
         }
-        else return null;
     }
 
-    public String getName() {
-        Property property = getProperty(Atom.getId("WM_NAME"));
-        return property != null ? property.toString() : "";
+    val name: String
+        get() {
+            val property = getProperty(getId("WM_NAME"))
+            return property?.toString() ?: ""
+        }
+
+    val className: String
+        get() {
+            val property = getProperty(getId("WM_CLASS"))
+            return property?.toString() ?: ""
+        }
+
+    fun getWMHintsValue(wmHints: WMHints): Int {
+        val property = getProperty(getId("WM_HINTS"))
+        return property?.getInt(wmHints.ordinal) ?: 0
     }
 
-    public String getClassName() {
-        Property property = getProperty(Atom.getId("WM_CLASS"));
-        return property != null ? property.toString() : "";
+    val processId: Int
+        get() {
+            val property = getProperty(getId("_NET_WM_PID"))
+            return property?.getInt(0) ?: 0
+        }
+
+    val isWoW64: Boolean
+        get() {
+            val property = getProperty(getId("_NET_WM_WOW64"))
+            return property != null && property.data!!.get(0).toInt() == 1
+        }
+
+    val handle: Long
+        get() {
+            val property = getProperty(getId("_NET_WM_HWND"))
+            return property?.getLong(0) ?: 0
+        }
+
+    val isApplicationWindow: Boolean
+        get() {
+            val windowGroup = getWMHintsValue(WMHints.WINDOW_GROUP)
+            return attributes.isMapped && !this.name.isEmpty() && windowGroup == id && width > 1 && height > 1
+        }
+
+    val isInputOutput: Boolean
+        get() = content != null
+
+    fun addChild(child: Window?) {
+        if (child == null || child.parent == this) return
+        child.parent = this
+        children.add(child)
     }
 
-    public int getWMHintsValue(WMHints wmHints) {
-        Property property = getProperty(Atom.getId("WM_HINTS"));
-        return property != null ? property.getInt(wmHints.ordinal()) : 0;
+    fun removeChild(child: Window?) {
+        if (child == null || child.parent != this) return
+        child.parent = null
+        children.remove(child)
     }
 
-    public int getProcessId() {
-        Property property = getProperty(Atom.getId("_NET_WM_PID"));
-        return property != null ? property.getInt(0) : 0;
+    fun previousSibling(): Window? {
+        if (parent == null) return null
+        val index = parent!!.children.indexOf(this)
+        return if (index > 0) parent!!.children.get(index - 1) else null
     }
 
-    public boolean isWoW64() {
-        Property property = getProperty(Atom.getId("_NET_WM_WOW64"));
-        return property != null && property.data.get(0) == 1;
-    }
-
-    public long getHandle() {
-        Property property = getProperty(Atom.getId("_NET_WM_HWND"));
-        return property != null ? property.getLong(0) : 0;
-    }
-
-    public boolean isApplicationWindow() {
-        int windowGroup = getWMHintsValue(WMHints.WINDOW_GROUP);
-        return attributes.isMapped() && !getName().isEmpty() && windowGroup == id && width > 1 && height > 1;
-    }
-
-    public boolean isInputOutput() {
-        return content != null;
-    }
-
-    public void addChild(Window child) {
-        if (child == null || child.parent == this) return;
-        child.parent = this;
-        children.add(child);
-    }
-
-    public void removeChild(Window child) {
-        if (child == null || child.parent != this) return;
-        child.parent = null;
-        children.remove(child);
-    }
-
-    public Window previousSibling() {
-        if (parent == null) return null;
-        int index = parent.children.indexOf(this);
-        return index > 0 ? parent.children.get(index - 1) : null;
-    }
-
-    public void moveChildAbove(Window child, Window sibling) {
-        children.remove(child);
+    fun moveChildAbove(child: Window?, sibling: Window?) {
+        children.remove(child)
         if (sibling != null && children.contains(sibling)) {
-            children.add(children.indexOf(sibling) + 1, child);
-            return;
+            children.add(children.indexOf(sibling) + 1, child!!)
+            return
         }
-        children.add(child);
+        children.add(child!!)
     }
 
-    public void moveChildBelow(Window child, Window sibling) {
-        children.remove(child);
+    fun moveChildBelow(child: Window?, sibling: Window?) {
+        children.remove(child)
         if (sibling != null && children.contains(sibling)) {
-            children.add(children.indexOf(sibling), child);
-            return;
+            children.add(children.indexOf(sibling), child!!)
+            return
         }
-        children.add(0, child);
+        children.add(0, child!!)
     }
 
-    public List<Window> getChildren() {
-        return immutableChildren;
+    fun getChildren(): MutableList<Window?> {
+        return immutableChildren
     }
 
-    public int getChildCount() {
-        return children.size();
+    val childCount: Int
+        get() = children.size
+
+    fun addEventListener(eventListener: EventListener?) {
+        eventListeners.add(eventListener!!)
     }
 
-    public void addEventListener(EventListener eventListener) {
-        eventListeners.add(eventListener);
+    fun removeEventListener(eventListener: EventListener?) {
+        eventListeners.remove(eventListener)
     }
 
-    public void removeEventListener(EventListener eventListener) {
-        eventListeners.remove(eventListener);
-    }
-
-    public boolean hasEventListenerFor(int eventId) {
-        for (EventListener eventListener : eventListeners) {
-            if (eventListener.isInterestedIn(eventId)) return true;
-        }
-        return false;
-    }
-
-    public boolean hasEventListenerFor(Bitmask mask) {
-        for (EventListener eventListener : eventListeners) {
-            if (eventListener.isInterestedIn(mask)) return true;
-        }
-        return false;
-    }
-
-    public void sendEvent(int eventId, Event event) {
-        for (EventListener eventListener : eventListeners) {
+    fun hasEventListenerFor(eventId: Int): Boolean {
+        for (eventListener in eventListeners) {
             if (eventListener.isInterestedIn(eventId)) {
-                eventListener.sendEvent(event);
+                return true
+            }
+        }
+
+        return false
+    }
+
+    fun hasEventListenerFor(mask: Bitmask): Boolean {
+        for (eventListener in eventListeners) {
+            if (eventListener.isInterestedIn(mask)) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    fun sendEvent(eventId: Int, event: Event) {
+        for (eventListener in eventListeners) {
+            if (eventListener.isInterestedIn(eventId)) {
+                eventListener.sendEvent(event)
             }
         }
     }
 
-    public void sendEvent(Bitmask eventMask, Event event) {
-        for (EventListener eventListener : eventListeners) {
+    fun sendEvent(eventMask: Bitmask, event: Event) {
+        eventListeners.forEach { eventListener ->
             if (eventListener.isInterestedIn(eventMask)) {
-                eventListener.sendEvent(event);
+                eventListener.sendEvent(event)
             }
         }
     }
 
-    public void sendEvent(int eventId, Event event, XClient client) {
-        for (EventListener eventListener : eventListeners) {
+    fun sendEvent(eventId: Int, event: Event, client: XClient?) {
+        eventListeners.forEach { eventListener ->
             if (eventListener.isInterestedIn(eventId) && eventListener.client == client) {
-                eventListener.sendEvent(event);
+                eventListener.sendEvent(event)
             }
         }
     }
 
-    public void sendEvent(Bitmask eventMask, Event event, XClient client) {
-        for (EventListener eventListener : eventListeners) {
+    fun sendEvent(eventMask: Bitmask, event: Event, client: XClient?) {
+        eventListeners.forEach { eventListener ->
             if (eventListener.isInterestedIn(eventMask) && eventListener.client == client) {
-                eventListener.sendEvent(event);
+                eventListener.sendEvent(event)
             }
         }
     }
 
-    public void sendEvent(Event event) {
-        for (EventListener eventListener : eventListeners) eventListener.sendEvent(event);
+    fun sendEvent(event: Event) {
+        eventListeners.forEach { eventListener ->
+            eventListener.sendEvent(event)
+        }
     }
 
-    public boolean containsPoint(short rootX, short rootY) {
-        short[] localPoint = rootPointToLocal(rootX, rootY);
-        return localPoint[0] >= 0 && localPoint[1] >= 0 && localPoint[0] < width && localPoint[1] < height;
+    fun containsPoint(rootX: Short, rootY: Short): Boolean {
+        val localPoint = rootPointToLocal(rootX, rootY)
+        return localPoint[0] >= 0 && localPoint[1] >= 0 && localPoint[0] < width && localPoint[1] < height
     }
 
-    public short[] rootPointToLocal(short x, short y) {
-        Window window = this;
+    fun rootPointToLocal(x: Short, y: Short): ShortArray {
+        var x = x
+        var y = y
+        var window: Window? = this
+
         while (window != null) {
-            x -= window.x;
-            y -= window.y;
-            window = window.parent;
+            x = (x - window.x).toShort()
+            y = (y - window.y).toShort()
+            window = window.parent
         }
-        return new short[]{x, y};
+
+        return shortArrayOf(x, y)
     }
 
-    public short[] localPointToRoot(short x, short y) {
-        Window window = this;
+    fun localPointToRoot(x: Short, y: Short): ShortArray? {
+        var x = x
+        var y = y
+        var window: Window? = this
+
         while (window != null) {
-            x += window.x;
-            y += window.y;
-            window = window.parent;
+            x = (x + window.x).toShort()
+            y = (y + window.y).toShort()
+            window = window.parent
         }
-        return new short[]{x, y};
+
+        return shortArrayOf(x, y)
     }
 
-    public short getRootX() {
-        short rootX = x;
-        Window window = parent;
+    val rootX: Short
+        get() {
+            var rootX = x
+            var window = parent
+
+            while (window != null) {
+                rootX = (rootX + window.x).toShort()
+                window = window.parent
+            }
+
+            return rootX
+        }
+
+    val rootY: Short
+        get() {
+            var rootY = y
+            var window = parent
+
+            while (window != null) {
+                rootY = (rootY + window.y).toShort()
+                window = window.parent
+            }
+
+            return rootY
+        }
+
+    fun getAncestorWithEventMask(eventMask: Bitmask): Window? {
+        var window: Window? = this
+
         while (window != null) {
-            rootX += window.x;
-            window = window.parent;
+            if (window.hasEventListenerFor(eventMask)) {
+                return window
+            }
+
+            if (window.attributes.doNotPropagateMask.intersects(eventMask)) {
+                return null
+            }
+
+            window = window.parent
         }
-        return rootX;
+
+        return null
     }
 
-    public short getRootY() {
-        short rootY = y;
-        Window window = parent;
+    fun getAncestorWithEventId(eventId: Int): Window? = getAncestorWithEventId(eventId, null)
+
+    fun getAncestorWithEventId(eventId: Int, endWindow: Window?): Window? {
+        var window: Window? = this
+
         while (window != null) {
-            rootY += window.y;
-            window = window.parent;
+            if (window.hasEventListenerFor(eventId)) {
+                return window
+            }
+
+            if (window == endWindow || window.attributes.doNotPropagateMask.isSet(eventId)) {
+                return null
+            }
+
+            window = window.parent
         }
-        return rootY;
+
+        return null
     }
 
-    public Window getAncestorWithEventMask(Bitmask eventMask) {
-        Window window = this;
+    fun isAncestorOf(window: Window?): Boolean {
+        var window = window
+
+        if (window == this) {
+            return false
+        }
+
         while (window != null) {
-            if (window.hasEventListenerFor(eventMask)) return window;
-            if (window.attributes.getDoNotPropagateMask().intersects(eventMask)) return null;
-            window = window.parent;
+            if (window == this) {
+                return true
+            }
+
+            window = window.parent
         }
-        return null;
+
+        return false
     }
 
-    public Window getAncestorWithEventId(int eventId) {
-        return getAncestorWithEventId(eventId, null);
-    }
+    fun getChildByCoords(x: Short, y: Short): Window? {
+        children.indices.reversed().forEach {
+            val child = children[it]
 
-    public Window getAncestorWithEventId(int eventId, Window endWindow) {
-        Window window = this;
-        while (window != null) {
-            if (window.hasEventListenerFor(eventId)) return window;
-            if (window == endWindow || window.attributes.getDoNotPropagateMask().isSet(eventId)) return null;
-            window = window.parent;
+            if (child.attributes.isMapped && child.containsPoint(x, y)) {
+                return child
+            }
         }
-        return null;
+
+        return null
     }
 
-    public boolean isAncestorOf(Window window) {
-        if (window == this) return false;
-        while (window != null) {
-            if (window == this) return true;
-            window = window.parent;
+    val mapState: MapState
+        get() {
+            if (!attributes.isMapped) {
+                return MapState.UNMAPPED
+            }
+
+            var window: Window? = this
+
+            do {
+                window = window!!.parent
+                if (window == null) {
+                    return MapState.VIEWABLE
+                }
+            } while (window.attributes.isMapped)
+
+            return MapState.UNVIEWABLE
         }
-        return false;
-    }
 
-    public Window getChildByCoords(short x, short y) {
-        for (int i = children.size()-1; i >= 0; i--) {
-            Window child = children.get(i);
-            if (child.attributes.isMapped() && child.containsPoint(x, y)) return child;
+    val allEventMasks: Bitmask
+        get() {
+            val eventMask = Bitmask()
+
+            eventListeners.forEach { eventListener ->
+                eventMask.join(eventListener.eventMask)
+            }
+
+            return eventMask
         }
-        return null;
-    }
 
-    public MapState getMapState() {
-        if (!attributes.isMapped()) return MapState.UNMAPPED;
-        Window window = this;
-        do {
-            window = window.parent;
-            if (window == null) return MapState.VIEWABLE;
+    val buttonPressListener: EventListener?
+        get() {
+            eventListeners.forEach { eventListener ->
+                if (eventListener.isInterestedIn(Event.BUTTON_PRESS)) {
+                    return eventListener
+                }
+            }
+
+            return null
         }
-        while (window.attributes.isMapped());
-        return MapState.UNVIEWABLE;
-    }
 
-    public Bitmask getAllEventMasks() {
-        Bitmask eventMask = new Bitmask();
-        for (EventListener eventListener : eventListeners) eventMask.join(eventListener.eventMask);
-        return eventMask;
-    }
-
-    public EventListener getButtonPressListener() {
-        for (EventListener eventListener : eventListeners) {
-            if (eventListener.isInterestedIn(Event.BUTTON_PRESS)) return eventListener;
-        }
-        return null;
-    }
-
-    public void disableAllDescendants() {
-        Stack<Window> stack = new Stack<>();
-        stack.push(this);
+    fun disableAllDescendants() {
+        val stack = Stack<Window>()
+        stack.push(this)
         while (!stack.isEmpty()) {
-            Window window = stack.pop();
-            window.attributes.setEnabled(false);
-            stack.addAll(window.children);
+            val window = stack.pop()
+            window.attributes.isEnabled = false
+            stack.addAll(window.children)
         }
     }
 
-    public String serializeProperties() {
-        String result = "";
-        for (int i = 0; i < properties.size(); i++) {
-            Property property = properties.valueAt(i);
-            result += property.nameAsString()+"="+property+"\n";
+    fun serializeProperties(): String {
+        var result = ""
+        for (i in 0..<properties.size) {
+            val property = properties.valueAt(i)
+            result += property.nameAsString() + "=" + property + "\n"
         }
-        return result;
+
+        return result
     }
 }

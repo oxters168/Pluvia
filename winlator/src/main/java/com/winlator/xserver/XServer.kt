@@ -1,195 +1,168 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import androidx.core.util.size
+import com.winlator.core.CursorLocker
+import com.winlator.renderer.GLRenderer
+import com.winlator.winhandler.WinHandler
+import com.winlator.xserver.DesktopHelper.attachTo
+import com.winlator.xserver.extensions.BigReqExtension
+import com.winlator.xserver.extensions.DRI3Extension
+import com.winlator.xserver.extensions.Extension
+import com.winlator.xserver.extensions.MITSHMExtension
+import com.winlator.xserver.extensions.PresentExtension
+import com.winlator.xserver.extensions.SyncExtension
+import java.nio.charset.Charset
+import java.util.EnumMap
+import java.util.concurrent.locks.ReentrantLock
 
-import com.winlator.core.CursorLocker;
-import com.winlator.renderer.GLRenderer;
-import com.winlator.winhandler.WinHandler;
-import com.winlator.xserver.extensions.BigReqExtension;
-import com.winlator.xserver.extensions.DRI3Extension;
-import com.winlator.xserver.extensions.Extension;
-import com.winlator.xserver.extensions.MITSHMExtension;
-import com.winlator.xserver.extensions.PresentExtension;
-import com.winlator.xserver.extensions.SyncExtension;
+class XServer(val screenInfo: ScreenInfo) {
 
-import java.nio.charset.Charset;
-import java.util.EnumMap;
-import java.util.concurrent.locks.ReentrantLock;
-
-public class XServer {
-    public enum Lockable {WINDOW_MANAGER, PIXMAP_MANAGER, DRAWABLE_MANAGER, GRAPHIC_CONTEXT_MANAGER, INPUT_DEVICE, CURSOR_MANAGER, SHMSEGMENT_MANAGER}
-    public static final short VERSION = 11;
-    public static final String VENDOR_NAME = "Elbrus Technologies, LLC";
-    public static final Charset LATIN1_CHARSET = Charset.forName("latin1");
-    public final SparseArray<Extension> extensions = new SparseArray<>();
-    public final ScreenInfo screenInfo;
-    public final PixmapManager pixmapManager;
-    public final ResourceIDs resourceIDs = new ResourceIDs(128);
-    public final GraphicsContextManager graphicsContextManager = new GraphicsContextManager();
-    public final SelectionManager selectionManager;
-    public final DrawableManager drawableManager;
-    public final WindowManager windowManager;
-    public final CursorManager cursorManager;
-    public final Keyboard keyboard = Keyboard.createKeyboard(this);
-    public final Pointer pointer = new Pointer(this);
-    public final InputDeviceManager inputDeviceManager;
-    public final GrabManager grabManager;
-    public final CursorLocker cursorLocker;
-    private SHMSegmentManager shmSegmentManager;
-    private GLRenderer renderer;
-    private WinHandler winHandler;
-    private final EnumMap<Lockable, ReentrantLock> locks = new EnumMap<>(Lockable.class);
-    private boolean relativeMouseMovement = false;
-
-    public XServer(ScreenInfo screenInfo) {
-        this.screenInfo = screenInfo;
-        cursorLocker = new CursorLocker(this);
-        for (Lockable lockable : Lockable.values()) locks.put(lockable, new ReentrantLock());
-
-        pixmapManager = new PixmapManager();
-        drawableManager = new DrawableManager(this);
-        cursorManager = new CursorManager(drawableManager);
-        windowManager = new WindowManager(screenInfo, drawableManager);
-        selectionManager = new SelectionManager(windowManager);
-        inputDeviceManager = new InputDeviceManager(this);
-        grabManager = new GrabManager(this);
-
-        DesktopHelper.attachTo(this);
-        setupExtensions();
+    companion object {
+        const val VERSION: Short = 11
+        const val VENDOR_NAME: String = "Elbrus Technologies, LLC"
+        val LATIN1_CHARSET: Charset = Charset.forName("latin1")
     }
 
-    public boolean isRelativeMouseMovement() {
-        return relativeMouseMovement;
+    enum class Lockable {
+        WINDOW_MANAGER,
+        PIXMAP_MANAGER,
+        DRAWABLE_MANAGER,
+        GRAPHIC_CONTEXT_MANAGER,
+        INPUT_DEVICE,
+        CURSOR_MANAGER,
+        SHMSEGMENT_MANAGER,
     }
 
-    public void setRelativeMouseMovement(boolean relativeMouseMovement) {
-        cursorLocker.setEnabled(!relativeMouseMovement);
-        this.relativeMouseMovement = relativeMouseMovement;
-    }
+    val extensions: SparseArray<Extension> = SparseArray<Extension>()
+    val pixmapManager: PixmapManager
+    val resourceIDs: ResourceIDs = ResourceIDs(128)
+    val graphicsContextManager: GraphicsContextManager = GraphicsContextManager()
+    val selectionManager: SelectionManager
+    val drawableManager: DrawableManager
+    val windowManager: WindowManager
+    val cursorManager: CursorManager
+    val keyboard: Keyboard = Keyboard.createKeyboard(this)
+    val pointer: Pointer = Pointer(this)
+    val inputDeviceManager: InputDeviceManager
+    val grabManager: GrabManager
+    val cursorLocker: CursorLocker = CursorLocker(this)
+    var shmSegmentManager: SHMSegmentManager? = null
+    var renderer: GLRenderer? = null
+    var winHandler: WinHandler? = null
 
-    public GLRenderer getRenderer() {
-        return renderer;
-    }
+    private val locks = EnumMap<Lockable?, ReentrantLock?>(Lockable::class.java)
 
-    public void setRenderer(GLRenderer renderer) {
-        this.renderer = renderer;
-    }
-
-    public WinHandler getWinHandler() {
-        return winHandler;
-    }
-
-    public void setWinHandler(WinHandler winHandler) {
-        this.winHandler = winHandler;
-    }
-
-    public SHMSegmentManager getSHMSegmentManager() {
-        return shmSegmentManager;
-    }
-
-    public void setSHMSegmentManager(SHMSegmentManager shmSegmentManager) {
-        this.shmSegmentManager = shmSegmentManager;
-    }
-
-    private class SingleXLock implements XLock {
-        private final ReentrantLock lock;
-
-        private SingleXLock(Lockable lockable) {
-            this.lock = locks.get(lockable);
-            lock.lock();
+    var isRelativeMouseMovement: Boolean = false
+        set(relativeMouseMovement) {
+            cursorLocker.setEnabled(!relativeMouseMovement)
+            field = relativeMouseMovement
         }
 
-        @Override
-        public void close() {
-            lock.unlock();
+    init {
+        Lockable.entries.forEach { lockable ->
+            locks.put(lockable, ReentrantLock())
+        }
+
+        pixmapManager = PixmapManager()
+        drawableManager = DrawableManager(this)
+        cursorManager = CursorManager(drawableManager)
+        windowManager = WindowManager(screenInfo, drawableManager)
+        selectionManager = SelectionManager(windowManager)
+        inputDeviceManager = InputDeviceManager(this)
+        grabManager = GrabManager(this)
+
+        attachTo(this)
+        setupExtensions()
+    }
+
+    private inner class SingleXLock(lockable: Lockable?) : XLock {
+        private val lock: ReentrantLock? = locks[lockable]
+
+        init {
+            lock!!.lock()
+        }
+
+        override fun close() {
+            lock!!.unlock()
         }
     }
 
-    private class MultiXLock implements XLock {
-        private final Lockable[] lockables;
-
-        private MultiXLock(Lockable[] lockables) {
-            this.lockables = lockables;
-            for (Lockable lockable : lockables) locks.get(lockable).lock();
+    private inner class MultiXLock(private val lockables: Array<out Lockable>) : XLock {
+        init {
+            lockables.forEach { lockable ->
+                locks.get(lockable)!!.lock()
+            }
         }
 
-        @Override
-        public void close() {
-            for (int i = lockables.length - 1; i >= 0; i--) {
-                locks.get(lockables[i]).unlock();
+        override fun close() {
+            lockables.indices.reversed().forEach {
+                locks.get(lockables[it])!!.unlock()
             }
         }
     }
 
-    public XLock lock(Lockable lockable) {
-        return new SingleXLock(lockable);
-    }
+    fun lock(lockable: Lockable?): XLock = SingleXLock(lockable)
 
-    public XLock lock(Lockable... lockables) {
-        return new MultiXLock(lockables);
-    }
+    fun lock(vararg lockables: Lockable): XLock = MultiXLock(lockables)
 
-    public XLock lockAll() {
-        return new MultiXLock(Lockable.values());
-    }
+    fun lockAll(): XLock = MultiXLock(Lockable.entries.toTypedArray())
 
-    public Extension getExtensionByName(String name) {
-        for (int i = 0; i < extensions.size(); i++) {
-            Extension extension = extensions.valueAt(i);
-            if (extension.getName().equals(name)) return extension;
+    fun getExtensionByName(name: String?): Extension? {
+        for (i in 0..<extensions.size) {
+            val extension = extensions.valueAt(i)
+            if (extension.name == name) {
+                return extension
+            }
         }
-        return null;
+
+        return null
     }
 
-    public void injectPointerMove(int x, int y) {
-        try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
-            pointer.setPosition(x, y);
+    fun injectPointerMove(x: Int, y: Int) {
+        lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE).use {
+            pointer.setPosition(x, y)
         }
     }
 
-    public void injectPointerMoveDelta(int dx, int dy) {
-        try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
-            pointer.setPosition(pointer.getX() + dx, pointer.getY() + dy);
+    fun injectPointerMoveDelta(dx: Int, dy: Int) {
+        lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE).use {
+            pointer.setPosition(pointer.x + dx, pointer.y + dy)
         }
     }
 
-    public void injectPointerButtonPress(Pointer.Button buttonCode) {
-        try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
-            pointer.setButton(buttonCode, true);
+    fun injectPointerButtonPress(buttonCode: Pointer.Button) {
+        lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE).use {
+            pointer.setButton(buttonCode, true)
         }
     }
 
-    public void injectPointerButtonRelease(Pointer.Button buttonCode) {
-        try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
-            pointer.setButton(buttonCode, false);
+    fun injectPointerButtonRelease(buttonCode: Pointer.Button) {
+        lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE).use {
+            pointer.setButton(buttonCode, false)
         }
     }
 
-    public void injectKeyPress(XKeycode xKeycode) {
-        injectKeyPress(xKeycode, 0);
-    }
-
-    public void injectKeyPress(XKeycode xKeycode, int keysym) {
-        try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
-            keyboard.setKeyPress(xKeycode.id, keysym);
+    @JvmOverloads
+    fun injectKeyPress(xKeycode: XKeycode, keysym: Int = 0) {
+        lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE).use {
+            keyboard.setKeyPress(xKeycode.id, keysym)
         }
     }
 
-    public void injectKeyRelease(XKeycode xKeycode) {
-        try (XLock lock = lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE)) {
-            keyboard.setKeyRelease(xKeycode.id);
+    fun injectKeyRelease(xKeycode: XKeycode) {
+        lock(Lockable.WINDOW_MANAGER, Lockable.INPUT_DEVICE).use {
+            keyboard.setKeyRelease(xKeycode.id)
         }
     }
 
-    private void setupExtensions() {
-        extensions.put(BigReqExtension.MAJOR_OPCODE, new BigReqExtension());
-        extensions.put(MITSHMExtension.MAJOR_OPCODE, new MITSHMExtension());
-        extensions.put(DRI3Extension.MAJOR_OPCODE, new DRI3Extension());
-        extensions.put(PresentExtension.MAJOR_OPCODE, new PresentExtension());
-        extensions.put(SyncExtension.MAJOR_OPCODE, new SyncExtension());
+    private fun setupExtensions() {
+        extensions.put(BigReqExtension.MAJOR_OPCODE.toInt(), BigReqExtension())
+        extensions.put(MITSHMExtension.MAJOR_OPCODE.toInt(), MITSHMExtension())
+        extensions.put(DRI3Extension.MAJOR_OPCODE.toInt(), DRI3Extension())
+        extensions.put(PresentExtension.MAJOR_OPCODE.toInt(), PresentExtension())
+        extensions.put(SyncExtension.MAJOR_OPCODE.toInt(), SyncExtension())
     }
 
-    public <T extends Extension> T getExtension(int opcode) {
-        return (T)extensions.get(opcode);
-    }
+    fun <T : Extension> getExtension(opcode: Int): T? = extensions.get(opcode) as T?
 }

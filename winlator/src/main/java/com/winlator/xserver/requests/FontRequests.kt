@@ -1,36 +1,43 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.XClient
+import com.winlator.xserver.XClientRequestHandler
+import com.winlator.xserver.errors.XRequestError
+import java.io.IOException
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.XRequestError;
+object FontRequests {
+    @Throws(XRequestError::class)
+    fun openFont(client: XClient?, inputStream: XInputStream, outputStream: XOutputStream?) {
+        inputStream.skip(4)
 
-import java.io.IOException;
+        val length = inputStream.readShort().toInt()
 
-public abstract class FontRequests {
-    public static void openFont(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        inputStream.skip(4);
-        int length = inputStream.readShort();
-        inputStream.skip(2);
-        String name = inputStream.readString8(length);
-        if (!name.equals("cursor")) throw new UnsupportedOperationException("OpenFont supports only name: cursor.");
+        inputStream.skip(2)
+
+        val name = inputStream.readString8(length)
+
+        if (name != "cursor") {
+            throw UnsupportedOperationException("OpenFont supports only name: cursor.")
+        }
     }
 
-    public static void listFonts(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        inputStream.skip(2);
-        short patternLength = inputStream.readShort();
-        inputStream.readString8(patternLength);
+    @Throws(IOException::class, XRequestError::class)
+    fun listFonts(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        inputStream.skip(2)
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
-            outputStream.writeShort((short)0);
-            outputStream.writePad(22);
+        val patternLength = inputStream.readShort()
+
+        inputStream.readString8(patternLength.toInt())
+
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
+            outputStream.writeShort(0.toShort())
+            outputStream.writePad(22)
         }
     }
 }

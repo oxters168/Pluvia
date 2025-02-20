@@ -1,34 +1,44 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import androidx.collection.ArraySet;
+import androidx.collection.ArraySet
 
-import java.util.Iterator;
+class ResourceIDs(maxClients: Int) {
 
-public class ResourceIDs {
-    private final ArraySet<Integer> idBases = new ArraySet<>();
-    public final int idMask;
+    private val idBases = ArraySet<Int?>()
 
-    public ResourceIDs(int maxClients) {
-        int clientsBits = 32 - Integer.numberOfLeadingZeros(maxClients);
-        clientsBits = Integer.bitCount(maxClients) == 1 ? clientsBits - 1 : clientsBits;
-        int base = 29 - clientsBits;
-        idMask = (1 << base) - 1;
-        for (int i = 1; i < maxClients; i++) idBases.add(i << base);
+    val idMask: Int
+
+    init {
+        var clientsBits = 32 - Integer.numberOfLeadingZeros(maxClients)
+        clientsBits = if (Integer.bitCount(maxClients) == 1) clientsBits - 1 else clientsBits
+
+        val base = 29 - clientsBits
+
+        idMask = (1 shl base) - 1
+
+        for (i in 1..<maxClients) {
+            idBases.add(i shl base)
+        }
     }
 
-    public synchronized Integer get() {
-        if (idBases.isEmpty()) return -1;
-        Iterator<Integer> iter = idBases.iterator();
-        int idBase = iter.next();
-        iter.remove();
-        return idBase;
+    @Synchronized
+    fun get(): Int {
+        if (idBases.isEmpty()) {
+            return -1
+        }
+
+        val iter = idBases.iterator()
+        val idBase: Int = iter.next()!!
+
+        iter.remove()
+
+        return idBase
     }
 
-    public boolean isInInterval(int value, int idBase) {
-        return (value | idMask) == (idBase | idMask);
-    }
+    fun isInInterval(value: Int, idBase: Int): Boolean = (value or idMask) == (idBase or idMask)
 
-    public synchronized void free(Integer idBase) {
-        idBases.add(idBase);
+    @Synchronized
+    fun free(idBase: Int?) {
+        idBases.add(idBase)
     }
 }

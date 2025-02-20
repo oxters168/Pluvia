@@ -1,71 +1,60 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import com.winlator.xserver.events.Event;
-import com.winlator.xserver.events.PointerWindowEvent;
+import com.winlator.xserver.WindowManager.OnWindowModificationListener
+import com.winlator.xserver.events.Event
+import com.winlator.xserver.events.PointerWindowEvent
 
-public class GrabManager implements WindowManager.OnWindowModificationListener {
-    private Window window;
-    private boolean ownerEvents;
-    private boolean releaseWithButtons;
-    private EventListener eventListener;
-    private final XServer xServer;
+class GrabManager(private val xServer: XServer) : OnWindowModificationListener {
 
-    public GrabManager(XServer xServer) {
-        this.xServer = xServer;
-        xServer.windowManager.addOnWindowModificationListener(this);
+    var window: Window? = null
+        private set
+
+    var isOwnerEvents: Boolean = false
+        private set
+
+    var isReleaseWithButtons: Boolean = false
+        private set
+
+    var eventListener: EventListener? = null
+        private set
+
+    val client: XClient?
+        get() = if (eventListener != null) eventListener!!.client else null
+
+    init {
+        xServer.windowManager.addOnWindowModificationListener(this)
     }
 
-    @Override
-    public void onUnmapWindow(Window window) {
-        if (window != null && window.getMapState() != Window.MapState.VIEWABLE) {
-            deactivatePointerGrab();
+    override fun onUnmapWindow(window: Window) {
+        if (window.mapState != Window.MapState.VIEWABLE) {
+            deactivatePointerGrab()
         }
     }
 
-    public Window getWindow() {
-        return window;
-    }
-
-    public boolean isOwnerEvents() {
-        return ownerEvents;
-    }
-
-    public boolean isReleaseWithButtons() {
-        return releaseWithButtons;
-    }
-
-    public EventListener getEventListener() {
-        return eventListener;
-    }
-
-    public XClient getClient() {
-        return eventListener != null ? eventListener.client : null;
-    }
-
-    public void deactivatePointerGrab() {
+    fun deactivatePointerGrab() {
         if (window != null) {
-            xServer.inputDeviceManager.sendEnterLeaveNotify(window, xServer.inputDeviceManager.getPointWindow(), PointerWindowEvent.Mode.UNGRAB);
-            window = null;
-            eventListener = null;
+            xServer.inputDeviceManager.sendEnterLeaveNotify(window!!, xServer.inputDeviceManager.pointWindow!!, PointerWindowEvent.Mode.UNGRAB)
+            window = null
+            eventListener = null
         }
     }
 
-    private void activatePointerGrab(Window window, EventListener eventListener, boolean ownerEvents, boolean releaseWithButtons) {
+    private fun activatePointerGrab(window: Window, eventListener: EventListener?, ownerEvents: Boolean, releaseWithButtons: Boolean) {
         if (this.window == null) {
-            xServer.inputDeviceManager.sendEnterLeaveNotify(xServer.inputDeviceManager.getPointWindow(), window, PointerWindowEvent.Mode.GRAB);
+            xServer.inputDeviceManager.sendEnterLeaveNotify(xServer.inputDeviceManager.pointWindow!!, window, PointerWindowEvent.Mode.GRAB)
         }
-        this.window = window;
-        this.releaseWithButtons = releaseWithButtons;
-        this.ownerEvents = ownerEvents;
-        this.eventListener = eventListener;
+        this.window = window
+        this.isReleaseWithButtons = releaseWithButtons
+        this.isOwnerEvents = ownerEvents
+        this.eventListener = eventListener
     }
 
-    public void activatePointerGrab(Window window, boolean ownerEvents, Bitmask eventMask, XClient client) {
-        activatePointerGrab(window, new EventListener(client, eventMask), ownerEvents, false);
+    fun activatePointerGrab(window: Window, ownerEvents: Boolean, eventMask: Bitmask, client: XClient) {
+        activatePointerGrab(window, EventListener(client, eventMask), ownerEvents, false)
     }
 
-    public void activatePointerGrab(Window window) {
-        EventListener eventListener = window.getButtonPressListener();
-        activatePointerGrab(window, eventListener, eventListener.isInterestedIn(Event.OWNER_GRAB_BUTTON), true);
+    fun activatePointerGrab(window: Window) {
+        val eventListener = window.buttonPressListener
+        activatePointerGrab(window, eventListener, eventListener!!.isInterestedIn(Event.OWNER_GRAB_BUTTON), true)
     }
 }

@@ -1,110 +1,101 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import com.winlator.math.Mathf;
+import com.winlator.math.Mathf.clamp
 
-import java.util.ArrayList;
+class Pointer(private val xServer: XServer) {
 
-public class Pointer {
-    public enum Button {
-        BUTTON_LEFT, BUTTON_MIDDLE, BUTTON_RIGHT, BUTTON_SCROLL_UP, BUTTON_SCROLL_DOWN, BUTTON_SCROLL_CLICK_LEFT, BUTTON_SCROLL_CLICK_RIGHT;
-
-        public byte code() {
-            return (byte)(ordinal() + 1);
-        }
-
-        public int flag() {
-            return 1<<(code() + MAX_BUTTONS);
-        }
-    }
-    public static final byte MAX_BUTTONS = 7;
-    private final ArrayList<OnPointerMotionListener> onPointerMotionListeners = new ArrayList<>();
-    private final Bitmask buttonMask = new Bitmask();
-    private final XServer xServer;
-    private short x;
-    private short y;
-
-    public interface OnPointerMotionListener {
-        default void onPointerButtonPress(Button button) {}
-        default void onPointerButtonRelease(Button button) {}
-        default void onPointerMove(short x, short y) {}
+    companion object {
+        const val MAX_BUTTONS: Byte = 7
     }
 
-    public Pointer(XServer xServer) {
-        this.xServer = xServer;
+    enum class Button {
+        BUTTON_LEFT,
+        BUTTON_MIDDLE,
+        BUTTON_RIGHT,
+        BUTTON_SCROLL_UP,
+        BUTTON_SCROLL_DOWN,
+        BUTTON_SCROLL_CLICK_LEFT,
+        BUTTON_SCROLL_CLICK_RIGHT,
+        ;
+
+        fun code(): Byte = (ordinal + 1).toByte()
+
+        fun flag(): Int = 1 shl (code() + MAX_BUTTONS)
     }
 
-    public void setX(int x) {
-        this.x = (short)x;
+    private val onPointerMotionListeners = ArrayList<OnPointerMotionListener?>()
+
+    val buttonMask: Bitmask = Bitmask()
+
+    var x: Short = 0
+        private set
+
+    var y: Short = 0
+        private set
+
+    val clampedX: Short
+        get() = clamp(x.toInt(), 0, xServer.screenInfo.width - 1).toShort()
+
+    val clampedY: Short
+        get() = clamp(y.toInt(), 0, xServer.screenInfo.height - 1).toShort()
+
+    interface OnPointerMotionListener {
+        fun onPointerButtonPress(button: Button) {}
+        fun onPointerButtonRelease(button: Button) {}
+        fun onPointerMove(x: Short, y: Short) {}
     }
 
-    public void setY(int y) {
-        this.y = (short)y;
+    fun setX(x: Int) {
+        this.x = x.toShort()
     }
 
-    public short getX() {
-        return x;
+    fun setY(y: Int) {
+        this.y = y.toShort()
     }
 
-    public short getY() {
-        return y;
+    fun setPosition(x: Int, y: Int) {
+        setX(x)
+        setY(y)
+        triggerOnPointerMove(this.x, this.y)
     }
 
-    public short getClampedX() {
-        return (short)Mathf.clamp(x, 0, xServer.screenInfo.width -1);
-    }
-
-    public short getClampedY() {
-        return (short)Mathf.clamp(y, 0, xServer.screenInfo.height -1);
-    }
-
-    public void setPosition(int x, int y) {
-        setX(x);
-        setY(y);
-        triggerOnPointerMove(this.x, this.y);
-    }
-
-    public Bitmask getButtonMask() {
-        return buttonMask;
-    }
-
-    public void setButton(Button button, boolean pressed) {
-        boolean oldPressed = isButtonPressed(button);
-        buttonMask.set(button.flag(), pressed);
+    fun setButton(button: Button, pressed: Boolean) {
+        val oldPressed = isButtonPressed(button)
+        buttonMask.set(button.flag(), pressed)
         if (oldPressed != pressed) {
             if (pressed) {
-                triggerOnPointerButtonPress(button);
+                triggerOnPointerButtonPress(button)
+            } else {
+                triggerOnPointerButtonRelease(button)
             }
-            else triggerOnPointerButtonRelease(button);
         }
     }
 
-    public boolean isButtonPressed(Button button) {
-        return buttonMask.isSet(button.flag());
+    fun isButtonPressed(button: Button): Boolean = buttonMask.isSet(button.flag())
+
+    fun addOnPointerMotionListener(onPointerMotionListener: OnPointerMotionListener?) {
+        onPointerMotionListeners.add(onPointerMotionListener)
     }
 
-    public void addOnPointerMotionListener(OnPointerMotionListener onPointerMotionListener) {
-        onPointerMotionListeners.add(onPointerMotionListener);
+    fun removeOnPointerMotionListener(onPointerMotionListener: OnPointerMotionListener?) {
+        onPointerMotionListeners.remove(onPointerMotionListener)
     }
 
-    public void removeOnPointerMotionListener(OnPointerMotionListener onPointerMotionListener) {
-        onPointerMotionListeners.remove(onPointerMotionListener);
-    }
-
-    private void triggerOnPointerButtonPress(Button button) {
-        for (int i = onPointerMotionListeners.size()-1; i >= 0; i--) {
-            onPointerMotionListeners.get(i).onPointerButtonPress(button);
+    private fun triggerOnPointerButtonPress(button: Button) {
+        onPointerMotionListeners.indices.reversed().forEach {
+            onPointerMotionListeners[it]!!.onPointerButtonPress(button)
         }
     }
 
-    private void triggerOnPointerButtonRelease(Button button) {
-        for (int i = onPointerMotionListeners.size()-1; i >= 0; i--) {
-            onPointerMotionListeners.get(i).onPointerButtonRelease(button);
+    private fun triggerOnPointerButtonRelease(button: Button) {
+        onPointerMotionListeners.indices.reversed().forEach {
+            onPointerMotionListeners[it]!!.onPointerButtonRelease(button)
         }
     }
 
-    private void triggerOnPointerMove(short x, short y) {
-        for (int i = onPointerMotionListeners.size()-1; i >= 0; i--) {
-            onPointerMotionListeners.get(i).onPointerMove(x, y);
+    private fun triggerOnPointerMove(x: Short, y: Short) {
+        onPointerMotionListeners.indices.reversed().forEach {
+            onPointerMotionListeners[it]!!.onPointerMove(x, y)
         }
     }
 }

@@ -127,8 +127,8 @@ class PresentExtension : Extension {
 
         val pixmap = client.xServer.pixmapManager.getPixmap(pixmapId) ?: throw BadPixmap(pixmapId)
 
-        val content = window.content
-        if (content.visual.depth != pixmap.drawable.visual.depth) throw BadMatch()
+        val content = window.content!!
+        if (content.visual?.depth != pixmap.drawable.visual?.depth) throw BadMatch()
 
         val ust = System.nanoTime() / 1000
         val msc = ust / FAKE_INTERVAL
@@ -149,10 +149,10 @@ class PresentExtension : Extension {
         val window = client.xServer.windowManager.getWindow(windowId) ?: throw BadWindow(windowId)
 
         if (GPUImage.isSupported && !mask.isEmpty) {
-            val content = window.content
+            val content = window.content!!
             val oldTexture = content.texture
 
-            client.xServer.renderer.xServerView.queueEvent { oldTexture.destroy() }
+            client.xServer.renderer?.xServerView?.queueEvent { oldTexture?.destroy() }
 
             content.texture = GPUImage(content.width, content.height)
         }
@@ -160,7 +160,7 @@ class PresentExtension : Extension {
         synchronized(events) {
             var event = events[eventId]
             if (event != null) {
-                if (event.window !== window || event.client !== client) {
+                if (event.window != window || event.client != client) {
                     throw BadMatch()
                 }
 

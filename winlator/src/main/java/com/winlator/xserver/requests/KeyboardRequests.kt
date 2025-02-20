@@ -1,47 +1,50 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import static com.winlator.xserver.Keyboard.KEYSYMS_PER_KEYCODE;
-import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Keyboard
+import com.winlator.xserver.XClient
+import com.winlator.xserver.XClientRequestHandler
+import com.winlator.xserver.errors.XRequestError
+import java.io.IOException
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Keyboard;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.XRequestError;
+object KeyboardRequests {
+    @Throws(IOException::class, XRequestError::class)
+    fun getKeyboardMapping(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val firstKeycode = inputStream.readByte()
+        var count = inputStream.readUnsignedByte()
 
-import java.io.IOException;
+        inputStream.skip(2)
 
-public abstract class KeyboardRequests {
-    public static void getKeyboardMapping(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        byte firstKeycode = inputStream.readByte();
-        int count = inputStream.readUnsignedByte();
-        inputStream.skip(2);
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(Keyboard.KEYSYMS_PER_KEYCODE)
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(count)
+            outputStream.writePad(24)
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte(KEYSYMS_PER_KEYCODE);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(count);
-            outputStream.writePad(24);
-
-            int i = firstKeycode - Keyboard.MIN_KEYCODE;
+            var i = firstKeycode - Keyboard.MIN_KEYCODE
             while (count != 0) {
-                outputStream.writeInt(client.xServer.keyboard.keysyms[i]);
-                count--;
-                i++;
+                outputStream.writeInt(client.xServer.keyboard.keysyms[i])
+                count--
+                i++
             }
         }
     }
 
-    public static void getModifierMapping(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)1);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(2);
-            outputStream.writePad(24);
-            outputStream.writePad(8);
+    @Throws(IOException::class, XRequestError::class)
+    fun getModifierMapping(
+        client: XClient,
+        inputStream: XInputStream?,
+        outputStream: XOutputStream,
+    ) {
+        outputStream.lock().use { lock ->
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(1.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(2)
+            outputStream.writePad(24)
+            outputStream.writePad(8)
         }
     }
 }

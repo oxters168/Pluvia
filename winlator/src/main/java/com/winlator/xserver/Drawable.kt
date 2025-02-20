@@ -1,193 +1,378 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.graphics.Bitmap;
+import android.graphics.Bitmap
+import com.winlator.core.Callback
+import com.winlator.math.Mathf.clamp
+import com.winlator.renderer.GPUImage
+import com.winlator.renderer.Texture
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-import com.winlator.core.Callback;
-import com.winlator.math.Mathf;
-import com.winlator.renderer.GPUImage;
-import com.winlator.renderer.Texture;
+class Drawable(id: Int, width: Int, height: Int, val visual: Visual?) : XResource(id) {
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+    companion object {
 
-public class Drawable extends XResource {
-    public final short width;
-    public final short height;
-    public final Visual visual;
-    private Texture texture = new Texture();
-    private ByteBuffer data;
-    private Runnable onDrawListener;
-    private Callback<Drawable> onDestroyListener;
-    public final Object renderLock = new Object();
-
-    static {
-        System.loadLibrary("winlator");
-    }
-
-    public Drawable(int id, int width, int height, Visual visual) {
-        super(id);
-        this.width = (short)width;
-        this.height = (short)height;
-        this.visual = visual;
-        this.data = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
-    }
-
-    public static Drawable fromBitmap(Bitmap bitmap) {
-        Drawable drawable = new Drawable(0, bitmap.getWidth(), bitmap.getHeight(), null);
-        fromBitmap(bitmap, drawable.data);
-        return drawable;
-    }
-
-    public Texture getTexture() {
-        return texture;
-    }
-
-    public void setTexture(Texture texture) {
-        if (texture instanceof GPUImage) data = ((GPUImage)texture).getVirtualData();
-        this.texture = texture;
-    }
-
-    public ByteBuffer getData() {
-        return data;
-    }
-
-    public void setData(ByteBuffer data) {
-        this.data = data;
-    }
-
-    private short getStride() {
-        return texture instanceof GPUImage ? ((GPUImage)texture).getStride() : width;
-    }
-
-    public Runnable getOnDrawListener() {
-        return onDrawListener;
-    }
-
-    public void setOnDrawListener(Runnable onDrawListener) {
-        this.onDrawListener = onDrawListener;
-    }
-
-    public Callback<Drawable> getOnDestroyListener() {
-        return onDestroyListener;
-    }
-
-    public void setOnDestroyListener(Callback<Drawable> onDestroyListener) {
-        this.onDestroyListener = onDestroyListener;
-    }
-
-    public void drawImage(short srcX, short srcY, short dstX, short dstY, short width, short height, byte depth, ByteBuffer data, short totalWidth, short totalHeight) {
-        if (depth == 1) {
-            drawBitmap(width, height, data, this.data);
-        }
-        else if (depth == 24 || depth == 32) {
-            dstX = (short)Mathf.clamp(dstX, 0, this.width-1);
-            dstY = (short)Mathf.clamp(dstY, 0, this.height-1);
-            if ((dstX + width) > this.width) width = (short)((this.width - dstX));
-            if ((dstY + height) > this.height) height = (short)((this.height - dstY));
-
-            copyArea(srcX, srcY, dstX, dstY, width, height, totalWidth, this.getStride(), data, this.data);
+        init {
+            System.loadLibrary("winlator")
         }
 
-        this.data.rewind();
-        data.rewind();
+        fun fromBitmap(bitmap: Bitmap): Drawable {
+            val drawable = Drawable(0, bitmap.getWidth(), bitmap.getHeight(), null)
+            fromBitmap(bitmap, drawable.data)
+            return drawable
+        }
 
-        texture.setNeedsUpdate(true);
-        if (onDrawListener != null) onDrawListener.run();
+        /**
+         * Native Methods
+         */
+
+        private external fun drawBitmap(width: Short, height: Short, srcData: ByteBuffer?, dstData: ByteBuffer?)
+
+        private external fun drawAlphaMaskedBitmap(
+            foreRed: Byte,
+            foreGreen: Byte,
+            foreBlue: Byte,
+            backRed: Byte,
+            backGreen: Byte,
+            backBlue: Byte,
+            srcData: ByteBuffer?,
+            maskData: ByteBuffer?,
+            dstData: ByteBuffer?,
+        )
+
+        private external fun copyArea(
+            srcX: Short,
+            srcY: Short,
+            dstX: Short,
+            dstY: Short,
+            width: Short,
+            height: Short,
+            srcStride: Short,
+            dstStride: Short,
+            srcData: ByteBuffer?,
+            dstData: ByteBuffer?,
+        )
+
+        private external fun copyAreaOp(
+            srcX: Short,
+            srcY: Short,
+            dstX: Short,
+            dstY: Short,
+            width: Short,
+            height: Short,
+            srcStride: Short,
+            dstStride: Short,
+            srcData: ByteBuffer?,
+            dstData: ByteBuffer?,
+            gcFunction: Int,
+        )
+
+        private external fun fillRect(x: Short, y: Short, width: Short, height: Short, color: Int, stride: Short, data: ByteBuffer?)
+
+        private external fun drawLine(
+            x0: Short,
+            y0: Short,
+            x1: Short,
+            y1: Short,
+            color: Int,
+            lineWidth: Short,
+            stride: Short,
+            data: ByteBuffer?,
+        )
+
+        private external fun fromBitmap(bitmap: Bitmap?, data: ByteBuffer?)
     }
 
-    public ByteBuffer getImage(short x, short y, short width, short height) {
-        ByteBuffer dstData = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
+    val width: Short
 
-        x = (short)Mathf.clamp(x, 0, this.width-1);
-        y = (short)Mathf.clamp(y, 0, this.height-1);
-        if ((x + width) > this.width) width = (short)(this.width - x);
-        if ((y + height) > this.height) height = (short)(this.height - y);
+    val height: Short
 
-        copyArea(x, y, (short)0, (short)0, width, height, this.getStride(), width, this.data, dstData);
+    var texture: Texture? = Texture()
+        internal set
 
-        this.data.rewind();
-        dstData.rewind();
-        return dstData;
+    var data: ByteBuffer?
+
+    var onDrawListener: Runnable? = null
+
+    var onDestroyListener: Callback<Drawable>? = null
+
+    val renderLock: Any = Any()
+
+    private val stride: Short
+        get() = if (texture is GPUImage) (texture as GPUImage).stride else width
+
+    init {
+        this.width = width.toShort()
+        this.height = height.toShort()
+        this.data = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN)
     }
 
-    public void copyArea(short srcX, short srcY, short dstX, short dstY, short width, short height, Drawable drawable) {
-        copyArea(srcX, srcY, dstX, dstY, width, height, drawable, GraphicsContext.Function.COPY);
+    fun setTexture(texture: Texture) {
+        if (texture is GPUImage) {
+            data = texture.virtualData
+        }
+
+        this.texture = texture
     }
 
-    public void copyArea(short srcX, short srcY, short dstX, short dstY, short width, short height, Drawable drawable, GraphicsContext.Function gcFunction) {
-        dstX = (short)Mathf.clamp(dstX, 0, this.width-1);
-        dstY = (short)Mathf.clamp(dstY, 0, this.height-1);
-        if ((dstX + width) > this.width) width = (short)(this.width - dstX);
-        if ((dstY + height) > this.height) height = (short)(this.height - dstY);
+    fun drawImage(
+        srcX: Short,
+        srcY: Short,
+        dstX: Short,
+        dstY: Short,
+        width: Short,
+        height: Short,
+        depth: Byte,
+        data: ByteBuffer,
+        totalWidth: Short,
+        totalHeight: Short,
+    ) {
+        var dstX = dstX
+        var dstY = dstY
+        var width = width
+        var height = height
+        if (depth.toInt() == 1) {
+            drawBitmap(width, height, data, this.data)
+        } else if (depth.toInt() == 24 || depth.toInt() == 32) {
+            dstX = clamp(dstX.toInt(), 0, this.width - 1).toShort()
+            dstY = clamp(dstY.toInt(), 0, this.height - 1).toShort()
+
+            if ((dstX + width) > this.width) {
+                width = ((this.width - dstX)).toShort()
+            }
+
+            if ((dstY + height) > this.height) {
+                height = ((this.height - dstY)).toShort()
+            }
+
+            copyArea(
+                srcX = srcX,
+                srcY = srcY,
+                dstX = dstX,
+                dstY = dstY,
+                width = width,
+                height = height,
+                srcStride = totalWidth,
+                dstStride = this.stride,
+                srcData = data,
+                dstData = this.data,
+            )
+        }
+
+        this.data!!.rewind()
+        data.rewind()
+
+        texture?.isNeedsUpdate = true
+        onDrawListener?.run()
+    }
+
+    fun getImage(x: Short, y: Short, width: Short, height: Short): ByteBuffer {
+        var x = x
+        var y = y
+        var width = width
+        var height = height
+        val dstData = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN)
+
+        x = clamp(x.toInt(), 0, this.width - 1).toShort()
+        y = clamp(y.toInt(), 0, this.height - 1).toShort()
+
+        if ((x + width) > this.width) {
+            width = (this.width - x).toShort()
+        }
+
+        if ((y + height) > this.height) {
+            height = (this.height - y).toShort()
+        }
+
+        copyArea(
+            srcX = x,
+            srcY = y,
+            dstX = 0.toShort(),
+            dstY = 0.toShort(),
+            width = width,
+            height = height,
+            srcStride = this.stride,
+            dstStride = width,
+            srcData = this.data,
+            dstData = dstData,
+        )
+
+        this.data!!.rewind()
+        dstData.rewind()
+
+        return dstData
+    }
+
+    @JvmOverloads
+    fun copyArea(
+        srcX: Short,
+        srcY: Short,
+        dstX: Short,
+        dstY: Short,
+        width: Short,
+        height: Short,
+        drawable: Drawable,
+        gcFunction: GraphicsContext.Function = GraphicsContext.Function.COPY,
+    ) {
+        var dstX = dstX
+        var dstY = dstY
+        var width = width
+        var height = height
+
+        dstX = clamp(dstX.toInt(), 0, this.width - 1).toShort()
+        dstY = clamp(dstY.toInt(), 0, this.height - 1).toShort()
+
+        if ((dstX + width) > this.width) {
+            width = (this.width - dstX).toShort()
+        }
+
+        if ((dstY + height) > this.height) {
+            height = (this.height - dstY).toShort()
+        }
 
         if (gcFunction == GraphicsContext.Function.COPY) {
-            copyArea(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data);
+            copyArea(
+                srcX = srcX,
+                srcY = srcY,
+                dstX = dstX,
+                dstY = dstY,
+                width = width,
+                height = height,
+                srcStride = drawable.stride,
+                dstStride = this.stride,
+                srcData = drawable.data,
+                dstData = this.data,
+            )
+        } else {
+            copyAreaOp(
+                srcX = srcX,
+                srcY = srcY,
+                dstX = dstX,
+                dstY = dstY,
+                width = width,
+                height = height,
+                srcStride = drawable.stride,
+                dstStride = this.stride,
+                srcData = drawable.data,
+                dstData = this.data,
+                gcFunction = gcFunction.ordinal,
+            )
         }
-        else copyAreaOp(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data, gcFunction.ordinal());
 
-        this.data.rewind();
-        drawable.data.rewind();
+        this.data!!.rewind()
+        drawable.data!!.rewind()
 
-        texture.setNeedsUpdate(true);
-        if (onDrawListener != null) onDrawListener.run();
+        texture?.isNeedsUpdate = true
+        onDrawListener?.run()
     }
 
-    public void fillColor(int color) {
-        fillRect(0, 0, width, height, color);
+    fun fillColor(color: Int) {
+        fillRect(0, 0, width.toInt(), height.toInt(), color)
     }
 
-    public void fillRect(int x, int y, int width, int height, int color) {
-        x = (short)Mathf.clamp(x, 0, this.width-1);
-        y = (short)Mathf.clamp(y, 0, this.height-1);
-        if ((x + width) > this.width) width = (short)((this.width - x));
-        if ((y + height) > this.height) height = (short)((this.height - y));
+    fun fillRect(x: Int, y: Int, width: Int, height: Int, color: Int) {
+        var x = x
+        var y = y
+        var width = width
+        var height = height
 
-        fillRect((short)x, (short)y, (short)width, (short)height, color, this.getStride(), this.data);
-        this.data.rewind();
+        x = clamp(x, 0, this.width - 1).toShort().toInt()
+        y = clamp(y, 0, this.height - 1).toShort().toInt()
 
-        texture.setNeedsUpdate(true);
-        if (onDrawListener != null) onDrawListener.run();
+        if ((x + width) > this.width) {
+            width = ((this.width - x)).toShort().toInt()
+        }
+
+        if ((y + height) > this.height) {
+            height = ((this.height - y)).toShort().toInt()
+        }
+
+        fillRect(
+            x = x.toShort(),
+            y = y.toShort(),
+            width = width.toShort(),
+            height = height.toShort(),
+            color = color,
+            stride = this.stride,
+            data = this.data,
+        )
+
+        this.data!!.rewind()
+
+        texture?.isNeedsUpdate = true
+        onDrawListener?.run()
     }
 
-    public void drawLines(int color, int lineWidth, short... points) {
-        for (int i = 2; i < points.length; i += 2) {
-            drawLine(points[i-2], points[i-1], points[i+0], points[i+1], color, (short)lineWidth);
+    fun drawLines(color: Int, lineWidth: Int, vararg points: Short) {
+        var i = 2
+
+        while (i < points.size) {
+            drawLine(
+                x0 = points[i - 2].toInt(),
+                y0 = points[i - 1].toInt(),
+                x1 = points[i + 0].toInt(),
+                y1 = points[i + 1].toInt(),
+                color = color,
+                lineWidth = lineWidth.toShort().toInt(),
+            )
+
+            i += 2
         }
     }
 
-    public void drawLine(int x0, int y0, int x1, int y1, int color, int lineWidth) {
-        x0 = Mathf.clamp(x0, 0, width-lineWidth);
-        y0 = Mathf.clamp(y0, 0, height-lineWidth);
-        x1 = Mathf.clamp(x1, 0, width-lineWidth);
-        y1 = Mathf.clamp(y1, 0, height-lineWidth);
+    fun drawLine(x0: Int, y0: Int, x1: Int, y1: Int, color: Int, lineWidth: Int) {
+        var x0 = x0
+        var y0 = y0
+        var x1 = x1
+        var y1 = y1
 
-        drawLine((short)x0, (short)y0, (short)x1, (short)y1, color, (short)lineWidth, this.getStride(), this.data);
+        x0 = clamp(x0, 0, width - lineWidth)
+        y0 = clamp(y0, 0, height - lineWidth)
+        x1 = clamp(x1, 0, width - lineWidth)
+        y1 = clamp(y1, 0, height - lineWidth)
 
-        this.data.rewind();
+        drawLine(
+            x0 = x0.toShort(),
+            y0 = y0.toShort(),
+            x1 = x1.toShort(),
+            y1 = y1.toShort(),
+            color = color,
+            lineWidth = lineWidth.toShort(),
+            stride = this.stride,
+            data = this.data,
+        )
 
-        texture.setNeedsUpdate(true);
-        if (onDrawListener != null) onDrawListener.run();
+        this.data!!.rewind()
+
+        texture?.isNeedsUpdate = true
+        onDrawListener?.run()
     }
 
-    public void drawAlphaMaskedBitmap(byte foreRed, byte foreGreen, byte foreBlue, byte backRed, byte backGreen, byte backBlue, Drawable srcDrawable, Drawable maskDrawable) {
-        drawAlphaMaskedBitmap(foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue, srcDrawable.data, maskDrawable.data, this.data);
-        this.data.rewind();
+    fun drawAlphaMaskedBitmap(
+        foreRed: Byte,
+        foreGreen: Byte,
+        foreBlue: Byte,
+        backRed: Byte,
+        backGreen: Byte,
+        backBlue: Byte,
+        srcDrawable: Drawable,
+        maskDrawable: Drawable,
+    ) {
+        drawAlphaMaskedBitmap(
+            foreRed = foreRed,
+            foreGreen = foreGreen,
+            foreBlue = foreBlue,
+            backRed = backRed,
+            backGreen = backGreen,
+            backBlue = backBlue,
+            srcData = srcDrawable.data,
+            maskData = maskDrawable.data,
+            dstData = this.data,
+        )
 
-        texture.setNeedsUpdate(true);
-        if (onDrawListener != null) onDrawListener.run();
+        this.data!!.rewind()
+
+        texture?.isNeedsUpdate = true
+        onDrawListener?.run()
     }
-
-    private static native void drawBitmap(short width, short height, ByteBuffer srcData, ByteBuffer dstData);
-
-    private static native void drawAlphaMaskedBitmap(byte foreRed, byte foreGreen, byte foreBlue, byte backRed, byte backGreen, byte backBlue, ByteBuffer srcData, ByteBuffer maskData, ByteBuffer dstData);
-
-    private static native void copyArea(short srcX, short srcY, short dstX, short dstY, short width, short height, short srcStride, short dstStride, ByteBuffer srcData, ByteBuffer dstData);
-
-    private static native void copyAreaOp(short srcX, short srcY, short dstX, short dstY, short width, short height, short srcStride, short dstStride, ByteBuffer srcData, ByteBuffer dstData, int gcFunction);
-
-    private static native void fillRect(short x, short y, short width, short height, int color, short stride, ByteBuffer data);
-
-    private static native void drawLine(short x0, short y0, short x1, short y1, int color, short lineWidth, short stride, ByteBuffer data);
-
-    private static native void fromBitmap(Bitmap bitmap, ByteBuffer data);
 }

@@ -2,6 +2,7 @@ package com.winlator.container
 
 import android.os.Environment
 import com.winlator.box86_64.Box86_64Preset
+import com.winlator.core.DefaultVersion
 import com.winlator.core.EnvVars
 import com.winlator.core.FileUtils
 import com.winlator.core.KeyValueSet
@@ -17,8 +18,8 @@ class Container(val id: Int) {
     var audioDriver: String = DEFAULT_AUDIO_DRIVER
     var box64Preset: String = Box86_64Preset.COMPATIBILITY
     var box86Preset: String = Box86_64Preset.COMPATIBILITY
-    var cpuList: String? = null
-    var cpuListWoW64: String? = null
+    var cpuList: String = ""
+    var cpuListWoW64: String = ""
     var dXWrapper: String = DEFAULT_DXWRAPPER
     var dXWrapperConfig: String = ""
     var desktopTheme: String = WineThemeManager.DEFAULT_DESKTOP_THEME
@@ -30,17 +31,23 @@ class Container(val id: Int) {
     var isWoW64Mode: Boolean = true
     var name: String = "Container-$id"
     var rootDir: File? = null
-    var screenSize: String? = DEFAULT_SCREEN_SIZE
+    var screenSize: String = DEFAULT_SCREEN_SIZE
     var startupSelection: Byte = STARTUP_SELECTION_ESSENTIAL
     var winComponents: String = DEFAULT_WINCOMPONENTS
     var wineVersion: String = WineInfo.MAIN_WINE_VERSION.identifier()
 
+    var box86Version: String = DefaultVersion.BOX86
+    var box64Version: String = DefaultVersion.BOX64
+
+    var dxwrapper: String = DEFAULT_DXWRAPPER
+    var dxwrapperConfig: String = ""
+
     fun getCPUList(allowFallback: Boolean = false): String? {
-        return if (cpuList != null) cpuList else (if (allowFallback) fallbackCPUList else null)
+        return if (cpuList.isNotEmpty()) cpuList else (if (allowFallback) fallbackCPUList else null)
     }
 
     fun getCPUListWoW64(allowFallback: Boolean = false): String? {
-        return if (cpuListWoW64 != null) cpuListWoW64 else (if (allowFallback) fallbackCPUListWoW64 else null)
+        return if (cpuListWoW64.isNotEmpty()) cpuListWoW64 else (if (allowFallback) fallbackCPUListWoW64 else null)
     }
 
     fun getExtra(name: String): String? {

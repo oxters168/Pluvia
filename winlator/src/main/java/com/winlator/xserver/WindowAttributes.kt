@@ -1,160 +1,133 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import com.winlator.xconnector.XInputStream;
+import com.winlator.xconnector.XInputStream
 
-public class WindowAttributes {
-    public static final int FLAG_BACKGROUND_PIXMAP = 1<<0;
-    public static final int FLAG_BACKGROUND_PIXEL = 1<<1;
-    public static final int FLAG_BORDER_PIXMAP = 1<<2;
-    public static final int FLAG_BORDER_PIXEL = 1<<3;
-    public static final int FLAG_BIT_GRAVITY = 1<<4;
-    public static final int FLAG_WIN_GRAVITY = 1<<5;
-    public static final int FLAG_BACKING_STORE = 1<<6;
-    public static final int FLAG_BACKING_PLANES = 1<<7;
-    public static final int FLAG_BACKING_PIXEL = 1<<8;
-    public static final int FLAG_OVERRIDE_REDIRECT = 1<<9;
-    public static final int FLAG_SAVE_UNDER = 1<<10;
-    public static final int FLAG_EVENT_MASK = 1<<11;
-    public static final int FLAG_DO_NOT_PROPAGATE_MASK = 1<<12;
-    public static final int FLAG_COLORMAP = 1<<13;
-    public static final int FLAG_CURSOR = 1<<14;
-    public enum BackingStore {NOT_USEFUL, WHEN_MAPPED, ALWAYS}
-    public enum WindowClass {COPY_FROM_PARENT, INPUT_OUTPUT, INPUT_ONLY}
-    public enum BitGravity {FORGET, NORTH_WEST, NORTH, NORTH_EAST, WEST, CENTER, EAST, SOUTH_WEST, SOUTH, SOUTH_EAST, STATIC}
-    public enum WinGravity {UNMAP, NORTH_WEST, NORTH, NORTH_EAST, WEST, CENTER, EAST, SOUTH_WEST, SOUTH, SOUTH_EAST, STATIC}
-    private int backingPixel = 0;
-    private int backingPlanes = 1;
-    private BackingStore backingStore = BackingStore.NOT_USEFUL;
-    private BitGravity bitGravity = BitGravity.CENTER;
-    private Cursor cursor;
-    private Bitmask doNotPropagateMask = new Bitmask(0);
-    private Bitmask eventMask = new Bitmask(0);
-    private boolean mapped = false;
-    private boolean overrideRedirect = false;
-    private boolean saveUnder = false;
-    private boolean enabled = true;
-    private WinGravity winGravity = WinGravity.CENTER;
-    private WindowClass windowClass = WindowClass.INPUT_OUTPUT;
-    public final Window window;
+class WindowAttributes(val window: Window) {
 
-    public WindowAttributes(Window window) {
-        this.window = window;
+    companion object {
+        const val FLAG_BACKGROUND_PIXMAP: Int = 1 shl 0
+        const val FLAG_BACKGROUND_PIXEL: Int = 1 shl 1
+        const val FLAG_BORDER_PIXMAP: Int = 1 shl 2
+        const val FLAG_BORDER_PIXEL: Int = 1 shl 3
+        const val FLAG_BIT_GRAVITY: Int = 1 shl 4
+        const val FLAG_WIN_GRAVITY: Int = 1 shl 5
+        const val FLAG_BACKING_STORE: Int = 1 shl 6
+        const val FLAG_BACKING_PLANES: Int = 1 shl 7
+        const val FLAG_BACKING_PIXEL: Int = 1 shl 8
+        const val FLAG_OVERRIDE_REDIRECT: Int = 1 shl 9
+        const val FLAG_SAVE_UNDER: Int = 1 shl 10
+        const val FLAG_EVENT_MASK: Int = 1 shl 11
+        const val FLAG_DO_NOT_PROPAGATE_MASK: Int = 1 shl 12
+        const val FLAG_COLORMAP: Int = 1 shl 13
+        const val FLAG_CURSOR: Int = 1 shl 14
     }
 
-    public int getBackingPixel() {
-        return backingPixel;
+    enum class BackingStore {
+        NOT_USEFUL,
+        WHEN_MAPPED,
+        ALWAYS,
     }
 
-    public int getBackingPlanes() {
-        return backingPlanes;
+    enum class WindowClass {
+        COPY_FROM_PARENT,
+        INPUT_OUTPUT,
+        INPUT_ONLY,
     }
 
-    public BackingStore getBackingStore() {
-        return backingStore;
+    enum class BitGravity {
+        FORGET,
+        NORTH_WEST,
+        NORTH,
+        NORTH_EAST,
+        WEST,
+        CENTER,
+        EAST,
+        SOUTH_WEST,
+        SOUTH,
+        SOUTH_EAST,
+        STATIC,
     }
 
-    public BitGravity getBitGravity() {
-        return bitGravity;
+    enum class WinGravity {
+        UNMAP,
+        NORTH_WEST,
+        NORTH,
+        NORTH_EAST,
+        WEST,
+        CENTER,
+        EAST,
+        SOUTH_WEST,
+        SOUTH,
+        SOUTH_EAST,
+        STATIC,
     }
 
-    public Cursor getCursor() {
-        Window parent = window.getParent();
-        return cursor == null && parent != null ? parent.attributes.getCursor() : cursor;
+    var backingPixel: Int = 0
+        private set
+
+    var backingPlanes: Int = 1
+        private set
+
+    var backingStore: BackingStore? = BackingStore.NOT_USEFUL
+        private set
+
+    var bitGravity: BitGravity? = BitGravity.CENTER
+        private set
+
+    private var cursor: Cursor? = null
+
+    var doNotPropagateMask: Bitmask = Bitmask(0)
+        private set
+
+    var eventMask: Bitmask = Bitmask(0)
+        private set
+
+    var isMapped: Boolean = false
+
+    var isOverrideRedirect: Boolean = false
+        private set
+
+    var isSaveUnder: Boolean = false
+        private set
+
+    var isEnabled: Boolean = true
+
+    var winGravity: WinGravity? = WinGravity.CENTER
+        private set
+
+    var windowClass: WindowClass? = WindowClass.INPUT_OUTPUT
+
+    fun getCursor(): Cursor? {
+        val parent = window.parent
+        return if (cursor == null && parent != null) {
+            parent.attributes.getCursor()
+        } else {
+            cursor
+        }
     }
 
-    public Bitmask getEventMask() {
-        return eventMask;
-    }
-
-    public Bitmask getDoNotPropagateMask() {
-        return doNotPropagateMask;
-    }
-
-    public boolean isMapped() {
-        return mapped;
-    }
-
-    public void setMapped(boolean mapped) {
-        this.mapped = mapped;
-    }
-
-    public boolean isOverrideRedirect() {
-        return overrideRedirect;
-    }
-
-    public boolean isSaveUnder() {
-        return saveUnder;
-    }
-
-    public WinGravity getWinGravity() {
-        return winGravity;
-    }
-
-    public WindowClass getWindowClass() {
-        return windowClass;
-    }
-
-    public void setWindowClass(WindowClass windowClass) {
-        this.windowClass = windowClass;
-    }
-
-    public Window getWindow() {
-        return window;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public void update(Bitmask valueMask, XInputStream inputStream, XClient client) {
-        for (int index : valueMask) {
-            switch (index) {
-                case FLAG_BACKGROUND_PIXEL:
-                    window.getContent().fillColor(inputStream.readInt());
-                    break;
-                case FLAG_BACKING_PIXEL:
-                    backingPixel = inputStream.readInt();
-                    break;
-                case FLAG_BACKING_PLANES:
-                    backingPlanes = inputStream.readInt();
-                    break;
-                case FLAG_BIT_GRAVITY:
-                    bitGravity = BitGravity.values()[inputStream.readInt()];
-                    break;
-                case FLAG_WIN_GRAVITY:
-                    winGravity = WinGravity.values()[inputStream.readInt()];
-                    break;
-                case FLAG_BACKING_STORE:
-                    backingStore = BackingStore.values()[inputStream.readInt()];
-                    break;
-                case FLAG_SAVE_UNDER:
-                    saveUnder = inputStream.readInt() == 1;
-                    break;
-                case FLAG_OVERRIDE_REDIRECT:
-                    overrideRedirect = inputStream.readInt() == 1;
-                    break;
-                case FLAG_EVENT_MASK:
-                    eventMask = new Bitmask(inputStream.readInt());
-                    break;
-                case FLAG_DO_NOT_PROPAGATE_MASK:
-                    doNotPropagateMask = new Bitmask(inputStream.readInt());
-                    break;
-                case FLAG_CURSOR:
-                    cursor = client.xServer.cursorManager.getCursor(inputStream.readInt());
-                    break;
-                case FLAG_BACKGROUND_PIXMAP:
-                case FLAG_BORDER_PIXMAP:
-                case FLAG_BORDER_PIXEL:
-                case FLAG_COLORMAP:
-                    inputStream.skip(4);
-                    break;
+    fun update(valueMask: Bitmask, inputStream: XInputStream, client: XClient) {
+        for (index in valueMask) {
+            when (index) {
+                FLAG_BACKGROUND_PIXEL -> window.content?.fillColor(inputStream.readInt())
+                FLAG_BACKING_PIXEL -> backingPixel = inputStream.readInt()
+                FLAG_BACKING_PLANES -> backingPlanes = inputStream.readInt()
+                FLAG_BIT_GRAVITY -> bitGravity = BitGravity.entries[inputStream.readInt()]
+                FLAG_WIN_GRAVITY -> winGravity = WinGravity.entries[inputStream.readInt()]
+                FLAG_BACKING_STORE -> backingStore = BackingStore.entries[inputStream.readInt()]
+                FLAG_SAVE_UNDER -> this.isSaveUnder = inputStream.readInt() == 1
+                FLAG_OVERRIDE_REDIRECT -> this.isOverrideRedirect = inputStream.readInt() == 1
+                FLAG_EVENT_MASK -> eventMask = Bitmask(inputStream.readInt())
+                FLAG_DO_NOT_PROPAGATE_MASK -> doNotPropagateMask = Bitmask(inputStream.readInt())
+                FLAG_CURSOR -> cursor = client.xServer.cursorManager.getCursor(inputStream.readInt())
+                FLAG_BACKGROUND_PIXMAP,
+                FLAG_BORDER_PIXMAP,
+                FLAG_BORDER_PIXEL,
+                FLAG_COLORMAP,
+                -> inputStream.skip(4)
             }
         }
 
-        client.xServer.windowManager.triggerOnUpdateWindowAttributes(window, valueMask);
+        client.xServer.windowManager.triggerOnUpdateWindowAttributes(window, valueMask)
     }
 }

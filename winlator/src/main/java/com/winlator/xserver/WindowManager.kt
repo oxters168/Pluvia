@@ -1,340 +1,426 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import androidx.core.util.size
+import com.winlator.xconnector.XInputStream
+import com.winlator.xserver.IDGenerator.generate
+import com.winlator.xserver.Window.StackMode
+import com.winlator.xserver.WindowAttributes.WindowClass
+import com.winlator.xserver.errors.BadIdChoice
+import com.winlator.xserver.errors.BadMatch
+import com.winlator.xserver.errors.XRequestError
+import com.winlator.xserver.events.ConfigureNotify
+import com.winlator.xserver.events.ConfigureRequest
+import com.winlator.xserver.events.DestroyNotify
+import com.winlator.xserver.events.Event
+import com.winlator.xserver.events.Expose
+import com.winlator.xserver.events.MapNotify
+import com.winlator.xserver.events.MapRequest
+import com.winlator.xserver.events.ResizeRequest
+import com.winlator.xserver.events.UnmapNotify
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xserver.errors.BadIdChoice;
-import com.winlator.xserver.errors.BadMatch;
-import com.winlator.xserver.errors.XRequestError;
-import com.winlator.xserver.events.ConfigureNotify;
-import com.winlator.xserver.events.ConfigureRequest;
-import com.winlator.xserver.events.DestroyNotify;
-import com.winlator.xserver.events.Event;
-import com.winlator.xserver.events.Expose;
-import com.winlator.xserver.events.MapNotify;
-import com.winlator.xserver.events.MapRequest;
-import com.winlator.xserver.events.ResizeRequest;
-import com.winlator.xserver.events.UnmapNotify;
+class WindowManager(
+    screenInfo: ScreenInfo,
+    val drawableManager: DrawableManager,
+) : XResourceManager() {
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class WindowManager extends XResourceManager {
-    public enum FocusRevertTo {NONE, POINTER_ROOT, PARENT}
-    public final Window rootWindow;
-    private final SparseArray<Window> windows = new SparseArray<>();
-    public final DrawableManager drawableManager;
-    private Window focusedWindow;
-    private FocusRevertTo focusRevertTo = FocusRevertTo.NONE;
-    private final ArrayList<OnWindowModificationListener> onWindowModificationListeners = new ArrayList<>();
-
-    public interface OnWindowModificationListener {
-        default void onMapWindow(Window window) {}
-
-        default void onUnmapWindow(Window window) {}
-
-        default void onChangeWindowZOrder(Window window) {}
-
-        default void onUpdateWindowContent(Window window) {}
-
-        default void onUpdateWindowGeometry(Window window, boolean resized) {}
-
-        default void onUpdateWindowAttributes(Window window, Bitmask mask) {}
-
-        default void onModifyWindowProperty(Window window, Property property) {}
+    enum class FocusRevertTo {
+        NONE,
+        POINTER_ROOT,
+        PARENT,
     }
 
-    public WindowManager(ScreenInfo screenInfo, DrawableManager drawableManager) {
-        this.drawableManager = drawableManager;
-        int id = IDGenerator.generate();
-        Drawable drawable = drawableManager.createDrawable(id, screenInfo.width, screenInfo.height, drawableManager.getVisual());
-        rootWindow = new Window(id, drawable, 0, 0, screenInfo.width, screenInfo.height, null);
-        rootWindow.attributes.setMapped(true);
-        windows.put(id, rootWindow);
+    val rootWindow: Window
+
+    private val windows = SparseArray<Window?>()
+
+    var focusedWindow: Window? = null
+        private set
+
+    var focusRevertTo: FocusRevertTo = FocusRevertTo.NONE
+        private set
+
+    private val onWindowModificationListeners = ArrayList<OnWindowModificationListener?>()
+
+    interface OnWindowModificationListener {
+        fun onMapWindow(window: Window) {}
+
+        fun onUnmapWindow(window: Window) {}
+
+        fun onChangeWindowZOrder(window: Window) {}
+
+        fun onUpdateWindowContent(window: Window) {}
+
+        fun onUpdateWindowGeometry(window: Window?, resized: Boolean) {}
+
+        fun onUpdateWindowAttributes(window: Window, mask: Bitmask) {}
+
+        fun onModifyWindowProperty(window: Window, property: Property) {}
     }
 
-    public Window getWindow(int id) {
-        return windows.get(id);
+    init {
+        val id = generate()
+        val drawable = drawableManager.createDrawable(
+            id = id,
+            width = screenInfo.width,
+            height = screenInfo.height,
+            visual = drawableManager.visual,
+        )
+
+        rootWindow = Window(id, drawable, 0, 0, screenInfo.width.toInt(), screenInfo.height.toInt(), null)
+        rootWindow.attributes.isMapped = true
+
+        windows.put(id, rootWindow)
     }
 
-    public Window findWindowWithProcessId(int processId) {
-        for (int i = 0; i < windows.size(); i++) {
-            Window window = windows.valueAt(i);
-            if (window != null && window.getProcessId() == processId) return window;
+    fun getWindow(id: Int): Window? = windows.get(id)
+
+    fun findWindowWithProcessId(processId: Int): Window? {
+        for (i in 0..<windows.size) {
+            val window = windows.valueAt(i)
+            if (window != null && window.processId == processId) {
+                return window
+            }
         }
-        return null;
+
+        return null
     }
 
-    public void destroyWindow(int id) {
-        Window window = getWindow(id);
+    fun destroyWindow(id: Int) {
+        val window = getWindow(id)
         if (window != null && rootWindow.id != id) {
-            unmapWindow(window);
-            removeAllSubwindowsAndWindow(window);
+            unmapWindow(window)
+            removeAllSubwindowsAndWindow(window)
         }
     }
 
-    private void removeAllSubwindowsAndWindow(Window window) {
-        List<Window> children = new ArrayList<>(window.getChildren());
-        for (Window child : children) removeAllSubwindowsAndWindow(child);
+    private fun removeAllSubwindowsAndWindow(window: Window) {
+        val children = window.getChildren()
 
-        Window parent = window.getParent();
-        window.sendEvent(Event.STRUCTURE_NOTIFY, new DestroyNotify(window, window));
-        parent.sendEvent(Event.SUBSTRUCTURE_NOTIFY, new DestroyNotify(parent, window));
-        windows.remove(window.id);
-        if (window.isInputOutput()) drawableManager.removeDrawable(window.getContent().id);
-        triggerOnFreeResourceListener(window);
-        if (window == focusedWindow) revertFocus();
-        parent.removeChild(window);
+        children.forEach { child ->
+            child?.let { removeAllSubwindowsAndWindow(it) }
+        }
+
+        val parent = window.parent
+
+        window.sendEvent(Event.STRUCTURE_NOTIFY, DestroyNotify(window, window))
+        parent!!.sendEvent(Event.SUBSTRUCTURE_NOTIFY, DestroyNotify(parent, window))
+
+        windows.remove(window.id)
+
+        if (window.isInputOutput) {
+            drawableManager.removeDrawable(window.content!!.id)
+        }
+
+        triggerOnFreeResourceListener(window)
+
+        if (window == focusedWindow) {
+            revertFocus()
+        }
+
+        parent.removeChild(window)
     }
 
-    public void mapWindow(Window window) {
-        if (!window.attributes.isMapped()) {
-            Window parent = window.getParent();
-            if (!parent.hasEventListenerFor(Event.SUBSTRUCTURE_REDIRECT) || window.attributes.isOverrideRedirect()) {
-                window.attributes.setMapped(true);
-                window.sendEvent(Event.STRUCTURE_NOTIFY, new MapNotify(window, window));
-                parent.sendEvent(Event.SUBSTRUCTURE_NOTIFY, new MapNotify(parent, window));
-                window.sendEvent(Event.EXPOSURE, new Expose(window));
-                triggerOnMapWindow(window);
+    fun mapWindow(window: Window) {
+        if (!window.attributes.isMapped) {
+            val parent = window.parent
+            if (!parent!!.hasEventListenerFor(Event.SUBSTRUCTURE_REDIRECT) || window.attributes.isOverrideRedirect) {
+                window.attributes.isMapped = true
+                window.sendEvent(Event.STRUCTURE_NOTIFY, MapNotify(window, window))
+                parent.sendEvent(Event.SUBSTRUCTURE_NOTIFY, MapNotify(parent, window))
+                window.sendEvent(Event.EXPOSURE, Expose(window))
+
+                triggerOnMapWindow(window)
+            } else {
+                parent.sendEvent(Event.SUBSTRUCTURE_REDIRECT, MapRequest(parent, window))
             }
-            else parent.sendEvent(Event.SUBSTRUCTURE_REDIRECT, new MapRequest(parent, window));
         }
     }
 
-    public void unmapWindow(Window window) {
-        if (rootWindow.id != window.id && window.attributes.isMapped()) {
-            window.attributes.setMapped(false);
-            Window parent = window.getParent();
-            window.sendEvent(Event.STRUCTURE_NOTIFY, new UnmapNotify(window, window));
-            parent.sendEvent(Event.SUBSTRUCTURE_NOTIFY, new UnmapNotify(parent, window));
-            if (window == focusedWindow) revertFocus();
-            triggerOnUnmapWindow(window);
+    fun unmapWindow(window: Window) {
+        if (rootWindow.id != window.id && window.attributes.isMapped) {
+            window.attributes.isMapped = false
+
+            val parent = window.parent
+
+            window.sendEvent(Event.STRUCTURE_NOTIFY, UnmapNotify(window, window))
+            parent!!.sendEvent(Event.SUBSTRUCTURE_NOTIFY, UnmapNotify(parent, window))
+
+            if (window == focusedWindow) {
+                revertFocus()
+            }
+
+            triggerOnUnmapWindow(window)
         }
     }
 
-    public Window getFocusedWindow() {
-        return focusedWindow;
-    }
-
-    public void revertFocus() {
-        switch (focusRevertTo) {
-            case NONE:
-                focusedWindow = null;
-                break;
-            case POINTER_ROOT:
-                focusedWindow = rootWindow;
-                break;
-            case PARENT:
-                if (focusedWindow.getParent() != null) focusedWindow = focusedWindow.getParent();
-                break;
+    fun revertFocus() {
+        when (focusRevertTo) {
+            FocusRevertTo.NONE -> focusedWindow = null
+            FocusRevertTo.POINTER_ROOT -> focusedWindow = rootWindow
+            FocusRevertTo.PARENT -> if (focusedWindow!!.parent != null) {
+                focusedWindow = focusedWindow!!.parent
+            }
         }
     }
 
-    public void setFocus(Window focusedWindow, FocusRevertTo focusRevertTo) {
-        this.focusedWindow = focusedWindow;
-        this.focusRevertTo = focusRevertTo;
+    fun setFocus(focusedWindow: Window?, focusRevertTo: FocusRevertTo) {
+        this.focusedWindow = focusedWindow
+        this.focusRevertTo = focusRevertTo
     }
 
-    public FocusRevertTo getFocusRevertTo() {
-        return focusRevertTo;
-    }
+    @Throws(XRequestError::class)
+    fun createWindow(
+        id: Int,
+        parent: Window,
+        x: Short,
+        y: Short,
+        width: Short,
+        height: Short,
+        windowClass: WindowClass,
+        visual: Visual?,
+        depth: Byte,
+        client: XClient?,
+    ): Window {
+        var visual = visual
+        var depth = depth
 
-    public Window createWindow(int id, Window parent, short x, short y, short width, short height, WindowAttributes.WindowClass windowClass, Visual visual, byte depth, XClient client) throws XRequestError {
-        if (windows.indexOfKey(id) >= 0) throw new BadIdChoice(id);
+        if (windows.indexOfKey(id) >= 0) {
+            throw BadIdChoice(id)
+        }
 
-        boolean isInputOutput = false;
-        switch (windowClass) {
-            case COPY_FROM_PARENT:
-                depth = (depth != 0 || !parent.isInputOutput()) ? depth : parent.getContent().visual.depth;
-                isInputOutput = parent.isInputOutput();
-                break;
-            case INPUT_OUTPUT:
-                if (parent.isInputOutput()) {
-                    depth = depth == 0 ? parent.getContent().visual.depth : depth;
-                    isInputOutput = true;
-                } else throw new BadMatch();
-                break;
-            case INPUT_ONLY:
-                isInputOutput = false;
-                break;
+        var isInputOutput = false
+        when (windowClass) {
+            WindowClass.COPY_FROM_PARENT -> {
+                depth = if (depth.toInt() != 0 || !parent.isInputOutput) {
+                    depth
+                } else {
+                    parent.content!!.visual!!.depth
+                }
+                isInputOutput = parent.isInputOutput
+            }
+
+            WindowClass.INPUT_OUTPUT -> if (parent.isInputOutput) {
+                depth = if (depth.toInt() == 0) parent.content!!.visual!!.depth else depth
+                isInputOutput = true
+            } else {
+                throw BadMatch()
+            }
+
+            WindowClass.INPUT_ONLY -> isInputOutput = false
         }
 
         if (isInputOutput) {
-            visual = visual == null ? parent.getContent().visual : visual;
-            if (depth != visual.depth) throw new BadMatch();
+            visual = visual ?: parent.content!!.visual
+
+            if (depth != visual!!.depth) {
+                throw BadMatch()
+            }
         }
 
-        Drawable drawable = null;
+        var drawable: Drawable? = null
         if (isInputOutput) {
-            drawable = drawableManager.createDrawable(id, width, height, visual);
-            if (drawable == null) throw new BadIdChoice(id);
+            drawable = drawableManager.createDrawable(id, width, height, visual)
+            if (drawable == null) {
+                throw BadIdChoice(id)
+            }
         }
 
-        final Window window = new Window(id, drawable, x, y, width, height, client);
-        window.attributes.setWindowClass(windowClass);
-        if (drawable != null) drawable.setOnDrawListener(() -> triggerOnUpdateWindowContent(window));
-        windows.put(id, window);
-        parent.addChild(window);
-        triggerOnCreateResourceListener(window);
-        return window;
+        val window = Window(id, drawable, x.toInt(), y.toInt(), width.toInt(), height.toInt(), client)
+        window.attributes.windowClass = windowClass
+
+        if (drawable != null) drawable.onDrawListener = Runnable { triggerOnUpdateWindowContent(window) }
+
+        windows.put(id, window)
+        parent.addChild(window)
+
+        triggerOnCreateResourceListener(window)
+
+        return window
     }
 
-    private void changeWindowGeometry(Window window, short x, short y, short width, short height) {
-        boolean resized = window.getWidth() != width || window.getHeight() != height;
+    private fun changeWindowGeometry(window: Window, x: Short, y: Short, width: Short, height: Short) {
+        var width = width
+        var height = height
+        var resized = window.width != width || window.height != height
+
         if (resized && window.hasEventListenerFor(Event.RESIZE_REDIRECT)) {
-            window.sendEvent(Event.SUBSTRUCTURE_REDIRECT, new ResizeRequest(window, width, height));
-            width = window.getWidth();
-            height = window.getHeight();
-            resized = false;
+            window.sendEvent(Event.SUBSTRUCTURE_REDIRECT, ResizeRequest(window, width, height))
+            width = window.width
+            height = window.height
+            resized = false
         }
 
-        if (resized && window.isInputOutput()) {
-            Drawable oldContent = window.getContent();
-            drawableManager.removeDrawable(oldContent.id);
-            Drawable newContent = drawableManager.createDrawable(oldContent.id, width, height, oldContent.visual);
-            newContent.setOnDrawListener(() -> triggerOnUpdateWindowContent(window));
-            window.setContent(newContent);
+        if (resized && window.isInputOutput) {
+            val oldContent = window.content
+            drawableManager.removeDrawable(oldContent!!.id)
+            val newContent = drawableManager.createDrawable(oldContent.id, width, height, oldContent.visual)
+            newContent!!.onDrawListener = Runnable { triggerOnUpdateWindowContent(window) }
+            window.content = newContent
         }
 
-        if (resized || window.getX() != x || window.getY() != y) {
-            window.setX(x);
-            window.setY(y);
-            window.setWidth(width);
-            window.setHeight(height);
-            triggerOnUpdateWindowGeometry(window, resized);
+        if (resized || window.x != x || window.y != y) {
+            window.x = x
+            window.y = y
+            window.width = width
+            window.height = height
+            triggerOnUpdateWindowGeometry(window, resized)
         }
 
-        if (resized && window.isInputOutput() && window.attributes.isMapped()) {
-            window.sendEvent(new Expose(window));
+        if (resized && window.isInputOutput && window.attributes.isMapped) {
+            window.sendEvent(Expose(window))
         }
     }
 
-    private void changeWindowZOrder(Window.StackMode stackMode, Window window, Window sibling) {
-        Window parent = window.getParent();
-        switch (stackMode) {
-            case ABOVE:
-                parent.moveChildAbove(window, sibling);
-                break;
-            case BELOW:
-                parent.moveChildBelow(window, sibling);
-                break;
+    private fun changeWindowZOrder(stackMode: StackMode, window: Window, sibling: Window?) {
+        val parent = window.parent
+
+        when (stackMode) {
+            StackMode.ABOVE -> parent!!.moveChildAbove(window, sibling)
+            StackMode.BELOW -> parent!!.moveChildBelow(window, sibling)
+            else -> Unit
         }
-        triggerOnChangeWindowZOrder(window);
+
+        triggerOnChangeWindowZOrder(window)
     }
 
-    public void configureWindow(Window window, Bitmask valueMask, XInputStream inputStream) {
-        short x = window.getX();
-        short y = window.getY();
-        short width = window.getWidth();
-        short height = window.getHeight();
-        short borderWidth = window.getBorderWidth();
-        Window sibling = null;
-        Window.StackMode stackMode = null;
+    fun configureWindow(window: Window, valueMask: Bitmask, inputStream: XInputStream) {
+        var x = window.x
+        var y = window.y
+        var width = window.width
+        var height = window.height
+        var borderWidth = window.borderWidth
+        var sibling: Window? = null
+        var stackMode: StackMode? = null
 
-        for (int index : valueMask) {
-            switch (index) {
-                case Window.FLAG_X:
-                    x = (short)inputStream.readInt();
-                    break;
-                case Window.FLAG_Y:
-                    y = (short)inputStream.readInt();
-                    break;
-                case Window.FLAG_WIDTH:
-                    width = (short)inputStream.readInt();
-                    break;
-                case Window.FLAG_HEIGHT:
-                    height = (short)inputStream.readInt();
-                    break;
-                case Window.FLAG_BORDER_WIDTH:
-                    borderWidth = (short)inputStream.readInt();
-                    break;
-                case Window.FLAG_SIBLING:
-                    sibling = getWindow(inputStream.readInt());
-                    break;
-                case Window.FLAG_STACK_MODE:
-                    stackMode = Window.StackMode.values()[inputStream.readInt()];
-                    break;
+        for (index in valueMask) {
+            when (index) {
+                Window.FLAG_X -> x = inputStream.readInt().toShort()
+                Window.FLAG_Y -> y = inputStream.readInt().toShort()
+                Window.FLAG_WIDTH -> width = inputStream.readInt().toShort()
+                Window.FLAG_HEIGHT -> height = inputStream.readInt().toShort()
+                Window.FLAG_BORDER_WIDTH -> borderWidth = inputStream.readInt().toShort()
+                Window.FLAG_SIBLING -> sibling = getWindow(inputStream.readInt())
+                Window.FLAG_STACK_MODE -> stackMode = StackMode.entries.toTypedArray()[inputStream.readInt()]
             }
         }
 
-        Window parent = window.getParent();
-        boolean overrideRedirect = window.attributes.isOverrideRedirect();
-        if (!parent.hasEventListenerFor(Event.SUBSTRUCTURE_REDIRECT) || overrideRedirect) {
-            changeWindowGeometry(window, x, y, width, height);
+        val parent = window.parent
+        val overrideRedirect = window.attributes.isOverrideRedirect
+        if (!parent!!.hasEventListenerFor(Event.SUBSTRUCTURE_REDIRECT) || overrideRedirect) {
+            changeWindowGeometry(window, x, y, width, height)
 
-            window.setBorderWidth(borderWidth);
-            if (stackMode != null) changeWindowZOrder(stackMode, window, sibling);
+            window.borderWidth = borderWidth
+            if (stackMode != null) {
+                changeWindowZOrder(stackMode, window, sibling)
+            }
 
-            Window previousSibling = window.previousSibling();
-            window.sendEvent(Event.STRUCTURE_NOTIFY, new ConfigureNotify(window, window, previousSibling, x, y, width, height, borderWidth, overrideRedirect));
-            parent.sendEvent(Event.SUBSTRUCTURE_NOTIFY, new ConfigureNotify(parent, window, previousSibling, x, y, width, height, borderWidth, overrideRedirect));
-        }
-        else parent.sendEvent(Event.SUBSTRUCTURE_REDIRECT, new ConfigureRequest(parent, window, window.previousSibling(), x, y, width, height, borderWidth, stackMode, valueMask));
-    }
-
-    public void reparentWindow(Window window, Window newParent) {
-        Window oldParent = window.getParent();
-        if (oldParent != null) oldParent.removeChild(window);
-        newParent.addChild(window);
-    }
-
-    public Window findPointWindow(short rootX, short rootY) {
-        return findPointWindow(rootWindow, rootX, rootY);
-    }
-
-    private Window findPointWindow(Window window, short rootX, short rootY) {
-        if (!(window.attributes.isMapped() && window.containsPoint(rootX, rootY))) return null;
-        Window child = window.getChildByCoords(rootX, rootY);
-        return child != null ? findPointWindow(child, rootX, rootY) : window;
-    }
-
-    public void addOnWindowModificationListener(OnWindowModificationListener onWindowModificationListener) {
-        onWindowModificationListeners.add(onWindowModificationListener);
-    }
-
-    public void removeOnWindowModificationListener(OnWindowModificationListener onWindowModificationListener) {
-        onWindowModificationListeners.remove(onWindowModificationListener);
-    }
-
-    private void triggerOnMapWindow(Window window) {
-        for (int i = onWindowModificationListeners.size()-1; i >= 0; i--) {
-            onWindowModificationListeners.get(i).onMapWindow(window);
-        }
-    }
-
-    private void triggerOnUnmapWindow(Window window) {
-        for (int i = onWindowModificationListeners.size()-1; i >= 0; i--) {
-            onWindowModificationListeners.get(i).onUnmapWindow(window);
+            val previousSibling = window.previousSibling()
+            window.sendEvent(
+                Event.STRUCTURE_NOTIFY,
+                ConfigureNotify(
+                    event = window,
+                    window = window,
+                    aboveSibling = previousSibling,
+                    x = x.toInt(),
+                    y = y.toInt(),
+                    width = width.toInt(),
+                    height = height.toInt(),
+                    borderWidth = borderWidth.toInt(),
+                    overrideRedirect = overrideRedirect,
+                ),
+            )
+            parent.sendEvent(
+                Event.SUBSTRUCTURE_NOTIFY,
+                ConfigureNotify(
+                    event = parent,
+                    window = window,
+                    aboveSibling = previousSibling,
+                    x = x.toInt(),
+                    y = y.toInt(),
+                    width = width.toInt(),
+                    height = height.toInt(),
+                    borderWidth = borderWidth.toInt(),
+                    overrideRedirect = overrideRedirect,
+                ),
+            )
+        } else {
+            parent.sendEvent(
+                Event.SUBSTRUCTURE_REDIRECT,
+                ConfigureRequest(parent, window, window.previousSibling(), x, y, width, height, borderWidth, stackMode, valueMask),
+            )
         }
     }
 
-    private void triggerOnChangeWindowZOrder(Window window) {
-        for (int i = onWindowModificationListeners.size()-1; i >= 0; i--) {
-            onWindowModificationListeners.get(i).onChangeWindowZOrder(window);
+    fun reparentWindow(window: Window, newParent: Window) {
+        val oldParent = window.parent
+        oldParent?.removeChild(window)
+        newParent.addChild(window)
+    }
+
+    fun findPointWindow(rootX: Short, rootY: Short): Window? = findPointWindow(rootWindow, rootX, rootY)
+
+    private fun findPointWindow(window: Window, rootX: Short, rootY: Short): Window? {
+        if (!(window.attributes.isMapped && window.containsPoint(rootX, rootY))) {
+            return null
+        }
+
+        val child = window.getChildByCoords(rootX, rootY)
+
+        return if (child != null) {
+            findPointWindow(child, rootX, rootY)
+        } else {
+            window
         }
     }
 
-    protected void triggerOnUpdateWindowContent(Window window) {
-        for (int i = onWindowModificationListeners.size()-1; i >= 0; i--) {
-            onWindowModificationListeners.get(i).onUpdateWindowContent(window);
+    fun addOnWindowModificationListener(onWindowModificationListener: OnWindowModificationListener?) {
+        onWindowModificationListeners.add(onWindowModificationListener)
+    }
+
+    fun removeOnWindowModificationListener(onWindowModificationListener: OnWindowModificationListener?) {
+        onWindowModificationListeners.remove(onWindowModificationListener)
+    }
+
+    private fun triggerOnMapWindow(window: Window) {
+        onWindowModificationListeners.indices.reversed().forEach {
+            onWindowModificationListeners[it]!!.onMapWindow(window)
         }
     }
 
-    protected void triggerOnUpdateWindowGeometry(Window window, boolean resized) {
-        for (int i = onWindowModificationListeners.size()-1; i >= 0; i--) {
-            onWindowModificationListeners.get(i).onUpdateWindowGeometry(window, resized);
+    private fun triggerOnUnmapWindow(window: Window) {
+        onWindowModificationListeners.indices.reversed().forEach {
+            onWindowModificationListeners[it]!!.onUnmapWindow(window)
         }
     }
 
-    public void triggerOnUpdateWindowAttributes(Window window, Bitmask mask) {
-        for (int i = onWindowModificationListeners.size()-1; i >= 0; i--) {
-            onWindowModificationListeners.get(i).onUpdateWindowAttributes(window, mask);
+    private fun triggerOnChangeWindowZOrder(window: Window) {
+        onWindowModificationListeners.indices.reversed().forEach {
+            onWindowModificationListeners[it]!!.onChangeWindowZOrder(window)
         }
     }
 
-    public void triggerOnModifyWindowProperty(Window window, Property property) {
-        for (int i = onWindowModificationListeners.size()-1; i >= 0; i--) {
-            onWindowModificationListeners.get(i).onModifyWindowProperty(window, property);
+    protected fun triggerOnUpdateWindowContent(window: Window) {
+        onWindowModificationListeners.indices.reversed().forEach {
+            onWindowModificationListeners[it]!!.onUpdateWindowContent(window)
+        }
+    }
+
+    protected fun triggerOnUpdateWindowGeometry(window: Window, resized: Boolean) {
+        onWindowModificationListeners.indices.reversed().forEach {
+            onWindowModificationListeners[it]!!.onUpdateWindowGeometry(window, resized)
+        }
+    }
+
+    fun triggerOnUpdateWindowAttributes(window: Window, mask: Bitmask) {
+        onWindowModificationListeners.indices.reversed().forEach {
+            onWindowModificationListeners[it]!!.onUpdateWindowAttributes(window, mask)
+        }
+    }
+
+    fun triggerOnModifyWindowProperty(window: Window, property: Property) {
+        onWindowModificationListeners.indices.reversed().forEach {
+            onWindowModificationListeners[it]!!.onModifyWindowProperty(window, property)
         }
     }
 }

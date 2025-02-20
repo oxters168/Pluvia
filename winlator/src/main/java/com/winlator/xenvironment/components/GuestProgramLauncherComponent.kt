@@ -40,6 +40,10 @@ class GuestProgramLauncherComponent : EnvironmentComponent() {
 
     var isWoW64Mode: Boolean = true
 
+    var box86Version: String = DefaultVersion.BOX86
+
+    var box64Version: String = DefaultVersion.BOX64
+
     override fun start() {
         synchronized(lock) {
             stop()

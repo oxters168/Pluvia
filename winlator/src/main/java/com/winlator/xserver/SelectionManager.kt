@@ -1,49 +1,53 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import androidx.core.util.size
+import com.winlator.xserver.XResourceManager.OnResourceLifecycleListener
+import com.winlator.xserver.events.SelectionClear
 
-import androidx.annotation.Nullable;
+class SelectionManager(windowManager: WindowManager) : OnResourceLifecycleListener {
 
-import com.winlator.xserver.events.SelectionClear;
+    private val selections = SparseArray<Selection>()
 
-public class SelectionManager implements XResourceManager.OnResourceLifecycleListener {
-    private final SparseArray<Selection> selections = new SparseArray<>();
-
-    public SelectionManager(WindowManager windowManager) {
-        windowManager.addOnResourceLifecycleListener(this);
+    init {
+        windowManager.addOnResourceLifecycleListener(this)
     }
 
-    public static class Selection {
-        public Window owner;
-        private XClient client;
+    class Selection {
+        var owner: Window? = null
+        var client: XClient? = null
     }
 
-    public void setSelection(int atom, Window owner, XClient client, int timestamp) {
-        Selection selection = getSelection(atom);
+    fun setSelection(atom: Int, owner: Window?, client: XClient, timestamp: Int) {
+        val selection = getSelection(atom)
         if (selection.owner != null && (owner == null || selection.client != client)) {
-            selection.client.sendEvent(new SelectionClear(timestamp, owner, atom));
+            selection.client!!.sendEvent(SelectionClear(timestamp, owner!!, atom))
         }
-        selection.owner = owner;
-        selection.client = client;
+        selection.owner = owner
+        selection.client = client
     }
 
-    public Selection getSelection(int atom) {
-        Selection selection = selections.get(atom);
-        if (selection != null) return selection;
-        selection = new Selection();
-        selections.put(atom, selection);
-        return selection;
+    fun getSelection(atom: Int): Selection {
+        var selection = selections.get(atom)
+        if (selection != null) {
+            return selection
+        }
+
+        selection = Selection()
+        selections.put(atom, selection)
+
+        return selection
     }
 
-    @Override
-    public void onCreateResource(@Nullable XResource resource) {
+    override fun onCreateResource(resource: XResource?) {
     }
 
-    @Override
-    public void onFreeResource(XResource resource) {
-        for (int i = 0; i < selections.size(); i++) {
-            Selection selection = selections.valueAt(i);
-            if (selection.owner == resource) selection.owner = null;
+    override fun onFreeResource(resource: XResource?) {
+        for (i in 0..<selections.size) {
+            val selection = selections.valueAt(i)
+            if (selection.owner == resource) {
+                selection.owner = null
+            }
         }
     }
 }

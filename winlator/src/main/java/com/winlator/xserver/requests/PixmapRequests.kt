@@ -1,35 +1,45 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xserver.Drawable;
-import com.winlator.xserver.Pixmap;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.BadDrawable;
-import com.winlator.xserver.errors.BadIdChoice;
-import com.winlator.xserver.errors.XRequestError;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.XClient
+import com.winlator.xserver.errors.BadDrawable
+import com.winlator.xserver.errors.BadIdChoice
+import com.winlator.xserver.errors.XRequestError
 
-public abstract class PixmapRequests {
-    public static void createPixmap(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        byte depth = client.getRequestData();
-        int pixmapId = inputStream.readInt();
-        int drawableId = inputStream.readInt();
-        short width = inputStream.readShort();
-        short height = inputStream.readShort();
+object PixmapRequests {
+    @Throws(XRequestError::class)
+    fun createPixmap(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val depth = client.requestData
+        val pixmapId = inputStream.readInt()
+        val drawableId = inputStream.readInt()
+        val width = inputStream.readShort()
+        val height = inputStream.readShort()
 
-        if (!client.isValidResourceId(pixmapId)) throw new BadIdChoice(pixmapId);
+        if (!client.isValidResourceId(pixmapId)) {
+            throw BadIdChoice(pixmapId)
+        }
 
-        Drawable drawable = client.xServer.drawableManager.getDrawable(drawableId);
-        if (drawable == null) throw new BadDrawable(drawableId);
+        val drawable = client.xServer.drawableManager.getDrawable(drawableId)
+        if (drawable == null) {
+            throw BadDrawable(drawableId)
+        }
 
-        Drawable backingStore = client.xServer.drawableManager.createDrawable(pixmapId, width, height, depth);
-        if (backingStore == null) throw new BadIdChoice(pixmapId);
-        Pixmap pixmap = client.xServer.pixmapManager.createPixmap(backingStore);
-        if (pixmap == null) throw new BadIdChoice(pixmapId);
-        client.registerAsOwnerOfResource(pixmap);
+        val backingStore = client.xServer.drawableManager.createDrawable(pixmapId, width, height, depth)
+        if (backingStore == null) {
+            throw BadIdChoice(pixmapId)
+        }
+
+        val pixmap = client.xServer.pixmapManager.createPixmap(backingStore)
+        if (pixmap == null) {
+            throw BadIdChoice(pixmapId)
+        }
+
+        client.registerAsOwnerOfResource(pixmap)
     }
 
-    public static void freePixmap(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        client.xServer.pixmapManager.freePixmap(inputStream.readInt());
+    @Throws(XRequestError::class)
+    fun freePixmap(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        client.xServer.pixmapManager.freePixmap(inputStream.readInt())
     }
 }

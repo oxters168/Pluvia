@@ -1,70 +1,77 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import androidx.collection.ArrayMap;
+import androidx.collection.arrayMapOf
+import com.winlator.xserver.Atom.getId
+import com.winlator.xserver.Pointer.OnPointerMotionListener
+import com.winlator.xserver.WindowManager.OnWindowModificationListener
 
-import java.util.Map;
+object DesktopHelper {
 
-public abstract class DesktopHelper {
-    public static void attachTo(final XServer xServer) {
-        setupXResources(xServer);
+    fun attachTo(xServer: XServer) {
+        setupXResources(xServer)
 
-        xServer.pointer.addOnPointerMotionListener(new Pointer.OnPointerMotionListener() {
-            @Override
-            public void onPointerButtonPress(Pointer.Button button) {
-                updateFocusedWindow(xServer);
-            }
-        });
+        xServer.pointer.addOnPointerMotionListener(
+            object : OnPointerMotionListener {
+                override fun onPointerButtonPress(button: Pointer.Button) {
+                    updateFocusedWindow(xServer)
+                }
+            },
+        )
 
-        xServer.windowManager.addOnWindowModificationListener(new WindowManager.OnWindowModificationListener() {
-            @Override
-            public void onMapWindow(Window window) {
-                setFocusedWindow(xServer, window);
-            }
-        });
+        xServer.windowManager.addOnWindowModificationListener(
+            object : OnWindowModificationListener {
+                override fun onMapWindow(window: Window) {
+                    setFocusedWindow(xServer, window)
+                }
+            },
+        )
     }
 
-    private static void updateFocusedWindow(XServer xServer) {
-        try (XLock lock = xServer.lock(XServer.Lockable.WINDOW_MANAGER, XServer.Lockable.INPUT_DEVICE)) {
-            Window focusedWindow = xServer.windowManager.getFocusedWindow();
-            Window child = xServer.windowManager.findPointWindow(xServer.pointer.getClampedX(), xServer.pointer.getClampedY());
+    private fun updateFocusedWindow(xServer: XServer) {
+        xServer.lock(XServer.Lockable.WINDOW_MANAGER, XServer.Lockable.INPUT_DEVICE).use {
+            val focusedWindow = xServer.windowManager.focusedWindow
+            val child = xServer.windowManager.findPointWindow(xServer.pointer.clampedX, xServer.pointer.clampedY)
             if (child == null && focusedWindow != xServer.windowManager.rootWindow) {
-                xServer.windowManager.setFocus(xServer.windowManager.rootWindow, WindowManager.FocusRevertTo.NONE);
-            }
-            else if (child != null && child != focusedWindow) {
-                setFocusedWindow(xServer, child);
+                xServer.windowManager.setFocus(xServer.windowManager.rootWindow, WindowManager.FocusRevertTo.NONE)
+            } else if (child != null && child != focusedWindow) {
+                setFocusedWindow(xServer, child)
             }
         }
     }
 
-    private static void setFocusedWindow(XServer xServer, Window window) {
-        if (window.isApplicationWindow()) {
-            boolean parentIsRoot = window.getParent() == xServer.windowManager.rootWindow;
-            xServer.windowManager.setFocus(window, parentIsRoot ? WindowManager.FocusRevertTo.POINTER_ROOT : WindowManager.FocusRevertTo.PARENT);
-            xServer.getWinHandler().bringToFront(window.getClassName(), window.getHandle());
+    private fun setFocusedWindow(xServer: XServer, window: Window) {
+        if (window.isApplicationWindow) {
+            val parentIsRoot = window.parent == xServer.windowManager.rootWindow
+            xServer.windowManager.setFocus(
+                window,
+                if (parentIsRoot) WindowManager.FocusRevertTo.POINTER_ROOT else WindowManager.FocusRevertTo.PARENT,
+            )
+            xServer.winHandler!!.bringToFront(window.className, window.handle)
         }
     }
 
-    private static void setupXResources(XServer xServer) {
-        int atom = Atom.getId("RESOURCE_MANAGER");
-        int type = Atom.getId("STRING");
+    private fun setupXResources(xServer: XServer) {
+        val atom = getId("RESOURCE_MANAGER")
+        val type = getId("STRING")
 
-        ArrayMap<String, String> values = new ArrayMap<>();
-        values.put("size", "20");
-        values.put("theme", "dmz");
-        values.put("theme_core", "true");
+        val values = arrayMapOf(
+            "size" to "20",
+            "theme" to "dmz",
+            "theme_core" to "true",
+        )
 
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, String> entry : values.entrySet()) {
+        val sb = StringBuilder()
+        for (entry in values.entries) {
             sb.append("Xcursor")
-              .append('.')
-              .append(entry.getKey())
-              .append(':')
-              .append('\t')
-              .append(entry.getValue())
-              .append('\n');
+                .append('.')
+                .append(entry.key)
+                .append(':')
+                .append('\t')
+                .append(entry.value)
+                .append('\n')
         }
 
-        byte[] data = sb.toString().getBytes(XServer.LATIN1_CHARSET);
-        xServer.windowManager.rootWindow.modifyProperty(atom, type, Property.Format.BYTE_ARRAY, Property.Mode.APPEND, data);
+        val data = sb.toString().toByteArray(XServer.LATIN1_CHARSET)
+        xServer.windowManager.rootWindow.modifyProperty(atom, type, Property.Format.BYTE_ARRAY, Property.Mode.APPEND, data)
     }
 }

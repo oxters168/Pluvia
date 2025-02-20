@@ -1,69 +1,71 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
+import com.winlator.xconnector.XInputStream
 
-import com.winlator.xconnector.XInputStream;
+class GraphicsContextManager : XResourceManager() {
+    private val graphicsContexts = SparseArray<GraphicsContext?>()
 
-public class GraphicsContextManager extends XResourceManager {
-    private final SparseArray<GraphicsContext> graphicsContexts = new SparseArray<>();
-
-    public GraphicsContext getGraphicsContext(int id) {
-        return graphicsContexts.get(id);
+    fun getGraphicsContext(id: Int): GraphicsContext? {
+        return graphicsContexts.get(id)
     }
 
-    public GraphicsContext createGraphicsContext(int id, Drawable drawable) {
-        if (graphicsContexts.indexOfKey(id) >= 0) return null;
-        GraphicsContext graphicsContext = new GraphicsContext(id, drawable);
-        graphicsContexts.put(id, graphicsContext);
-        triggerOnCreateResourceListener(graphicsContext);
-        return graphicsContext;
+    fun createGraphicsContext(id: Int, drawable: Drawable?): GraphicsContext? {
+        if (graphicsContexts.indexOfKey(id) >= 0) return null
+        val graphicsContext = GraphicsContext(id, drawable)
+        graphicsContexts.put(id, graphicsContext)
+        triggerOnCreateResourceListener(graphicsContext)
+        return graphicsContext
     }
 
-    public void freeGraphicsContext(int id) {
-        triggerOnFreeResourceListener(graphicsContexts.get(id));
-        graphicsContexts.remove(id);
+    fun freeGraphicsContext(id: Int) {
+        triggerOnFreeResourceListener(graphicsContexts.get(id))
+        graphicsContexts.remove(id)
     }
 
-    public void updateGraphicsContext(GraphicsContext graphicsContext, Bitmask valueMask, XInputStream inputStream) {
-        for (int index : valueMask) {
-            switch (index) {
-                case GraphicsContext.FLAG_FUNCTION:
-                    graphicsContext.setFunction(GraphicsContext.Function.values()[inputStream.readInt()]);
-                    break;
-                case GraphicsContext.FLAG_PLANE_MASK:
-                    graphicsContext.setPlaneMask(inputStream.readInt());
-                    break;
-                case GraphicsContext.FLAG_FOREGROUND:
-                    graphicsContext.setForeground(inputStream.readInt());
-                    break;
-                case GraphicsContext.FLAG_BACKGROUND:
-                    graphicsContext.setBackground(inputStream.readInt());
-                    break;
-                case GraphicsContext.FLAG_LINE_WIDTH:
-                    graphicsContext.setLineWidth(inputStream.readInt());
-                    break;
-                case GraphicsContext.FLAG_SUBWINDOW_MODE:
-                    graphicsContext.setSubwindowMode(GraphicsContext.SubwindowMode.values()[inputStream.readInt()]);
-                    break;
-                case GraphicsContext.FLAG_LINE_STYLE:
-                case GraphicsContext.FLAG_CAP_STYLE:
-                case GraphicsContext.FLAG_JOIN_STYLE:
-                case GraphicsContext.FLAG_FILL_STYLE:
-                case GraphicsContext.FLAG_FILL_RULE:
-                case GraphicsContext.FLAG_GRAPHICS_EXPOSURES:
-                case GraphicsContext.FLAG_DASHES:
-                case GraphicsContext.FLAG_ARC_MODE:
-                case GraphicsContext.FLAG_TILE:
-                case GraphicsContext.FLAG_STIPPLE:
-                case GraphicsContext.FLAG_FONT:
-                case GraphicsContext.FLAG_CLIP_MASK:
-                case GraphicsContext.FLAG_TILE_STIPPLE_X_ORIGIN:
-                case GraphicsContext.FLAG_TILE_STIPPLE_Y_ORIGIN:
-                case GraphicsContext.FLAG_CLIP_X_ORIGIN:
-                case GraphicsContext.FLAG_CLIP_Y_ORIGIN:
-                case GraphicsContext.FLAG_DASH_OFFSET:
-                    inputStream.skip(4);
-                    break;
+    fun updateGraphicsContext(
+        graphicsContext: GraphicsContext,
+        valueMask: Bitmask,
+        inputStream: XInputStream,
+    ) {
+        for (index in valueMask) {
+            when (index) {
+                GraphicsContext.FLAG_FUNCTION ->
+                    graphicsContext.function = GraphicsContext.Function.entries.toTypedArray()[inputStream.readInt()]
+
+                GraphicsContext.FLAG_PLANE_MASK ->
+                    graphicsContext.planeMask = inputStream.readInt()
+
+                GraphicsContext.FLAG_FOREGROUND ->
+                    graphicsContext.foreground = inputStream.readInt()
+
+                GraphicsContext.FLAG_BACKGROUND ->
+                    graphicsContext.background = inputStream.readInt()
+
+                GraphicsContext.FLAG_LINE_WIDTH ->
+                    graphicsContext.lineWidth = inputStream.readInt()
+
+                GraphicsContext.FLAG_SUBWINDOW_MODE ->
+                    graphicsContext.subwindowMode = GraphicsContext.SubwindowMode.entries.toTypedArray()[inputStream.readInt()]
+
+                GraphicsContext.FLAG_LINE_STYLE,
+                GraphicsContext.FLAG_CAP_STYLE,
+                GraphicsContext.FLAG_JOIN_STYLE,
+                GraphicsContext.FLAG_FILL_STYLE,
+                GraphicsContext.FLAG_FILL_RULE,
+                GraphicsContext.FLAG_GRAPHICS_EXPOSURES,
+                GraphicsContext.FLAG_DASHES,
+                GraphicsContext.FLAG_ARC_MODE,
+                GraphicsContext.FLAG_TILE,
+                GraphicsContext.FLAG_STIPPLE,
+                GraphicsContext.FLAG_FONT,
+                GraphicsContext.FLAG_CLIP_MASK,
+                GraphicsContext.FLAG_TILE_STIPPLE_X_ORIGIN,
+                GraphicsContext.FLAG_TILE_STIPPLE_Y_ORIGIN,
+                GraphicsContext.FLAG_CLIP_X_ORIGIN,
+                GraphicsContext.FLAG_CLIP_Y_ORIGIN,
+                GraphicsContext.FLAG_DASH_OFFSET,
+                -> inputStream.skip(4)
             }
         }
     }

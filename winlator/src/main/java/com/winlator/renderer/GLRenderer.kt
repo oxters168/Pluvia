@@ -1,397 +1,451 @@
-package com.winlator.renderer;
+package com.winlator.renderer
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
+import android.graphics.BitmapFactory
+import android.opengl.GLES20
+import android.opengl.GLSurfaceView
+import com.winlator.R
+import com.winlator.math.Mathf
+import com.winlator.math.XForm.identity
+import com.winlator.math.XForm.instance
+import com.winlator.math.XForm.makeTransform
+import com.winlator.math.XForm.multiply
+import com.winlator.math.XForm.set
+import com.winlator.renderer.GPUImage.Companion.checkIsSupported
+import com.winlator.renderer.material.CursorMaterial
+import com.winlator.renderer.material.ShaderMaterial
+import com.winlator.renderer.material.WindowMaterial
+import com.winlator.widget.XServerView
+import com.winlator.xserver.Bitmask
+import com.winlator.xserver.Drawable
+import com.winlator.xserver.Pointer.OnPointerMotionListener
+import com.winlator.xserver.Window
+import com.winlator.xserver.WindowAttributes
+import com.winlator.xserver.WindowManager.OnWindowModificationListener
+import com.winlator.xserver.XServer
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.opengles.GL10
+import kotlin.math.abs
+import kotlin.math.min
 
-import com.winlator.R;
-import com.winlator.math.Mathf;
-import com.winlator.math.XForm;
-import com.winlator.renderer.material.CursorMaterial;
-import com.winlator.renderer.material.ShaderMaterial;
-import com.winlator.renderer.material.WindowMaterial;
-import com.winlator.widget.XServerView;
-import com.winlator.xserver.Bitmask;
-import com.winlator.xserver.Cursor;
-import com.winlator.xserver.Drawable;
-import com.winlator.xserver.Pointer;
-import com.winlator.xserver.Window;
-import com.winlator.xserver.WindowAttributes;
-import com.winlator.xserver.WindowManager;
-import com.winlator.xserver.XLock;
-import com.winlator.xserver.XServer;
+class GLRenderer(val xServerView: XServerView, private val xServer: XServer) :
+    GLSurfaceView.Renderer, OnWindowModificationListener, OnPointerMotionListener {
+    private val quadVertices = VertexAttribute("position", 2)
+    private val tmpXForm1 = instance
+    private val tmpXForm2 = instance
+    private val cursorMaterial = CursorMaterial()
+    private val windowMaterial = WindowMaterial()
+    val viewTransformation: ViewTransformation = ViewTransformation()
+    private val rootCursorDrawable: Drawable
+    private val renderableWindows = ArrayList<RenderableWindow>()
+    var forceFullscreenWMClass: String? = null
+    var isFullscreen: Boolean = false
+        private set
+    private var toggleFullscreen = false
+    private var viewportNeedsUpdate = true
+    var cursorVisible = true
+        private set
+    var screenOffsetYRelativeToCursor = false
+        private set
+    var unviewableWMClasses: Array<out String>? = null
+        private set
+    var magnifierZoom = 1.0f
+        private set
+    private val magnifierEnabled = true
+    private var surfaceWidth = 0
+    private var surfaceHeight = 0
 
-import java.util.ArrayList;
+    init {
+        rootCursorDrawable = createRootCursorDrawable()
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+        quadVertices.put(
+            floatArrayOf(
+                0.0f, 0.0f,
+                0.0f, 1.0f,
+                1.0f, 0.0f,
+                1.0f, 1.0f,
+            ),
+        )
 
-public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindowModificationListener, Pointer.OnPointerMotionListener {
-    public final XServerView xServerView;
-    private final XServer xServer;
-    private final VertexAttribute quadVertices = new VertexAttribute("position", 2);
-    private final float[] tmpXForm1 = XForm.getInstance();
-    private final float[] tmpXForm2 = XForm.getInstance();
-    private final CursorMaterial cursorMaterial = new CursorMaterial();
-    private final WindowMaterial windowMaterial = new WindowMaterial();
-    public final ViewTransformation viewTransformation = new ViewTransformation();
-    private final Drawable rootCursorDrawable;
-    private final ArrayList<RenderableWindow> renderableWindows = new ArrayList<>();
-    private String forceFullscreenWMClass = null;
-    private boolean fullscreen = false;
-    private boolean toggleFullscreen = false;
-    private boolean viewportNeedsUpdate = true;
-    private boolean cursorVisible = true;
-    private boolean screenOffsetYRelativeToCursor = false;
-    private String[] unviewableWMClasses = null;
-    private float magnifierZoom = 1.0f;
-    private boolean magnifierEnabled = true;
-    private int surfaceWidth;
-    private int surfaceHeight;
-
-    public GLRenderer(XServerView xServerView, XServer xServer) {
-        this.xServerView = xServerView;
-        this.xServer = xServer;
-        rootCursorDrawable = createRootCursorDrawable();
-
-        quadVertices.put(new float[]{
-            0.0f, 0.0f,
-            0.0f, 1.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f
-        });
-
-        xServer.windowManager.addOnWindowModificationListener(this);
-        xServer.pointer.addOnPointerMotionListener(this);
+        xServer.windowManager.addOnWindowModificationListener(this)
+        xServer.pointer.addOnPointerMotionListener(this)
     }
 
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GPUImage.checkIsSupported();
+    override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+        checkIsSupported()
 
-        GLES20.glFrontFace(GLES20.GL_CCW);
-        GLES20.glDisable(GLES20.GL_CULL_FACE);
+        GLES20.glFrontFace(GLES20.GL_CCW)
+        GLES20.glDisable(GLES20.GL_CULL_FACE)
 
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-        GLES20.glDepthMask(false);
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST)
+        GLES20.glDepthMask(false)
 
-        GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        GLES20.glEnable(GLES20.GL_BLEND)
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f)
     }
 
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-        surfaceWidth = width;
-        surfaceHeight = height;
-        viewTransformation.update(width, height, xServer.screenInfo.width, xServer.screenInfo.height);
+    override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
+        surfaceWidth = width
+        surfaceHeight = height
+        viewTransformation.update(
+            width,
+            height,
+            xServer.screenInfo.width.toInt(),
+            xServer.screenInfo.height.toInt(),
+        )
     }
 
-    @Override
-    public void onDrawFrame(GL10 gl) {
+    override fun onDrawFrame(gl: GL10?) {
         if (toggleFullscreen) {
-            fullscreen = !fullscreen;
-            toggleFullscreen = false;
-            viewportNeedsUpdate = true;
+            this.isFullscreen = !this.isFullscreen
+            toggleFullscreen = false
+            viewportNeedsUpdate = true
         }
 
-        drawFrame();
+        drawFrame()
     }
 
-    private void drawFrame() {
-        boolean xrFrame = false;
+    private fun drawFrame() {
+        val xrFrame = false
 
         if (viewportNeedsUpdate && magnifierEnabled) {
-            if (fullscreen) {
-                GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight);
+            if (this.isFullscreen) {
+                GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight)
+            } else {
+                GLES20.glViewport(
+                    viewTransformation.viewOffsetX,
+                    viewTransformation.viewOffsetY,
+                    viewTransformation.viewWidth,
+                    viewTransformation.viewHeight,
+                )
             }
-            else GLES20.glViewport(viewTransformation.viewOffsetX, viewTransformation.viewOffsetY, viewTransformation.viewWidth, viewTransformation.viewHeight);
-            viewportNeedsUpdate = false;
+            viewportNeedsUpdate = false
         }
 
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
 
         if (magnifierEnabled) {
-            float pointerX = 0;
-            float pointerY = 0;
-            float magnifierZoom = !screenOffsetYRelativeToCursor ? this.magnifierZoom : 1.0f;
+            var pointerX = 0f
+            var pointerY = 0f
+            val magnifierZoom = if (!screenOffsetYRelativeToCursor) this.magnifierZoom else 1.0f
 
             if (magnifierZoom != 1.0f) {
-                pointerX = Mathf.clamp(xServer.pointer.getX() * magnifierZoom - xServer.screenInfo.width * 0.5f, 0, xServer.screenInfo.width * Math.abs(1.0f - magnifierZoom));
+                pointerX = Mathf.clamp(
+                    xServer.pointer.x * magnifierZoom - xServer.screenInfo.width * 0.5f,
+                    0f,
+                    (xServer.screenInfo.width * abs((1.0f - magnifierZoom).toDouble())).toFloat(),
+                )
             }
 
             if (screenOffsetYRelativeToCursor || magnifierZoom != 1.0f) {
-                float scaleY = magnifierZoom != 1.0f ? Math.abs(1.0f - magnifierZoom) : 0.5f;
-                float offsetY = xServer.screenInfo.height * (screenOffsetYRelativeToCursor ? 0.25f : 0.5f);
-                pointerY = Mathf.clamp(xServer.pointer.getY() * magnifierZoom - offsetY, 0, xServer.screenInfo.height * scaleY);
+                val scaleY = if (magnifierZoom != 1.0f) abs((1.0f - magnifierZoom).toDouble()).toFloat() else 0.5f
+                val offsetY = xServer.screenInfo.height * (if (screenOffsetYRelativeToCursor) 0.25f else 0.5f)
+                pointerY = Mathf.clamp(
+                    xServer.pointer.y * magnifierZoom - offsetY,
+                    0f,
+                    xServer.screenInfo.height * scaleY,
+                )
             }
 
-            XForm.makeTransform(tmpXForm2, -pointerX, -pointerY, magnifierZoom, magnifierZoom, 0);
-        }
-        else {
-            if (!fullscreen) {
-                int pointerY = 0;
+            makeTransform(tmpXForm2, -pointerX, -pointerY, magnifierZoom, magnifierZoom, 0f)
+        } else {
+            if (!this.isFullscreen) {
+                var pointerY = 0
                 if (screenOffsetYRelativeToCursor) {
-                    short halfScreenHeight = (short)(xServer.screenInfo.height / 2);
-                    pointerY = Mathf.clamp(xServer.pointer.getY() - halfScreenHeight / 2, 0, halfScreenHeight);
+                    val halfScreenHeight = (xServer.screenInfo.height / 2).toShort()
+                    pointerY = Mathf.clamp(xServer.pointer.y - halfScreenHeight / 2, 0, halfScreenHeight.toInt())
                 }
 
-                XForm.makeTransform(tmpXForm2, viewTransformation.sceneOffsetX, viewTransformation.sceneOffsetY - pointerY, viewTransformation.sceneScaleX, viewTransformation.sceneScaleY, 0);
+                makeTransform(
+                    tmpXForm2,
+                    viewTransformation.sceneOffsetX,
+                    viewTransformation.sceneOffsetY - pointerY,
+                    viewTransformation.sceneScaleX,
+                    viewTransformation.sceneScaleY,
+                    0f,
+                )
 
-                GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
-                GLES20.glScissor(viewTransformation.viewOffsetX, viewTransformation.viewOffsetY, viewTransformation.viewWidth, viewTransformation.viewHeight);
+                GLES20.glEnable(GLES20.GL_SCISSOR_TEST)
+                GLES20.glScissor(
+                    viewTransformation.viewOffsetX,
+                    viewTransformation.viewOffsetY,
+                    viewTransformation.viewWidth,
+                    viewTransformation.viewHeight,
+                )
+            } else {
+                identity(tmpXForm2)
             }
-            else XForm.identity(tmpXForm2);
         }
 
-        renderWindows();
-        if (cursorVisible) renderCursor();
+        renderWindows()
+        if (cursorVisible) renderCursor()
 
-        if (!magnifierEnabled && !fullscreen) GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+        if (!magnifierEnabled && !this.isFullscreen) GLES20.glDisable(GLES20.GL_SCISSOR_TEST)
 
         if (xrFrame) {
-            xServerView.requestRender();
+            xServerView.requestRender()
         }
     }
 
-    @Override
-    public void onMapWindow(Window window) {
-        xServerView.queueEvent(this::updateScene);
-        xServerView.requestRender();
+    override fun onMapWindow(window: Window) {
+        xServerView.queueEvent(Runnable { this.updateScene() })
+        xServerView.requestRender()
     }
 
-    @Override
-    public void onUnmapWindow(Window window) {
-        xServerView.queueEvent(this::updateScene);
-        xServerView.requestRender();
+    override fun onUnmapWindow(window: Window) {
+        xServerView.queueEvent(Runnable { this.updateScene() })
+        xServerView.requestRender()
     }
 
-    @Override
-    public void onChangeWindowZOrder(Window window) {
-        xServerView.queueEvent(this::updateScene);
-        xServerView.requestRender();
+    override fun onChangeWindowZOrder(window: Window) {
+        xServerView.queueEvent(Runnable { this.updateScene() })
+        xServerView.requestRender()
     }
 
-    @Override
-    public void onUpdateWindowContent(Window window) {
-        xServerView.requestRender();
+    override fun onUpdateWindowContent(window: Window) {
+        xServerView.requestRender()
     }
 
-    @Override
-    public void onUpdateWindowGeometry(final Window window, boolean resized) {
+    override fun onUpdateWindowGeometry(window: Window?, resized: Boolean) {
         if (resized) {
-            xServerView.queueEvent(this::updateScene);
+            xServerView.queueEvent(Runnable { this.updateScene() })
+        } else {
+            xServerView.queueEvent(Runnable { updateWindowPosition(window) })
         }
-        else xServerView.queueEvent(() -> updateWindowPosition(window));
-        xServerView.requestRender();
+        xServerView.requestRender()
     }
 
-    @Override
-    public void onUpdateWindowAttributes(Window window, Bitmask mask) {
-        if (mask.isSet(WindowAttributes.FLAG_CURSOR)) xServerView.requestRender();
+    override fun onUpdateWindowAttributes(window: Window, mask: Bitmask) {
+        if (mask.isSet(WindowAttributes.FLAG_CURSOR)) xServerView.requestRender()
     }
 
-    @Override
-    public void onPointerMove(short x, short y) {
-        xServerView.requestRender();
+    override fun onPointerMove(x: Short, y: Short) {
+        xServerView.requestRender()
     }
 
-    private void renderDrawable(Drawable drawable, int x, int y, ShaderMaterial material) {
-        renderDrawable(drawable, x, y, material, false);
-    }
-
-    private void renderDrawable(Drawable drawable, int x, int y, ShaderMaterial material, boolean forceFullscreen) {
-        synchronized (drawable.renderLock) {
-            Texture texture = drawable.getTexture();
-            texture.updateFromDrawable(drawable);
+    private fun renderDrawable(
+        drawable: Drawable,
+        x: Int,
+        y: Int,
+        material: ShaderMaterial,
+        forceFullscreen: Boolean = false,
+    ) {
+        synchronized(drawable.renderLock) {
+            val texture = drawable.texture
+            texture!!.updateFromDrawable(drawable)
 
             if (forceFullscreen) {
-                short newHeight = (short)Math.min(xServer.screenInfo.height, ((float)xServer.screenInfo.width / drawable.width) * drawable.height);
-                short newWidth = (short)(((float)newHeight / drawable.height) * drawable.width);
-                XForm.set(tmpXForm1, (xServer.screenInfo.width - newWidth) * 0.5f, (xServer.screenInfo.height - newHeight) * 0.5f, newWidth, newHeight);
+                val newHeight = min(
+                    xServer.screenInfo.height.toDouble(),
+                    ((xServer.screenInfo.width.toFloat() / drawable.width) * drawable.height).toDouble(),
+                ).toInt().toShort()
+                val newWidth =
+                    ((newHeight.toFloat() / drawable.height) * drawable.width).toInt().toShort()
+                set(
+                    tmpXForm1,
+                    (xServer.screenInfo.width - newWidth) * 0.5f,
+                    (xServer.screenInfo.height - newHeight) * 0.5f,
+                    newWidth.toFloat(),
+                    newHeight.toFloat(),
+                )
+            } else {
+                set(
+                    tmpXForm1,
+                    x.toFloat(),
+                    y.toFloat(),
+                    drawable.width.toFloat(),
+                    drawable.height.toFloat(),
+                )
             }
-            else XForm.set(tmpXForm1, x, y, drawable.width, drawable.height);
 
-            XForm.multiply(tmpXForm1, tmpXForm1, tmpXForm2);
+            multiply(tmpXForm1, tmpXForm1, tmpXForm2)
 
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getTextureId());
-            GLES20.glUniform1i(material.getUniformLocation("texture"), 0);
-            GLES20.glUniform1fv(material.getUniformLocation("xform"), tmpXForm1.length, tmpXForm1, 0);
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, quadVertices.count());
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.textureId)
+            GLES20.glUniform1i(material.getUniformLocation("texture"), 0)
+            GLES20.glUniform1fv(material.getUniformLocation("xform"), tmpXForm1.size, tmpXForm1, 0)
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, quadVertices.count())
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         }
     }
 
-    private void renderWindows() {
-        windowMaterial.use();
-        GLES20.glUniform2f(windowMaterial.getUniformLocation("viewSize"), xServer.screenInfo.width, xServer.screenInfo.height);
-        quadVertices.bind(windowMaterial.programId);
+    private fun renderWindows() {
+        windowMaterial.use()
+        GLES20.glUniform2f(
+            windowMaterial.getUniformLocation("viewSize"),
+            xServer.screenInfo.width.toFloat(),
+            xServer.screenInfo.height.toFloat(),
+        )
+        quadVertices.bind(windowMaterial.programId)
 
-        try (XLock lock = xServer.lock(XServer.Lockable.DRAWABLE_MANAGER)) {
-            for (RenderableWindow window : renderableWindows) {
-                renderDrawable(window.content, window.rootX, window.rootY, windowMaterial, window.forceFullscreen);
+        xServer.lock(XServer.Lockable.DRAWABLE_MANAGER).use { lock ->
+            for (window in renderableWindows) {
+                renderDrawable(
+                    window.content,
+                    window.rootX.toInt(),
+                    window.rootY.toInt(),
+                    windowMaterial,
+                    window.forceFullscreen,
+                )
             }
         }
-
-        quadVertices.disable();
+        quadVertices.disable()
     }
 
-    private void renderCursor() {
-        cursorMaterial.use();
-        GLES20.glUniform2f(cursorMaterial.getUniformLocation("viewSize"), xServer.screenInfo.width, xServer.screenInfo.height);
-        quadVertices.bind(cursorMaterial.programId);
+    private fun renderCursor() {
+        cursorMaterial.use()
+        GLES20.glUniform2f(
+            cursorMaterial.getUniformLocation("viewSize"),
+            xServer.screenInfo.width.toFloat(),
+            xServer.screenInfo.height.toFloat(),
+        )
+        quadVertices.bind(cursorMaterial.programId)
 
-        try (XLock lock = xServer.lock(XServer.Lockable.DRAWABLE_MANAGER)) {
-            Window pointWindow = xServer.inputDeviceManager.getPointWindow();
-            Cursor cursor = pointWindow != null ? pointWindow.attributes.getCursor() : null;
-            short x = xServer.pointer.getClampedX();
-            short y = xServer.pointer.getClampedY();
+        xServer.lock(XServer.Lockable.DRAWABLE_MANAGER).use { lock ->
+            val pointWindow = xServer.inputDeviceManager.pointWindow
+
+            val cursor = pointWindow?.attributes?.getCursor()
+
+            val x = xServer.pointer.clampedX
+            val y = xServer.pointer.clampedY
 
             if (cursor != null) {
-                if (cursor.isVisible()) renderDrawable(cursor.cursorImage, x - cursor.hotSpotX, y - cursor.hotSpotY, cursorMaterial);
+                if (cursor.isVisible) {
+                    renderDrawable(
+                        drawable = cursor.cursorImage!!,
+                        x = x - cursor.hotSpotX,
+                        y = y - cursor.hotSpotY,
+                        material = cursorMaterial,
+                    )
+                }
+            } else {
+                renderDrawable(rootCursorDrawable, x.toInt(), y.toInt(), cursorMaterial)
             }
-            else renderDrawable(rootCursorDrawable, x, y, cursorMaterial);
         }
 
-        quadVertices.disable();
+        quadVertices.disable()
     }
 
-    public void toggleFullscreen() {
-        toggleFullscreen = true;
-        xServerView.requestRender();
+    fun toggleFullscreen() {
+        toggleFullscreen = true
+        xServerView.requestRender()
     }
 
-    private Drawable createRootCursorDrawable() {
-        Context context = xServerView.getContext();
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.cursor, options);
-        return Drawable.fromBitmap(bitmap);
+    private fun createRootCursorDrawable(): Drawable {
+        val context = xServerView.context
+
+        val options = BitmapFactory.Options()
+        options.inScaled = false
+
+        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cursor, options)
+
+        return Drawable.fromBitmap(bitmap!!)
     }
 
-    private void updateScene() {
-        try (XLock lock = xServer.lock(XServer.Lockable.WINDOW_MANAGER, XServer.Lockable.DRAWABLE_MANAGER)) {
-            renderableWindows.clear();
-            collectRenderableWindows(xServer.windowManager.rootWindow, xServer.windowManager.rootWindow.getX(), xServer.windowManager.rootWindow.getY());
+    private fun updateScene() {
+        xServer.lock(XServer.Lockable.WINDOW_MANAGER, XServer.Lockable.DRAWABLE_MANAGER).use {
+            renderableWindows.clear()
+            collectRenderableWindows(
+                window = xServer.windowManager.rootWindow,
+                x = xServer.windowManager.rootWindow.x.toInt(),
+                y = xServer.windowManager.rootWindow.y.toInt(),
+            )
         }
     }
 
-    private void collectRenderableWindows(Window window, int x, int y) {
-        if (!window.attributes.isMapped()) return;
+    private fun collectRenderableWindows(window: Window, x: Int, y: Int) {
+        if (!window.attributes.isMapped) {
+            return
+        }
+
         if (window != xServer.windowManager.rootWindow) {
-            boolean viewable = true;
+            var viewable = true
 
             if (unviewableWMClasses != null) {
-                String wmClass = window.getClassName();
-                for (String unviewableWMClass : unviewableWMClasses) {
+                val wmClass = window.className
+                for (unviewableWMClass in unviewableWMClasses) {
                     if (wmClass.contains(unviewableWMClass)) {
-                        if (window.attributes.isEnabled()) window.disableAllDescendants();
-                        viewable = false;
-                        break;
+                        if (window.attributes.isEnabled) {
+                            window.disableAllDescendants()
+                        }
+
+                        viewable = false
+                        break
                     }
                 }
             }
 
             if (viewable) {
                 if (forceFullscreenWMClass != null) {
-                    short width = window.getWidth();
-                    short height = window.getHeight();
-                    boolean forceFullscreen= false;
+                    val width = window.width
+                    val height = window.height
+                    var forceFullscreen = false
 
                     if (width >= 320 && height >= 200 && width < xServer.screenInfo.width && height < xServer.screenInfo.height) {
-                        Window parent = window.getParent();
-                        boolean parentHasWMClass = parent.getClassName().contains(forceFullscreenWMClass);
-                        boolean hasWMClass = window.getClassName().contains(forceFullscreenWMClass);
+                        val parent = window.parent
+                        val parentHasWMClass = parent!!.className.contains(forceFullscreenWMClass!!)
+                        val hasWMClass = window.className.contains(forceFullscreenWMClass!!)
+
                         if (hasWMClass) {
-                            forceFullscreen = !parentHasWMClass && window.getChildCount() == 0;
-                        }
-                        else {
-                            short borderX = (short)(parent.getWidth() - width);
-                            short borderY = (short)(parent.getHeight() - height);
-                            if (parent.getChildCount() == 1 && borderX > 0 && borderY > 0 && borderX <= 12) {
-                                forceFullscreen = true;
-                                removeRenderableWindow(parent);
+                            forceFullscreen = !parentHasWMClass && window.childCount == 0
+                        } else {
+                            val borderX = (parent.width - width).toShort()
+                            val borderY = (parent.height - height).toShort()
+
+                            if (parent.childCount == 1 && borderX > 0 && borderY > 0 && borderX <= 12) {
+                                forceFullscreen = true
+                                removeRenderableWindow(parent)
                             }
                         }
                     }
 
-                    renderableWindows.add(new RenderableWindow(window.getContent(), x, y, forceFullscreen));
+                    renderableWindows.add(RenderableWindow(window.content!!, x, y, forceFullscreen))
+                } else {
+                    renderableWindows.add(RenderableWindow(window.content!!, x, y))
                 }
-                else renderableWindows.add(new RenderableWindow(window.getContent(), x, y));
             }
         }
 
-        for (Window child : window.getChildren()) {
-            collectRenderableWindows(child, child.getX() + x, child.getY() + y);
+        window.getChildren().forEach { child ->
+            collectRenderableWindows(child!!, child.x + x, child.y + y)
         }
     }
 
-    private void removeRenderableWindow(Window window) {
-        for (int i = 0; i < renderableWindows.size(); i++) {
-            if (renderableWindows.get(i).content == window.getContent()) {
-                renderableWindows.remove(i);
-                break;
-            }
-        }
-    }
-
-    private void updateWindowPosition(Window window) {
-        for (RenderableWindow renderableWindow : renderableWindows) {
-            if (renderableWindow.content == window.getContent()) {
-                renderableWindow.rootX = window.getRootX();
-                renderableWindow.rootY = window.getRootY();
-                break;
+    private fun removeRenderableWindow(window: Window) {
+        renderableWindows.indices.forEach {
+            if (renderableWindows[it].content == window.content) {
+                renderableWindows.removeAt(it)
+                return
             }
         }
     }
 
-    public void setCursorVisible(boolean cursorVisible) {
-        this.cursorVisible = cursorVisible;
-        xServerView.requestRender();
+    private fun updateWindowPosition(window: Window?) {
+        renderableWindows.forEach { renderableWindow ->
+            if (renderableWindow.content == window!!.content) {
+                renderableWindow.rootX = window.rootX
+                renderableWindow.rootY = window.rootY
+                return
+            }
+        }
     }
 
-    public boolean isCursorVisible() {
-        return cursorVisible;
+    fun setCursorVisible(cursorVisible: Boolean) {
+        this.cursorVisible = cursorVisible
+        xServerView.requestRender()
     }
 
-    public boolean isScreenOffsetYRelativeToCursor() {
-        return screenOffsetYRelativeToCursor;
+    fun setScreenOffsetYRelativeToCursor(screenOffsetYRelativeToCursor: Boolean) {
+        this.screenOffsetYRelativeToCursor = screenOffsetYRelativeToCursor
+        xServerView.requestRender()
     }
 
-    public void setScreenOffsetYRelativeToCursor(boolean screenOffsetYRelativeToCursor) {
-        this.screenOffsetYRelativeToCursor = screenOffsetYRelativeToCursor;
-        xServerView.requestRender();
+    fun setUnviewableWMClasses(vararg unviewableWMNames: String) {
+        this.unviewableWMClasses = unviewableWMNames
     }
 
-    public String getForceFullscreenWMClass() {
-        return forceFullscreenWMClass;
-    }
-
-    public void setForceFullscreenWMClass(String forceFullscreenWMClass) {
-        this.forceFullscreenWMClass = forceFullscreenWMClass;
-    }
-
-    public String[] getUnviewableWMClasses() {
-        return unviewableWMClasses;
-    }
-
-    public void setUnviewableWMClasses(String... unviewableWMNames) {
-        this.unviewableWMClasses = unviewableWMNames;
-    }
-
-    public boolean isFullscreen() {
-        return fullscreen;
-    }
-
-    public float getMagnifierZoom() {
-        return magnifierZoom;
-    }
-
-    public void setMagnifierZoom(float magnifierZoom) {
-        this.magnifierZoom = magnifierZoom;
-        xServerView.requestRender();
+    fun setMagnifierZoom(magnifierZoom: Float) {
+        this.magnifierZoom = magnifierZoom
+        xServerView.requestRender()
     }
 }

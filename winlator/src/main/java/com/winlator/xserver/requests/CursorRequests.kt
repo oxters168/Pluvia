@@ -1,50 +1,60 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xserver.Cursor;
-import com.winlator.xserver.Pixmap;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.BadIdChoice;
-import com.winlator.xserver.errors.BadMatch;
-import com.winlator.xserver.errors.BadPixmap;
-import com.winlator.xserver.errors.XRequestError;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.XClient
+import com.winlator.xserver.errors.BadIdChoice
+import com.winlator.xserver.errors.BadMatch
+import com.winlator.xserver.errors.BadPixmap
+import com.winlator.xserver.errors.XRequestError
 
-public abstract class CursorRequests {
-    public static void createCursor(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        int cursorId = inputStream.readInt();
-        int sourcePixmapId = inputStream.readInt();
-        int maskPixmapId = inputStream.readInt();
+object CursorRequests {
+    @Throws(XRequestError::class)
+    fun createCursor(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        val cursorId = inputStream.readInt()
+        val sourcePixmapId = inputStream.readInt()
+        val maskPixmapId = inputStream.readInt()
 
-        if (!client.isValidResourceId(cursorId)) throw new BadIdChoice(cursorId);
-
-        Pixmap sourcePixmap = client.xServer.pixmapManager.getPixmap(sourcePixmapId);
-        if (sourcePixmap == null) throw new BadPixmap(sourcePixmapId);
-
-        Pixmap maskPixmap = client.xServer.pixmapManager.getPixmap(maskPixmapId);
-        if (maskPixmap != null && (
-            maskPixmap.drawable.visual.depth != 1 ||
-            maskPixmap.drawable.width != sourcePixmap.drawable.width ||
-            maskPixmap.drawable.height != sourcePixmap.drawable.height)) {
-            throw new BadMatch();
+        if (!client.isValidResourceId(cursorId)) {
+            throw BadIdChoice(cursorId)
         }
 
-        byte foreRed = (byte)inputStream.readShort();
-        byte foreGreen = (byte)inputStream.readShort();
-        byte foreBlue = (byte)inputStream.readShort();
-        byte backRed = (byte)inputStream.readShort();
-        byte backGreen = (byte)inputStream.readShort();
-        byte backBlue = (byte)inputStream.readShort();
-        short x = inputStream.readShort();
-        short y = inputStream.readShort();
+        val sourcePixmap = client.xServer.pixmapManager.getPixmap(sourcePixmapId)
+        if (sourcePixmap == null) {
+            throw BadPixmap(sourcePixmapId)
+        }
 
-        Cursor cursor = client.xServer.cursorManager.createCursor(cursorId, x, y, sourcePixmap, maskPixmap);
-        if (cursor == null) throw new BadIdChoice(cursorId);
-        client.xServer.cursorManager.recolorCursor(cursor, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue);
-        client.registerAsOwnerOfResource(cursor);
+        val maskPixmap = client.xServer.pixmapManager.getPixmap(maskPixmapId)
+        if (maskPixmap != null &&
+            (
+                maskPixmap.drawable.visual?.depth?.toInt() != 1 ||
+                    maskPixmap.drawable.width != sourcePixmap.drawable.width ||
+                    maskPixmap.drawable.height != sourcePixmap.drawable.height
+                )
+        ) {
+            throw BadMatch()
+        }
+
+        val foreRed = inputStream.readShort().toByte()
+        val foreGreen = inputStream.readShort().toByte()
+        val foreBlue = inputStream.readShort().toByte()
+        val backRed = inputStream.readShort().toByte()
+        val backGreen = inputStream.readShort().toByte()
+        val backBlue = inputStream.readShort().toByte()
+        val x = inputStream.readShort()
+        val y = inputStream.readShort()
+
+        val cursor = client.xServer.cursorManager.createCursor(cursorId, x, y, sourcePixmap, maskPixmap)
+        if (cursor == null) {
+            throw BadIdChoice(cursorId)
+        }
+
+        client.xServer.cursorManager.recolorCursor(cursor, foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue)
+        client.registerAsOwnerOfResource(cursor)
     }
 
-    public static void freeCursor(XClient client, XInputStream inputStream, XOutputStream outputStream) throws XRequestError {
-        client.xServer.cursorManager.freeCursor(inputStream.readInt());
+    @Throws(XRequestError::class)
+    fun freeCursor(client: XClient, inputStream: XInputStream, outputStream: XOutputStream?) {
+        client.xServer.cursorManager.freeCursor(inputStream.readInt())
     }
 }

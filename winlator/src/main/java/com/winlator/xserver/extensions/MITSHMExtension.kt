@@ -40,12 +40,12 @@ class MITSHMExtension : Extension {
 
             inputStream.skip(4)
 
-            client.xServer.shmSegmentManager.attach(xid, shmid)
+            client.xServer.shmSegmentManager?.attach(xid, shmid)
         }
 
         @Throws(IOException::class, XRequestError::class)
         private fun detach(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
-            client.xServer.shmSegmentManager.detach(inputStream.readInt())
+            client.xServer.shmSegmentManager?.detach(inputStream.readInt())
         }
 
         @Throws(IOException::class, XRequestError::class)
@@ -72,7 +72,7 @@ class MITSHMExtension : Extension {
 
             val graphicsContext = client.xServer.graphicsContextManager.getGraphicsContext(gcId) ?: throw BadGraphicsContext(gcId)
 
-            val data = client.xServer.shmSegmentManager.getData(shmseg) ?: throw BadSHMSegment(shmseg)
+            val data = client.xServer.shmSegmentManager?.getData(shmseg) ?: throw BadSHMSegment(shmseg)
 
             if (graphicsContext.function != GraphicsContext.Function.COPY) {
                 throw UnsupportedOperationException("GC Function other than COPY is not supported.")

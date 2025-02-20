@@ -1,52 +1,66 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.util.SparseArray;
+import android.util.SparseArray
 
-import java.nio.IntBuffer;
+class CursorManager(private val drawableManager: DrawableManager) : XResourceManager() {
+    private val cursors = SparseArray<Cursor?>()
 
-public class CursorManager extends XResourceManager {
-    private final SparseArray<Cursor> cursors = new SparseArray<>();
-    private final DrawableManager drawableManager;
+    fun getCursor(id: Int): Cursor? = cursors.get(id)
 
-    public CursorManager(DrawableManager drawableManager) {
-        this.drawableManager = drawableManager;
+    fun createCursor(id: Int, x: Short, y: Short, sourcePixmap: Pixmap, maskPixmap: Pixmap?): Cursor? {
+        if (cursors.indexOfKey(id) >= 0) {
+            return null
+        }
+
+        val drawable = drawableManager.createDrawable(0, sourcePixmap.drawable.width, sourcePixmap.drawable.height, sourcePixmap.drawable.visual)
+
+        val cursor = Cursor(id, x.toInt(), y.toInt(), drawable, sourcePixmap.drawable, maskPixmap?.drawable)
+
+        cursors.put(id, cursor)
+        triggerOnCreateResourceListener(cursor)
+
+        return cursor
     }
 
-    public Cursor getCursor(int id) {
-        return cursors.get(id);
+    fun freeCursor(id: Int) {
+        triggerOnFreeResourceListener(cursors.get(id))
+        cursors.remove(id)
     }
 
-    public Cursor createCursor(int id, short x, short y, Pixmap sourcePixmap, Pixmap maskPixmap) {
-        if (cursors.indexOfKey(id) >= 0) return null;
-        Drawable drawable = drawableManager.createDrawable(0, sourcePixmap.drawable.width, sourcePixmap.drawable.height, sourcePixmap.drawable.visual);
-        Cursor cursor = new Cursor(id, x, y, drawable, sourcePixmap.drawable, maskPixmap != null ? maskPixmap.drawable : null);
-        cursors.put(id, cursor);
-        triggerOnCreateResourceListener(cursor);
-        return cursor;
-    }
+    fun recolorCursor(cursor: Cursor, foreRed: Byte, foreGreen: Byte, foreBlue: Byte, backRed: Byte, backGreen: Byte, backBlue: Byte) {
+        if (cursor.maskImage != null) {
+            val visible: Boolean = !isEmptyMaskImage(cursor.maskImage)
+            cursor.isVisible = visible
 
-    public void freeCursor(int id) {
-        triggerOnFreeResourceListener(cursors.get(id));
-        cursors.remove(id);
-    }
-
-    private static boolean isEmptyMaskImage(Drawable maskImage) {
-        IntBuffer maskData = maskImage.getData().asIntBuffer();
-        boolean result = true;
-        for (int i = 0; i < maskData.capacity(); i++) {
-            if (maskData.get(i) != 0x000000) {
-                result = false;
-                break;
+            if (visible) {
+                cursor.cursorImage!!.drawAlphaMaskedBitmap(
+                    foreRed,
+                    foreGreen,
+                    foreBlue,
+                    backRed,
+                    backGreen,
+                    backBlue,
+                    cursor.sourceImage!!,
+                    cursor.maskImage,
+                )
             }
         }
-        return result;
     }
 
-    public void recolorCursor(Cursor cursor, byte foreRed, byte foreGreen, byte foreBlue, byte backRed, byte backGreen, byte backBlue) {
-        if (cursor.maskImage != null) {
-            boolean visible = !isEmptyMaskImage(cursor.maskImage);
-            cursor.setVisible(visible);
-            if (visible) cursor.cursorImage.drawAlphaMaskedBitmap(foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue, cursor.sourceImage, cursor.maskImage);
+    companion object {
+        private fun isEmptyMaskImage(maskImage: Drawable): Boolean {
+            val maskData = maskImage.data!!.asIntBuffer()
+            var result = true
+
+            for (i in 0..<maskData.capacity()) {
+                if (maskData.get(i) != 0x000000) {
+                    result = false
+
+                    break
+                }
+            }
+
+            return result
         }
     }
 }

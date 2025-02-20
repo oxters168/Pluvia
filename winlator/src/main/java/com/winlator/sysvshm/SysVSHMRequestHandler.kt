@@ -6,10 +6,10 @@ import java.io.IOException
 
 class SysVSHMRequestHandler : RequestHandler {
     @Throws(IOException::class)
-    override fun handleRequest(client: Client): Boolean {
-        val sysVSharedMemory = client.tag as SysVSharedMemory
-        val inputStream = client.inputStream
-        val outputStream = client.outputStream
+    override fun handleRequest(client: Client?): Boolean {
+        val sysVSharedMemory = client!!.tag as SysVSharedMemory
+        val inputStream = client.inputStream!!
+        val outputStream = client.outputStream!!
 
         if (inputStream.available() < 5) {
             return false

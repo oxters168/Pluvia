@@ -1,33 +1,41 @@
-package com.winlator.xserver.requests;
+package com.winlator.xserver.requests
 
-import static com.winlator.xserver.XClientRequestHandler.RESPONSE_CODE_SUCCESS;
+import com.winlator.xconnector.XInputStream
+import com.winlator.xconnector.XOutputStream
+import com.winlator.xserver.Atom
+import com.winlator.xserver.XClient
+import com.winlator.xserver.XClientRequestHandler
+import com.winlator.xserver.errors.BadAtom
+import com.winlator.xserver.errors.XRequestError
+import java.io.IOException
 
-import com.winlator.xconnector.XInputStream;
-import com.winlator.xconnector.XOutputStream;
-import com.winlator.xconnector.XStreamLock;
-import com.winlator.xserver.Atom;
-import com.winlator.xserver.XClient;
-import com.winlator.xserver.errors.BadAtom;
-import com.winlator.xserver.errors.XRequestError;
+object AtomRequests {
+    @Throws(IOException::class, XRequestError::class)
+    fun internAtom(client: XClient, inputStream: XInputStream, outputStream: XOutputStream) {
+        val onlyIfExists = client.requestData.toInt() == 1
+        val length = inputStream.readShort()
 
-import java.io.IOException;
+        inputStream.skip(2)
 
-public abstract class AtomRequests {
-    public static void internAtom(XClient client, XInputStream inputStream, XOutputStream outputStream) throws IOException, XRequestError {
-        boolean onlyIfExists = client.getRequestData() == 1;
-        short length = inputStream.readShort();
-        inputStream.skip(2);
-        String name = inputStream.readString8(length);
-        int id = onlyIfExists ? Atom.getId(name) : Atom.internAtom(name);
-        if (id < 0) throw new BadAtom(id);
+        val name = inputStream.readString8(length.toInt())
 
-        try (XStreamLock lock = outputStream.lock()) {
-            outputStream.writeByte(RESPONSE_CODE_SUCCESS);
-            outputStream.writeByte((byte)0);
-            outputStream.writeShort(client.getSequenceNumber());
-            outputStream.writeInt(0);
-            outputStream.writeInt(id);
-            outputStream.writePad(20);
+        val id = if (onlyIfExists) {
+            Atom.getId(name)
+        } else {
+            Atom.internAtom(name)
+        }
+
+        if (id < 0) {
+            throw BadAtom(id)
+        }
+
+        outputStream.lock().use {
+            outputStream.writeByte(XClientRequestHandler.RESPONSE_CODE_SUCCESS)
+            outputStream.writeByte(0.toByte())
+            outputStream.writeShort(client.sequenceNumber)
+            outputStream.writeInt(0)
+            outputStream.writeInt(id)
+            outputStream.writePad(20)
         }
     }
 }

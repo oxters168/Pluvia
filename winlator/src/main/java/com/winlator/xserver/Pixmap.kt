@@ -1,23 +1,23 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import android.graphics.Bitmap;
+import android.graphics.Bitmap
+import androidx.core.graphics.createBitmap
+import java.nio.ByteBuffer
 
-import java.nio.ByteBuffer;
+class Pixmap(val drawable: Drawable) : XResource(drawable.id) {
+    fun toBitmap(maskPixmap: Pixmap?): Bitmap {
+        val maskData = maskPixmap?.drawable?.data
+        val bitmap = createBitmap(drawable.width.toInt(), drawable.height.toInt())
 
-public class Pixmap extends XResource {
-    public final Drawable drawable;
+        toBitmap(drawable.data, maskData, bitmap)
 
-    public Pixmap(Drawable drawable) {
-        super(drawable.id);
-        this.drawable = drawable;
+        return bitmap
     }
 
-    public Bitmap toBitmap(Pixmap maskPixmap) {
-        ByteBuffer maskData = maskPixmap != null ? maskPixmap.drawable.getData() : null;
-        Bitmap bitmap = Bitmap.createBitmap(drawable.width, drawable.height, Bitmap.Config.ARGB_8888);
-        toBitmap(drawable.getData(), maskData, bitmap);
-        return bitmap;
+    companion object {
+        /**
+         * Native Methods
+         */
+        private external fun toBitmap(colorData: ByteBuffer?, maskData: ByteBuffer?, bitmap: Bitmap?)
     }
-
-    private static native void toBitmap(ByteBuffer colorData, ByteBuffer maskData, Bitmap bitmap);
 }

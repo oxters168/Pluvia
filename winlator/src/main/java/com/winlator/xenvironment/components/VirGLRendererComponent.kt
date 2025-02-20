@@ -44,7 +44,7 @@ class VirGLRendererComponent(
 
     @Keep
     private fun killConnection(fd: Int) {
-        connector?.killConnection(connector!!.getClient(fd))
+        connector?.killConnection(connector!!.getClient(fd)!!)
     }
 
     @Keep
@@ -54,7 +54,7 @@ class VirGLRendererComponent(
         try {
             val renderer = xServer.renderer
 
-            renderer.xServerView.queueEvent {
+            renderer!!.xServerView.queueEvent {
                 sharedEGLContextPtr = getCurrentEGLContextPtr()
 
                 synchronized(thread) {
@@ -72,23 +72,23 @@ class VirGLRendererComponent(
         return sharedEGLContextPtr
     }
 
-    override fun handleConnectionShutdown(client: Client) {
-        val clientPtr = client.tag as Long
+    override fun handleConnectionShutdown(client: Client?) {
+        val clientPtr = client!!.tag as Long
 
         destroyClient(clientPtr)
     }
 
-    override fun handleNewConnection(client: Client) {
+    override fun handleNewConnection(client: Client?) {
         getSharedEGLContext()
 
-        val clientPtr = handleNewConnection(client.clientSocket.fd)
+        val clientPtr = handleNewConnection(client!!.clientSocket!!.fd)
 
         client.tag = clientPtr
     }
 
     @Throws(IOException::class)
-    override fun handleRequest(client: Client): Boolean {
-        val clientPtr = client.tag as Long
+    override fun handleRequest(client: Client?): Boolean {
+        val clientPtr = client!!.tag as Long
 
         handleRequest(clientPtr)
 
@@ -102,7 +102,7 @@ class VirGLRendererComponent(
         synchronized(drawable.renderLock) {
             drawable.data = null
 
-            drawable.texture.copyFromFramebuffer(framebuffer, drawable.width, drawable.height)
+            drawable.texture?.copyFromFramebuffer(framebuffer, drawable.width, drawable.height)
         }
 
         drawable.onDrawListener?.run()

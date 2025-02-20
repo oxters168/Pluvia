@@ -1,32 +1,31 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector
 
-import com.winlator.core.FileUtils;
+import com.winlator.core.FileUtils.delete
+import com.winlator.core.FileUtils.getDirname
+import java.io.File
 
-import java.io.File;
+class UnixSocketConfig private constructor(val path: String?) {
 
-public class UnixSocketConfig {
-    public static final String SYSVSHM_SERVER_PATH = "/tmp/.sysvshm/SM0";
-    public static final String ALSA_SERVER_PATH = "/tmp/.sound/AS0";
-    public static final String PULSE_SERVER_PATH = "/tmp/.sound/PS0";
-    public static final String XSERVER_PATH = "/tmp/.X11-unix/X0";
-    public static final String VIRGL_SERVER_PATH = "/tmp/.virgl/V0";
-    public final String path;
+    companion object {
+        const val SYSVSHM_SERVER_PATH: String = "/tmp/.sysvshm/SM0"
+        const val ALSA_SERVER_PATH: String = "/tmp/.sound/AS0"
+        const val PULSE_SERVER_PATH: String = "/tmp/.sound/PS0"
+        const val XSERVER_PATH: String = "/tmp/.X11-unix/X0"
+        const val VIRGL_SERVER_PATH: String = "/tmp/.virgl/V0"
 
-    private UnixSocketConfig(String path) {
-        this.path = path;
-    }
+        fun createSocket(rootPath: String?, relativePath: String): UnixSocketConfig {
+            val socketFile = File(rootPath, relativePath)
 
-    public static UnixSocketConfig createSocket(String rootPath, String relativePath) {
-        File socketFile = new File(rootPath, relativePath);
+            val dirname = getDirname(relativePath)
+            if (dirname.lastIndexOf("/") > 0) {
+                val socketDir = File(rootPath, getDirname(relativePath))
+                delete(socketDir)
+                socketDir.mkdirs()
+            } else {
+                socketFile.delete()
+            }
 
-        String dirname = FileUtils.getDirname(relativePath);
-        if (dirname.lastIndexOf("/") > 0) {
-            File socketDir = new File(rootPath, FileUtils.getDirname(relativePath));
-            FileUtils.delete(socketDir);
-            socketDir.mkdirs();
+            return UnixSocketConfig(socketFile.path)
         }
-        else socketFile.delete();
-
-        return new UnixSocketConfig(socketFile.getPath());
     }
 }

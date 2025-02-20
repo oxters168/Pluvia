@@ -12,10 +12,10 @@ class ALSARequestHandler : RequestHandler {
     private var maxSHMemoryId = 0
 
     @Throws(IOException::class)
-    override fun handleRequest(client: Client): Boolean {
-        val alsaClient = client.tag as ALSAClient
-        val inputStream = client.inputStream
-        val outputStream = client.outputStream
+    override fun handleRequest(client: Client?): Boolean {
+        val alsaClient = client!!.tag as ALSAClient
+        val inputStream = client.inputStream!!
+        val outputStream = client.outputStream!!
 
         if (inputStream.available() < 5) return false
 

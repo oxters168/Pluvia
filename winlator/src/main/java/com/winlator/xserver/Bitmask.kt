@@ -1,74 +1,55 @@
-package com.winlator.xserver;
+package com.winlator.xserver
 
-import androidx.annotation.NonNull;
+class Bitmask : Iterable<Int?> {
 
-import java.util.Iterator;
+    var bits: Int = 0
+        private set
 
-public class Bitmask implements Iterable<Integer> {
-    private int bits = 0;
+    val isEmpty: Boolean
+        get() = bits == 0
 
-    public Bitmask() {}
+    constructor()
 
-    public Bitmask(int bits) {
-        this.bits = bits;
+    constructor(bits: Int) {
+        this.bits = bits
     }
 
-    public boolean isSet(int flag) {
-        return (flag & this.bits) != 0;
+    fun isSet(flag: Int): Boolean = (flag and this.bits) != 0
+
+    fun intersects(mask: Bitmask): Boolean = (mask.bits and this.bits) != 0
+
+    fun set(flag: Int) {
+        bits = bits or flag
     }
 
-    public boolean intersects(Bitmask mask) {
-        return (mask.bits & this.bits) != 0;
-    }
-
-    public void set(int flag) {
-        bits |= flag;
-    }
-
-    public void set(int flag, boolean value) {
+    fun set(flag: Int, value: Boolean) {
         if (value) {
-            set(flag);
+            set(flag)
+        } else {
+            unset(flag)
         }
-        else unset(flag);
     }
 
-    public void unset(int flag) {
-        bits &= ~flag;
+    fun unset(flag: Int) {
+        bits = bits and flag.inv()
     }
 
-    public boolean isEmpty() {
-        return bits == 0;
+    fun join(mask: Bitmask) {
+        this.bits = mask.bits or this.bits
     }
 
-    public int getBits() {
-        return bits;
-    }
+    override fun iterator(): Iterator<Int> {
+        val bits = intArrayOf(this.bits)
+        return object : Iterator<Int> {
+            override fun hasNext(): Boolean = bits[0] != 0
 
-    public void join(Bitmask mask) {
-        this.bits = mask.bits | this.bits;
-    }
-
-    @NonNull
-    @Override
-    public Iterator<Integer> iterator() {
-        final int[] bits = {this.bits};
-        return new Iterator<Integer>() {
-            @Override
-            public boolean hasNext() {
-                return bits[0] != 0;
+            override fun next(): Int {
+                val index = Integer.lowestOneBit(bits[0])
+                bits[0] = bits[0] and index.inv()
+                return index
             }
-
-            @Override
-            public Integer next() {
-                int index = Integer.lowestOneBit(bits[0]);
-                bits[0] &= ~index;
-                return index;
-            }
-        };
+        }
     }
 
-    @Override
-    public int hashCode() {
-        return bits;
-    }
+    override fun hashCode(): Int = bits
 }

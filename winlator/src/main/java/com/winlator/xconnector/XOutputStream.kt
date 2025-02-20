@@ -1,121 +1,124 @@
-package com.winlator.xconnector;
+package com.winlator.xconnector
 
-import com.winlator.xserver.XServer;
+import com.winlator.xserver.XServer
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.concurrent.locks.ReentrantLock
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.concurrent.locks.ReentrantLock;
+class XOutputStream(val clientSocket: ClientSocket?, initialCapacity: Int) {
 
-public class XOutputStream {
-    private static final byte[] ZERO = new byte[64];
-    private ByteBuffer buffer;
-    public final ClientSocket clientSocket;
-    private final ReentrantLock lock = new ReentrantLock();
-    private int ancillaryFd = -1;
-
-    public XOutputStream(int initialCapacity) {
-        this(null, initialCapacity);
+    companion object {
+        private val ZERO = ByteArray(64)
     }
 
-    public XOutputStream(ClientSocket clientSocket, int initialCapacity) {
-        this.clientSocket = clientSocket;
-        buffer = ByteBuffer.allocateDirect(initialCapacity);
+    private var buffer: ByteBuffer = ByteBuffer.allocateDirect(initialCapacity)
+
+    private val lock = ReentrantLock()
+
+    private var ancillaryFd = -1
+
+    constructor(initialCapacity: Int) : this(null, initialCapacity)
+
+    fun setByteOrder(byteOrder: ByteOrder) {
+        buffer.order(byteOrder)
     }
 
-    public void setByteOrder(ByteOrder byteOrder) {
-        buffer.order(byteOrder);
+    fun setAncillaryFd(ancillaryFd: Int) {
+        this.ancillaryFd = ancillaryFd
     }
 
-    public void setAncillaryFd(int ancillaryFd) {
-        this.ancillaryFd = ancillaryFd;
+    fun writeByte(value: Byte) {
+        ensureSpaceIsAvailable(1)
+        buffer.put(value)
     }
 
-    public void writeByte(byte value) {
-        ensureSpaceIsAvailable(1);
-        buffer.put(value);
+    fun writeShort(value: Short) {
+        ensureSpaceIsAvailable(2)
+        buffer.putShort(value)
     }
 
-    public void writeShort(short value) {
-        ensureSpaceIsAvailable(2);
-        buffer.putShort(value);
+    fun writeInt(value: Int) {
+        ensureSpaceIsAvailable(4)
+        buffer.putInt(value)
     }
 
-    public void writeInt(int value) {
-        ensureSpaceIsAvailable(4);
-        buffer.putInt(value);
+    fun writeLong(value: Long) {
+        ensureSpaceIsAvailable(8)
+        buffer.putLong(value)
     }
 
-    public void writeLong(long value) {
-        ensureSpaceIsAvailable(8);
-        buffer.putLong(value);
+    fun writeString8(str: String) {
+        val bytes = str.toByteArray(XServer.LATIN1_CHARSET)
+        val length = -str.length and 3
+
+        ensureSpaceIsAvailable(bytes.size + length)
+        buffer.put(bytes)
+
+        if (length > 0) {
+            writePad(length)
+        }
     }
 
-    public void writeString8(String str) {
-        byte[] bytes = str.getBytes(XServer.LATIN1_CHARSET);
-        int length = -str.length() & 3;
-        ensureSpaceIsAvailable(bytes.length + length);
-        buffer.put(bytes);
-        if (length > 0) writePad(length);
+    @JvmOverloads
+    fun write(data: ByteArray, offset: Int = 0, length: Int = data.size) {
+        ensureSpaceIsAvailable(length)
+        buffer.put(data, offset, length)
     }
 
-    public void write(byte[] data) {
-        write(data, 0, data.length);
+    fun write(data: ByteBuffer) {
+        ensureSpaceIsAvailable(data.remaining())
+        buffer.put(data)
     }
 
-    public void write(byte[] data, int offset, int length) {
-        ensureSpaceIsAvailable(length);
-        buffer.put(data, offset, length);
+    fun writePad(length: Int) {
+        write(XOutputStream.Companion.ZERO, 0, length)
     }
 
-    public void write(ByteBuffer data) {
-        ensureSpaceIsAvailable(data.remaining());
-        buffer.put(data);
-    }
-
-    public void writePad(int length) {
-        write(ZERO, 0, length);
-    }
-
-    private void flush() throws IOException {
+    @Throws(IOException::class)
+    private fun flush() {
         if (buffer.position() != 0) {
-            buffer.flip();
+            buffer.flip()
 
             if (ancillaryFd != -1) {
-                clientSocket.sendAncillaryMsg(buffer, ancillaryFd);
-                ancillaryFd = -1;
+                clientSocket?.sendAncillaryMsg(buffer, ancillaryFd)
+                ancillaryFd = -1
+            } else {
+                clientSocket?.write(buffer)
             }
-            else clientSocket.write(buffer);
 
-            buffer.clear();
+            buffer.clear()
         }
     }
 
-    public XStreamLock lock() {
-        return new OutputStreamLock();
-    }
+    fun lock(): XStreamLock = OutputStreamLock()
 
-    private void ensureSpaceIsAvailable(int length) {
-        int position = buffer.position();
-        if ((buffer.capacity() - position) >= length) return;
-        ByteBuffer newBuffer = ByteBuffer.allocateDirect(buffer.capacity() + length).order(buffer.order());
-        buffer.rewind();
-        newBuffer.put(buffer).position(position);
-        buffer = newBuffer;
-    }
+    private fun ensureSpaceIsAvailable(length: Int) {
+        val position = buffer.position()
 
-    private class OutputStreamLock implements XStreamLock {
-        public OutputStreamLock() {
-            lock.lock();
+        if ((buffer.capacity() - position) >= length) {
+            return
         }
 
-        @Override
-        public void close() throws IOException {
+        val newBuffer = ByteBuffer.allocateDirect(buffer.capacity() + length).order(buffer.order())
+
+        buffer.rewind()
+        newBuffer.put(buffer).position(position)
+
+        buffer = newBuffer
+    }
+
+    private inner class OutputStreamLock : XStreamLock {
+        init {
+            lock.lock()
+        }
+
+        @Throws(IOException::class)
+        override fun close() {
             try {
-                flush();
-            }
-            finally {
-                lock.unlock();
+                flush()
+            } finally {
+                lock.unlock()
             }
         }
     }

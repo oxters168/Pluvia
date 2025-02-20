@@ -25,7 +25,7 @@ class DRI3Extension : Extension {
 
     private val onDestroyDrawableListener = Callback { drawable: Drawable ->
         val data = drawable.data
-        SysVSharedMemory.unmapSHMSegment(data, data.capacity().toLong())
+        SysVSharedMemory.unmapSHMSegment(data!!, data.capacity().toLong())
     }
 
     private object ClientOpcodes {
@@ -147,7 +147,7 @@ class DRI3Extension : Extension {
             val buffer = SysVSharedMemory.mapSHMSegment(fd, size, offset, true) ?: throw BadAlloc()
 
             val totalWidth = (stride / 4).toShort()
-            val drawable = client.xServer.drawableManager.createDrawable(pixmapId, totalWidth, height, depth)
+            val drawable = client.xServer.drawableManager.createDrawable(pixmapId, totalWidth, height, depth)!!
 
             drawable.data = buffer
             drawable.texture = null
