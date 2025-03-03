@@ -2,6 +2,8 @@ package com.OxGames.Pluvia.ui.screen.login
 
 import android.content.res.Configuration
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,18 +14,21 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -35,6 +40,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -50,16 +56,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.R
@@ -69,6 +83,7 @@ import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.data.UserLoginState
 import com.OxGames.Pluvia.ui.model.UserLoginViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import com.materialkolor.ktx.isLight
 
 @Composable
 fun UserLoginScreen(
@@ -115,16 +130,7 @@ private fun UserLoginScreenContent(
         snackbarHost = { SnackbarHost(snackBarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.app_name))
-                },
-                actions = {
-                    val uriHandler = LocalUriHandler.current
-                    IconButton(
-                        onClick = { uriHandler.openUri(Constants.Misc.PRIVACY_LINK) },
-                        content = { Icon(imageVector = Icons.Filled.PrivacyTip, contentDescription = "Privacy policy") },
-                    )
-                },
+                title = { Text(text = stringResource(R.string.app_name)) },
             )
         },
         floatingActionButton = {
@@ -162,6 +168,33 @@ private fun UserLoginScreenContent(
                         Icon(imageVector = icon, contentDescription = null)
                     },
                 )
+            }
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = "Pluvia is an unofficial Steam® client",
+                    fontSize = 14.sp,
+                )
+                Text(
+                    text = buildAnnotatedString {
+                        withLink(
+                            LinkAnnotation.Url(
+                                Constants.Misc.PRIVACY_LINK,
+                                TextLinkStyles(style = SpanStyle(color = MaterialTheme.colorScheme.primary)),
+                            ),
+                            block = { append("Privacy Policy ") },
+                        )
+                    },
+                    fontSize = 14.sp,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
             }
         },
     ) { paddingValues ->
@@ -261,11 +294,24 @@ private fun UsernamePassword(
     var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
     ) {
+        // TODO maybe handle logo differently in landscape? To prevent scrolling.
+        val isLight = MaterialTheme.colorScheme.background.isLight()
+        Image(
+            modifier = Modifier
+                .size(128.dp)
+                .clip(CircleShape)
+                .background(
+                    if (isLight) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                ),
+            painter = painterResource(R.drawable.ic_logo_color),
+            contentDescription = "Pluvia Logo",
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+
         OutlinedTextField(
             value = username,
             singleLine = true,
@@ -309,6 +355,7 @@ private fun UsernamePassword(
                 content = { Text(text = "Login") },
             )
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
