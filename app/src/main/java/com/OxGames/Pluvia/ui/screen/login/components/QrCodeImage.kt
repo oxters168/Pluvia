@@ -1,4 +1,4 @@
-package com.OxGames.Pluvia.ui.screen.login
+package com.OxGames.Pluvia.ui.screen.login.components
 
 import android.content.res.Configuration
 import android.graphics.Bitmap
