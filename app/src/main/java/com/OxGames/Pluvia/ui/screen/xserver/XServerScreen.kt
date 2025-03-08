@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -13,7 +14,6 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.data.XServerState
 import com.OxGames.Pluvia.utils.ContainerUtils
 import com.winlator.container.ContainerManager
@@ -35,6 +35,7 @@ import com.winlator.xserver.XServer
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.name
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
@@ -48,10 +49,6 @@ fun XServerScreen(
     xServerViewModel: XServerViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-
-    var firstTimeBoot: Boolean
-    var taskAffinityMask = 0
-    var taskAffinityMaskWoW64 = 0
 
     LaunchedEffect(Unit) {
         xServerViewModel.uiEvent.collect { event ->
@@ -79,16 +76,15 @@ fun XServerScreen(
         }
     }
 
-    val appLaunchInfo = SteamService.getAppInfoOf(appId)?.let {
-        SteamService.getWindowsLaunchInfos(appId).firstOrNull()
-    }
-
+    // TODO confirm dialog
+    val scope = rememberCoroutineScope()
     BackHandler {
         Timber.i("BackHandler")
-        xServerViewModel.exit(xServerViewModel.xServerView!!.xServer.winHandler, xServerViewModel.xEnvironment, onExit)
+        scope.launch {
+            xServerViewModel.exit()
+        }
     }
 
-    // var launchedView by rememberSaveable { mutableStateOf(false) }
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
@@ -99,6 +95,8 @@ fun XServerScreen(
             },
         factory = {
             Timber.i("Creating XServerView and XServer")
+
+            xServerViewModel.appId = appId
 
             XServerView(
                 context,
@@ -117,7 +115,7 @@ fun XServerScreen(
                 if (!bootToContainer) {
                     renderer.setUnviewableWMClasses("explorer.exe")
                     // TODO: make 'force fullscreen' be an option of the app being launched
-                    appLaunchInfo?.let { renderer.forceFullscreenWMClass = Paths.get(it.executable).name }
+                    xServerViewModel.appLaunchInfo?.let { renderer.forceFullscreenWMClass = Paths.get(it.executable).name }
                 }
 
                 xServer.windowManager.addOnWindowModificationListener(
@@ -141,7 +139,7 @@ fun XServerScreen(
                                     "\n\thasParent: ${window.parent != null}" +
                                     "\n\tchildrenSize: ${window.children.size}",
                             )
-                            xServerViewModel.assignTaskAffinity(window, xServer.winHandler, taskAffinityMask, taskAffinityMaskWoW64)
+                            xServerViewModel.assignTaskAffinity(window, xServer.winHandler)
                             onWindowMapped?.invoke(window)
                         }
 
@@ -163,7 +161,6 @@ fun XServerScreen(
                 if (xServerViewModel.xEnvironment != null) {
                     xServerViewModel.xEnvironment = xServerViewModel.shiftXEnvironmentToContext(
                         context = context,
-                        xEnvironment = xServerViewModel.xEnvironment!!,
                         xServer = xServer,
                     )
                 } else {
@@ -173,10 +170,11 @@ fun XServerScreen(
                     containerManager.activateContainer(container)
                     // Timber.d("2 Container drives: ${container.drives}")
 
-                    taskAffinityMask = ProcessHelper.getAffinityMask(container.getCPUList(true)).toShort().toInt()
-                    taskAffinityMaskWoW64 = ProcessHelper.getAffinityMask(container.getCPUListWoW64(true)).toShort().toInt()
-                    firstTimeBoot = container.getExtra("appVersion").isEmpty()
-                    Timber.i("First time boot: $firstTimeBoot")
+                    xServerViewModel.taskAffinityMask = ProcessHelper.getAffinityMask(container.getCPUList(true)).toShort().toInt()
+                    xServerViewModel.taskAffinityMaskWoW64 =
+                        ProcessHelper.getAffinityMask(container.getCPUListWoW64(true)).toShort().toInt()
+                    xServerViewModel.firstTimeBoot = container.getExtra("appVersion").isEmpty()
+                    Timber.i("First time boot: ${xServerViewModel.firstTimeBoot}")
 
                     val wineVersion = container.wineVersion
                     xServerState.value = xServerState.value.copy(
@@ -206,8 +204,6 @@ fun XServerScreen(
 
                     xServerViewModel.setupWineSystemFiles(
                         context = context,
-                        firstTimeBoot = firstTimeBoot,
-                        screenInfo = xServerViewModel.xServerView!!.xServer.screenInfo,
                         xServerState = xServerState,
                         container = container,
                         containerManager = containerManager,
@@ -230,8 +226,6 @@ fun XServerScreen(
                         xServerState = xServerState,
                         envVars = envVars,
                         container = container,
-                        appLaunchInfo = appLaunchInfo,
-                        xServer = xServerViewModel.xServerView!!.xServer,
                     )
                 }
             }
