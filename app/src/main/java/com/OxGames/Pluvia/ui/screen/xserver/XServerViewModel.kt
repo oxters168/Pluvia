@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.xserver
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
@@ -47,7 +48,6 @@ import com.winlator.xenvironment.components.SysVSharedMemoryComponent
 import com.winlator.xenvironment.components.VirGLRendererComponent
 import com.winlator.xenvironment.components.XServerComponent
 import com.winlator.xserver.Keyboard
-import com.winlator.xserver.ScreenInfo
 import com.winlator.xserver.Window
 import com.winlator.xserver.XServer
 import java.io.File
@@ -62,12 +62,30 @@ import timber.log.Timber
 
 class XServerViewModel : ViewModel() {
 
-    internal var xEnvironment: XEnvironment? = null
-
+    @SuppressLint("StaticFieldLeak")
     internal var xServerView: XServerView? = null
+
+    internal var xEnvironment: XEnvironment? = null
 
     internal var touchMouse: TouchMouse? = null
     internal var keyboard: Keyboard? = null
+
+    var appId: Int = -1
+    val appLaunchInfo: LaunchInfo?
+        get() {
+            if (appId < 0) {
+                Timber.w("AppID is $appId")
+                return null
+            }
+
+            return SteamService.getAppInfoOf(appId)?.let {
+                SteamService.getWindowsLaunchInfos(appId).firstOrNull()
+            }
+        }
+
+    var firstTimeBoot: Boolean = false
+    var taskAffinityMask = 0
+    var taskAffinityMaskWoW64 = 0
 
     sealed class XServerUiEvent {
         data object OnExit : XServerUiEvent()
@@ -77,19 +95,14 @@ class XServerViewModel : ViewModel() {
     private val _uiEvent = Channel<XServerUiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
 
-    private val onExit: () -> Unit = {
-        viewModelScope.launch { _uiEvent.send(XServerUiEvent.OnExit) }
-    }
-    private val onNavigateBack: () -> Unit = {
-        viewModelScope.launch { _uiEvent.send(XServerUiEvent.OnNavigateBack) }
-    }
-
-    val onActivityDestroyed: (AndroidEvent.ActivityDestroyed) -> Unit = {
+    private val onActivityDestroyed: (AndroidEvent.ActivityDestroyed) -> Unit = {
         Timber.i("onActivityDestroyed")
-        exit(xServerView!!.xServer.winHandler, xEnvironment, onExit)
+        viewModelScope.launch {
+            exit()
+        }
     }
 
-    val onKeyEvent: (AndroidEvent.KeyEvent) -> Boolean = {
+    private val onKeyEvent: (AndroidEvent.KeyEvent) -> Boolean = {
         val isKeyboard = Keyboard.isKeyboardDevice(it.event.device)
         val isGamepad = ExternalController.isGameController(it.event.device)
 
@@ -105,7 +118,7 @@ class XServerViewModel : ViewModel() {
         handled
     }
 
-    val onMotionEvent: (AndroidEvent.MotionEvent) -> Boolean = {
+    private val onMotionEvent: (AndroidEvent.MotionEvent) -> Boolean = {
         val isMouse = TouchMouse.isMouseDevice(it.event?.device)
         val isGamepad = ExternalController.isGameController(it.event?.device)
 
@@ -120,19 +133,22 @@ class XServerViewModel : ViewModel() {
         handled
     }
 
-    val onGuestProgramTerminated: (AndroidEvent.GuestProgramTerminated) -> Unit = {
+    private val onGuestProgramTerminated: (AndroidEvent.GuestProgramTerminated) -> Unit = {
         Timber.i("onGuestProgramTerminated")
-        exit(xServerView!!.xServer.winHandler, xEnvironment, onExit)
-        onNavigateBack()
+        viewModelScope.launch {
+            exit()
+            _uiEvent.send(XServerUiEvent.OnNavigateBack)
+        }
     }
 
-    val onForceCloseApp: (SteamEvent.ForceCloseApp) -> Unit = {
+    private val onForceCloseApp: (SteamEvent.ForceCloseApp) -> Unit = {
         Timber.i("onForceCloseApp")
-        exit(xServerView!!.xServer.winHandler, xEnvironment, onExit)
-        onNavigateBack()
+        viewModelScope.launch {
+            exit()
+        }
     }
 
-    val debugCallback = Callback<String> { outputLine ->
+    private val debugCallback = Callback<String> { outputLine ->
         Timber.i(outputLine ?: "")
     }
 
@@ -167,8 +183,6 @@ class XServerViewModel : ViewModel() {
     fun assignTaskAffinity(
         window: Window,
         winHandler: WinHandler,
-        taskAffinityMask: Int,
-        taskAffinityMaskWoW64: Int,
     ) {
         if (taskAffinityMask == 0) return
         val processId = window.getProcessId()
@@ -184,12 +198,11 @@ class XServerViewModel : ViewModel() {
 
     fun shiftXEnvironmentToContext(
         context: Context,
-        xEnvironment: XEnvironment,
         xServer: XServer,
     ): XEnvironment {
-        val environment = XEnvironment(context, xEnvironment.imageFs)
-        val rootPath = xEnvironment.imageFs.rootDir.path
-        xEnvironment.getComponent(SysVSharedMemoryComponent::class.java).stop()
+        val environment = XEnvironment(context, xEnvironment!!.imageFs)
+        val rootPath = xEnvironment!!.imageFs.rootDir.path
+        xEnvironment!!.getComponent(SysVSharedMemoryComponent::class.java).stop()
         val sysVSharedMemoryComponent = SysVSharedMemoryComponent(
             xServer,
             UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.SYSVSHM_SERVER_PATH),
@@ -197,26 +210,26 @@ class XServerViewModel : ViewModel() {
         // val sysVSharedMemoryComponent = xEnvironment.getComponent<SysVSharedMemoryComponent>(SysVSharedMemoryComponent::class.java)
         // sysVSharedMemoryComponent.connectToXServer(xServer)
         environment.addComponent(sysVSharedMemoryComponent)
-        xEnvironment.getComponent(XServerComponent::class.java).stop()
+        xEnvironment!!.getComponent(XServerComponent::class.java).stop()
         val xServerComponent = XServerComponent(xServer, UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.XSERVER_PATH))
         // val xServerComponent = xEnvironment.getComponent<XServerComponent>(XServerComponent::class.java)
         // xServerComponent.connectToXServer(xServer)
         environment.addComponent(xServerComponent)
-        xEnvironment.getComponent(NetworkInfoUpdateComponent::class.java).stop()
+        xEnvironment!!.getComponent(NetworkInfoUpdateComponent::class.java).stop()
         val networkInfoComponent = NetworkInfoUpdateComponent()
         environment.addComponent(networkInfoComponent)
         // environment.addComponent(xEnvironment.getComponent<NetworkInfoUpdateComponent>(NetworkInfoUpdateComponent::class.java))
-        environment.addComponent(xEnvironment.getComponent(SteamClientComponent::class.java))
-        val alsaComponent = xEnvironment.getComponent(ALSAServerComponent::class.java)
+        environment.addComponent(xEnvironment!!.getComponent(SteamClientComponent::class.java))
+        val alsaComponent = xEnvironment!!.getComponent(ALSAServerComponent::class.java)
         if (alsaComponent != null) {
             environment.addComponent(alsaComponent)
         }
-        val pulseComponent = xEnvironment.getComponent(PulseAudioComponent::class.java)
+        val pulseComponent = xEnvironment!!.getComponent(PulseAudioComponent::class.java)
         if (pulseComponent != null) {
             environment.addComponent(pulseComponent)
         }
         var virglComponent: VirGLRendererComponent? =
-            xEnvironment.getComponent(VirGLRendererComponent::class.java)
+            xEnvironment!!.getComponent(VirGLRendererComponent::class.java)
         if (virglComponent != null) {
             virglComponent.stop()
             virglComponent = VirGLRendererComponent(
@@ -225,7 +238,7 @@ class XServerViewModel : ViewModel() {
             )
             environment.addComponent(virglComponent)
         }
-        environment.addComponent(xEnvironment.getComponent(GuestProgramLauncherComponent::class.java))
+        environment.addComponent(xEnvironment!!.getComponent(GuestProgramLauncherComponent::class.java))
 
         FileUtils.clear(XEnvironment.getTmpDir(context))
         sysVSharedMemoryComponent.start()
@@ -246,9 +259,7 @@ class XServerViewModel : ViewModel() {
         envVars: EnvVars,
         // generateWinePrefix: Boolean,
         container: Container?,
-        appLaunchInfo: LaunchInfo?,
         // shortcut: Shortcut?,
-        xServer: XServer,
     ): XEnvironment {
         envVars.put("MESA_DEBUG", "silent")
         envVars.put("MESA_NO_ERROR", "1")
@@ -270,12 +281,12 @@ class XServerViewModel : ViewModel() {
 
         if (container != null) {
             if (container.startupSelection == Container.STARTUP_SELECTION_AGGRESSIVE) {
-                xServer.winHandler.killProcess("services.exe")
+                xServerView!!.xServer.winHandler.killProcess("services.exe")
             }
 
             val wow64Mode = container.isWoW64Mode
             val guestExecutable = xServerState.value.wineInfo.getExecutable(context, wow64Mode) + " explorer /desktop=shell," +
-                xServer.screenInfo + " " + getWineStartCommand(appId, container, bootToContainer, appLaunchInfo)
+                xServerView!!.xServer.screenInfo + " " + getWineStartCommand(appId, container, bootToContainer, appLaunchInfo)
             guestProgramLauncherComponent.isWoW64Mode = wow64Mode
             guestProgramLauncherComponent.guestExecutable = guestExecutable
 
@@ -300,11 +311,16 @@ class XServerViewModel : ViewModel() {
         val environment = XEnvironment(context, imageFs)
         environment.addComponent(
             SysVSharedMemoryComponent(
-                xServer,
+                xServerView!!.xServer,
                 UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.SYSVSHM_SERVER_PATH),
             ),
         )
-        environment.addComponent(XServerComponent(xServer, UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.XSERVER_PATH)))
+        environment.addComponent(
+            XServerComponent(
+                xServerView!!.xServer,
+                UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.XSERVER_PATH),
+            ),
+        )
         environment.addComponent(NetworkInfoUpdateComponent())
         environment.addComponent(SteamClientComponent())
 
@@ -330,7 +346,7 @@ class XServerViewModel : ViewModel() {
 
         if (xServerState.value.graphicsDriver == "virgl") {
             environment.addComponent(
-                VirGLRendererComponent(xServer, UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.VIRGL_SERVER_PATH)),
+                VirGLRendererComponent(xServerView!!.xServer, UnixSocketConfig.createSocket(rootPath, UnixSocketConfig.VIRGL_SERVER_PATH)),
             )
         }
 
@@ -353,7 +369,7 @@ class XServerViewModel : ViewModel() {
 
         // put in separate scope since winhandler start method does some network stuff
         CoroutineScope(Dispatchers.IO).launch {
-            xServer.winHandler.start()
+            xServerView!!.xServer.winHandler.start()
         }
         envVars.clear()
         xServerState.value = xServerState.value.copy(dxwrapperConfig = null)
@@ -390,11 +406,11 @@ class XServerViewModel : ViewModel() {
         return "winhandler.exe $args"
     }
 
-    fun exit(winHandler: WinHandler?, environment: XEnvironment?, onExit: () -> Unit) {
+    suspend fun exit() {
         Timber.i("Exit called")
 
-        winHandler?.stop()
-        environment?.stopEnvironmentComponents()
+        xServerView?.xServer?.winHandler?.stop()
+        xEnvironment?.stopEnvironmentComponents()
 
         // AppUtils.restartApplication(this)
         // PluviaApp.xServerState = null
@@ -403,9 +419,11 @@ class XServerViewModel : ViewModel() {
         xEnvironment = null
         // PluviaApp.touchMouse = null
         // PluviaApp.keyboard = null
-        onExit()
+
+        _uiEvent.send(XServerUiEvent.OnExit)
     }
 
+    @Suppress("unused")
     fun generateWineprefix(
         context: Context,
         imageFs: ImageFs,
@@ -496,13 +514,9 @@ class XServerViewModel : ViewModel() {
 
     fun setupWineSystemFiles(
         context: Context,
-        firstTimeBoot: Boolean,
-        screenInfo: ScreenInfo,
         xServerState: MutableState<XServerState>,
-        // xServerViewModel: XServerViewModel,
         container: Container,
         containerManager: ContainerManager,
-        // shortcut: Shortcut?,
         envVars: EnvVars,
         onExtractFileListener: OnExtractFileListener?,
     ) {
@@ -553,6 +567,7 @@ class XServerViewModel : ViewModel() {
         }
 
         val desktopTheme = container.desktopTheme
+        val screenInfo = xServerView!!.xServer.screenInfo
         if (("$desktopTheme,$screenInfo") != container.getExtra("desktopTheme")) {
             WineThemeManager.apply(context, WineThemeManager.ThemeInfo(desktopTheme), screenInfo)
             container.putExtra("desktopTheme", "$desktopTheme,$screenInfo")
