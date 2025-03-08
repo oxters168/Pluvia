@@ -2,11 +2,15 @@ package com.OxGames.Pluvia.ui.screen.xserver
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -14,6 +18,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.data.XServerState
 import com.OxGames.Pluvia.utils.ContainerUtils
 import com.winlator.container.ContainerManager
@@ -46,12 +51,13 @@ fun XServerScreen(
     onExit: () -> Unit,
     onWindowMapped: ((Window) -> Unit)? = null,
     onWindowUnmapped: ((Window) -> Unit)? = null,
-    xServerViewModel: XServerViewModel = viewModel(),
+    viewModel: XServerViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        xServerViewModel.uiEvent.collect { event ->
+        viewModel.uiEvent.collect { event ->
             when (event) {
                 XServerViewModel.XServerUiEvent.OnExit -> onExit()
                 XServerViewModel.XServerUiEvent.OnNavigateBack -> navigateBack()
@@ -76,13 +82,26 @@ fun XServerScreen(
         }
     }
 
-    // TODO confirm dialog
-    val scope = rememberCoroutineScope()
+    var exitDialogVisible by rememberSaveable { mutableStateOf(false) }
+    MessageDialog(
+        visible = exitDialogVisible,
+        onDismissRequest = { exitDialogVisible = false },
+        onConfirmClick = {
+            scope.launch {
+                viewModel.exit()
+            }
+            exitDialogVisible = false
+        },
+        onDismissClick = { exitDialogVisible = false },
+        confirmBtnText = "Close",
+        dismissBtnText = "Cancel",
+        icon = Icons.AutoMirrored.Filled.ExitToApp,
+        title = "Exit Game",
+        message = "Are you sure you want to close ${viewModel.gameName}?",
+    )
+
     BackHandler {
-        Timber.i("BackHandler")
-        scope.launch {
-            xServerViewModel.exit()
-        }
+        exitDialogVisible = true
     }
 
     AndroidView(
@@ -90,32 +109,32 @@ fun XServerScreen(
             .fillMaxSize()
             .pointerHoverIcon(PointerIcon(0))
             .pointerInteropFilter {
-                xServerViewModel.touchMouse?.onTouchEvent(it)
+                viewModel.touchMouse?.onTouchEvent(it)
                 true
             },
         factory = {
             Timber.i("Creating XServerView and XServer")
 
-            xServerViewModel.appId = appId
+            viewModel.appId = appId
 
             XServerView(
                 context,
                 XServer(ScreenInfo(xServerState.value.screenSize)),
             ).apply {
-                xServerViewModel.xServerView = this
+                viewModel.xServerView = this
 
                 val renderer = this.renderer
                 renderer.isCursorVisible = false
 
                 xServer.renderer = renderer
                 xServer.winHandler = WinHandler(xServer, this)
-                xServerViewModel.touchMouse = TouchMouse(xServer)
-                xServerViewModel.keyboard = Keyboard(xServer)
+                viewModel.touchMouse = TouchMouse(xServer)
+                viewModel.keyboard = Keyboard(xServer)
 
                 if (!bootToContainer) {
                     renderer.setUnviewableWMClasses("explorer.exe")
                     // TODO: make 'force fullscreen' be an option of the app being launched
-                    xServerViewModel.appLaunchInfo?.let { renderer.forceFullscreenWMClass = Paths.get(it.executable).name }
+                    viewModel.appLaunchInfo?.let { renderer.forceFullscreenWMClass = Paths.get(it.executable).name }
                 }
 
                 xServer.windowManager.addOnWindowModificationListener(
@@ -139,7 +158,7 @@ fun XServerScreen(
                                     "\n\thasParent: ${window.parent != null}" +
                                     "\n\tchildrenSize: ${window.children.size}",
                             )
-                            xServerViewModel.assignTaskAffinity(window, xServer.winHandler)
+                            viewModel.assignTaskAffinity(window, xServer.winHandler)
                             onWindowMapped?.invoke(window)
                         }
 
@@ -158,8 +177,8 @@ fun XServerScreen(
                     },
                 )
 
-                if (xServerViewModel.xEnvironment != null) {
-                    xServerViewModel.xEnvironment = xServerViewModel.shiftXEnvironmentToContext(
+                if (viewModel.xEnvironment != null) {
+                    viewModel.xEnvironment = viewModel.shiftXEnvironmentToContext(
                         context = context,
                         xServer = xServer,
                     )
@@ -170,11 +189,11 @@ fun XServerScreen(
                     containerManager.activateContainer(container)
                     // Timber.d("2 Container drives: ${container.drives}")
 
-                    xServerViewModel.taskAffinityMask = ProcessHelper.getAffinityMask(container.getCPUList(true)).toShort().toInt()
-                    xServerViewModel.taskAffinityMaskWoW64 =
+                    viewModel.taskAffinityMask = ProcessHelper.getAffinityMask(container.getCPUList(true)).toShort().toInt()
+                    viewModel.taskAffinityMaskWoW64 =
                         ProcessHelper.getAffinityMask(container.getCPUListWoW64(true)).toShort().toInt()
-                    xServerViewModel.firstTimeBoot = container.getExtra("appVersion").isEmpty()
-                    Timber.i("First time boot: ${xServerViewModel.firstTimeBoot}")
+                    viewModel.firstTimeBoot = container.getExtra("appVersion").isEmpty()
+                    Timber.i("First time boot: ${viewModel.firstTimeBoot}")
 
                     val wineVersion = container.wineVersion
                     xServerState.value = xServerState.value.copy(
@@ -202,7 +221,7 @@ fun XServerScreen(
                     Timber.i("Doing things once")
                     val envVars = EnvVars()
 
-                    xServerViewModel.setupWineSystemFiles(
+                    viewModel.setupWineSystemFiles(
                         context = context,
                         xServerState = xServerState,
                         container = container,
@@ -210,7 +229,7 @@ fun XServerScreen(
                         envVars = envVars,
                         onExtractFileListener = onExtractFileListener,
                     )
-                    xServerViewModel.extractGraphicsDriverFiles(
+                    viewModel.extractGraphicsDriverFiles(
                         context = context,
                         graphicsDriver = xServerState.value.graphicsDriver,
                         dxwrapper = xServerState.value.dxwrapper,
@@ -218,8 +237,8 @@ fun XServerScreen(
                         container = container,
                         envVars = envVars,
                     )
-                    xServerViewModel.changeWineAudioDriver(xServerState.value.audioDriver, container, ImageFs.find(context))
-                    xServerViewModel.xEnvironment = xServerViewModel.setupXEnvironment(
+                    viewModel.changeWineAudioDriver(xServerState.value.audioDriver, container, ImageFs.find(context))
+                    viewModel.xEnvironment = viewModel.setupXEnvironment(
                         context = context,
                         appId = appId,
                         bootToContainer = bootToContainer,

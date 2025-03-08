@@ -70,6 +70,10 @@ class XServerViewModel : ViewModel() {
     internal var touchMouse: TouchMouse? = null
     internal var keyboard: Keyboard? = null
 
+    // Some of the variables below `could` be in a state.
+
+    internal var gameName: String = "your game"
+
     var appId: Int = -1
     val appLaunchInfo: LaunchInfo?
         get() {
@@ -79,6 +83,7 @@ class XServerViewModel : ViewModel() {
             }
 
             return SteamService.getAppInfoOf(appId)?.let {
+                gameName = it.name
                 SteamService.getWindowsLaunchInfos(appId).firstOrNull()
             }
         }
