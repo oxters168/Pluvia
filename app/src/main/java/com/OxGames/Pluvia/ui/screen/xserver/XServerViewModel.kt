@@ -476,17 +476,16 @@ class XServerViewModel : ViewModel() {
                     // TODO: show loading modal
                     FileUtils.writeString(File(rootDir, ImageFs.WINEPREFIX + "/.update-timestamp"), "disable\n")
 
-                    val userDir = File(rootDir, ImageFs.WINEPREFIX + "/drive_c/users/xuser")
-                    val userFiles = userDir.listFiles()
-                    if (userFiles != null) {
-                        for (userFile in userFiles) {
+                    File(rootDir, ImageFs.WINEPREFIX + "/drive_c/users/xuser")
+                        .listFiles()
+                        .orEmpty()
+                        .forEach { userFile ->
                             if (FileUtils.isSymlink(userFile)) {
                                 val path = userFile.path
                                 userFile.delete()
                                 File(path).mkdirs()
                             }
                         }
-                    }
 
                     val suffix = wineInfo.fullVersion() + "-" + wineInfo.arch
                     val containerPatternFile = File(installedWineDir, "/preinstall/container-pattern-$suffix.tzst")
