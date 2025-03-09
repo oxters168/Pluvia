@@ -105,15 +105,16 @@ object PrefManager {
         }
     }
 
-    /* PICS */
+    // region PICS
     private val LAST_PICS_CHANGE_NUMBER = intPreferencesKey("last_pics_change_number")
     var lastPICSChangeNumber: Int
         get() = getPref(LAST_PICS_CHANGE_NUMBER, 0)
         set(value) {
             setPref(LAST_PICS_CHANGE_NUMBER, value)
         }
+    // endregion
 
-    /* Container Default Settings */
+    // region Container Default Settings
     private val LAUNCH_OPTIONS = stringPreferencesKey("launch_params")
     var launchParams: String
         get() = getPref(LAUNCH_OPTIONS, "")
@@ -281,30 +282,9 @@ object PrefManager {
         set(value) {
             setPref(BOX_64_VERSION, value)
         }
+    // endregion
 
-    /* Recent Crash Flag */
-    private val RECENTLY_CRASHED = booleanPreferencesKey("recently_crashed")
-    var recentlyCrashed: Boolean
-        get() = getPref(RECENTLY_CRASHED, false)
-        set(value) {
-            setPref(RECENTLY_CRASHED, value)
-        }
-
-    /* Login Info */
-    private val CELL_ID = intPreferencesKey("cell_id")
-    var cellId: Int
-        get() = getPref(CELL_ID, 0)
-        set(value) {
-            setPref(CELL_ID, value)
-        }
-
-    private val USER_NAME = stringPreferencesKey("user_name")
-    var username: String
-        get() = getPref(USER_NAME, "")
-        set(value) {
-            setPref(USER_NAME, value)
-        }
-
+    // region Login Info
     private val APP_INSTALL_PATH = stringPreferencesKey("app_install_path")
     var appInstallPath: String
         get() = getPref(APP_INSTALL_PATH, SteamService.defaultAppInstallPath)
@@ -317,6 +297,30 @@ object PrefManager {
         get() = getPref(APP_STAGING_PATH, SteamService.defaultAppStagingPath)
         set(value) {
             setPref(APP_STAGING_PATH, value)
+        }
+
+    // Special: Because null value.
+    private val CLIENT_ID = longPreferencesKey("client_id")
+    var clientId: Long?
+        get() = runBlocking { dataStore.data.first()[CLIENT_ID] }
+        set(value) {
+            scope.launch {
+                dataStore.edit { pref -> pref[CLIENT_ID] = value!! }
+            }
+        }
+
+    private val CELL_ID = intPreferencesKey("cell_id")
+    var cellId: Int
+        get() = getPref(CELL_ID, 0)
+        set(value) {
+            setPref(CELL_ID, value)
+        }
+
+    private val USER_NAME = stringPreferencesKey("user_name")
+    var username: String
+        get() = getPref(USER_NAME, "")
+        set(value) {
+            setPref(USER_NAME, value)
         }
 
     private val ACCESS_TOKEN_ENC = byteArrayPreferencesKey("access_token_enc")
@@ -351,29 +355,6 @@ object PrefManager {
             setPref(REFRESH_TOKEN_ENC, bytes)
         }
 
-    // Special: Because null value.
-    private val CLIENT_ID = longPreferencesKey("client_id")
-    var clientId: Long?
-        get() = runBlocking { dataStore.data.first()[CLIENT_ID] }
-        set(value) {
-            scope.launch {
-                dataStore.edit { pref -> pref[CLIENT_ID] = value!! }
-            }
-        }
-
-    /**
-     * Get or Set the last known Persona State. See [EPersonaState]
-     */
-    private val LIBRARY_FILTER = intPreferencesKey("library_filter")
-    var libraryFilter: EnumSet<AppFilter>
-        get() {
-            val value = getPref(LIBRARY_FILTER, AppFilter.toFlags(EnumSet.of(AppFilter.GAME)))
-            return AppFilter.fromFlags(value)
-        }
-        set(value) {
-            setPref(LIBRARY_FILTER, AppFilter.toFlags(value))
-        }
-
     private val PERSONA_STATE = intPreferencesKey("persona_state")
     var personaState: EPersonaState
         get() {
@@ -382,6 +363,15 @@ object PrefManager {
         }
         set(value) {
             setPref(PERSONA_STATE, value.code())
+        }
+    // endregion
+
+    // region App
+    private val RECENTLY_CRASHED = booleanPreferencesKey("recently_crashed")
+    var recentlyCrashed: Boolean
+        get() = getPref(RECENTLY_CRASHED, false)
+        set(value) {
+            setPref(RECENTLY_CRASHED, value)
         }
 
     private val ALLOWED_ORIENTATION = intPreferencesKey("allowed_orientation")
@@ -437,6 +427,26 @@ object PrefManager {
             setPref(START_SCREEN, value.ordinal)
         }
 
+    // Whether to open links internally with a webview or open externally with a user's browser.
+    private val OPEN_WEB_LINKS_EXTERNALLY = booleanPreferencesKey("open_web_links_externally")
+    var openWebLinksExternally: Boolean
+        get() = getPref(OPEN_WEB_LINKS_EXTERNALLY, true)
+        set(value) {
+            setPref(OPEN_WEB_LINKS_EXTERNALLY, value)
+        }
+    // endregion
+
+    // region Screens
+    private val LIBRARY_FILTER = intPreferencesKey("library_filter")
+    var libraryFilter: EnumSet<AppFilter>
+        get() {
+            val value = getPref(LIBRARY_FILTER, AppFilter.toFlags(EnumSet.of(AppFilter.GAME)))
+            return AppFilter.fromFlags(value)
+        }
+        set(value) {
+            setPref(LIBRARY_FILTER, AppFilter.toFlags(value))
+        }
+
     private val FRIENDS_LIST_HEADER = stringPreferencesKey("friends_list_header")
     var friendsListHeader: Set<String>
         get() {
@@ -454,12 +464,5 @@ object PrefManager {
         set(value) {
             setPref(ACK_CHAT_PREVIEW, value)
         }
-
-    // Whether to open links internally with a webview or open externally with a user's browser.
-    private val OPEN_WEB_LINKS_EXTERNALLY = booleanPreferencesKey("open_web_links_externally")
-    var openWebLinksExternally: Boolean
-        get() = getPref(OPEN_WEB_LINKS_EXTERNALLY, true)
-        set(value) {
-            setPref(OPEN_WEB_LINKS_EXTERNALLY, value)
-        }
+    // endregion
 }
