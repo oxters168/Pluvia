@@ -37,9 +37,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.data.OwnedGames
+import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.ui.util.ListItemImage
 import com.OxGames.Pluvia.utils.SteamUtils
 
 @OptIn(ExperimentalMaterial3Api::class)

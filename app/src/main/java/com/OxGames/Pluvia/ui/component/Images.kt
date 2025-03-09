@@ -1,4 +1,4 @@
-package com.OxGames.Pluvia.ui.util
+package com.OxGames.Pluvia.ui.component
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape

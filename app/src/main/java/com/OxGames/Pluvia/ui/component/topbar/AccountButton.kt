@@ -18,9 +18,9 @@ import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.events.SteamEvent
 import com.OxGames.Pluvia.service.SteamService
+import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.component.dialog.ProfileDialog
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.ui.util.ListItemImage
 import com.OxGames.Pluvia.utils.getAvatarURL
 import `in`.dragonbra.javasteam.enums.EPersonaState
 import kotlinx.coroutines.launch
