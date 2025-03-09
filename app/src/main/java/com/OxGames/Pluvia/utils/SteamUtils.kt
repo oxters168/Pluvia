@@ -5,6 +5,7 @@ import android.content.Context
 import android.provider.Settings
 import com.OxGames.Pluvia.service.SteamService
 import `in`.dragonbra.javasteam.util.HardwareUtils
+import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -57,20 +58,21 @@ object SteamUtils {
      */
     fun replaceSteamApi(context: Context, appId: Int) {
         val appDirPath = SteamService.getAppDirPath(appId)
-        FileUtils.walkThroughPath(Paths.get(appDirPath), -1) {
+
+        File(appDirPath).walkTopDown().forEach {
             if (it.name == "steam_api.dll" && it.exists()) {
-                Files.delete(it)
-                Files.createFile(it)
-                FileOutputStream(it.absolutePathString()).use { fos ->
+                it.delete()
+                it.createNewFile()
+                FileOutputStream(it.absolutePath).use { fos ->
                     context.assets.open("steampipe/steam_api.dll").use { fs ->
                         fs.copyTo(fos)
                     }
                 }
             }
             if (it.name == "steam_api64.dll" && it.exists()) {
-                Files.delete(it)
-                Files.createFile(it)
-                FileOutputStream(it.absolutePathString()).use { fos ->
+                it.delete()
+                it.createNewFile()
+                FileOutputStream(it.absolutePath).use { fos ->
                     context.assets.open("steampipe/steam_api64.dll").use { fs ->
                         fs.copyTo(fos)
                     }

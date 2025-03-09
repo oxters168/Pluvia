@@ -82,26 +82,6 @@ object FileUtils {
         }
     }
 
-    /**
-     * Traverse through a directory and perform an action on each file
-     *
-     * @param rootPath The start path
-     * @param maxDepth How deep to go in the directory tree, a value of -1 keeps going
-     * @param action The action to perform on each file
-     */
-    fun walkThroughPath(rootPath: Path, maxDepth: Int = 0, action: (Path) -> Unit) {
-        Files.list(rootPath).forEach {
-            action(it)
-            if (maxDepth != 0 && it.exists() && it.isDirectory()) {
-                walkThroughPath(
-                    rootPath = it,
-                    maxDepth = if (maxDepth > 0) maxDepth - 1 else maxDepth,
-                    action = action,
-                )
-            }
-        }
-    }
-
     fun findFiles(rootPath: Path, pattern: String, includeDirectories: Boolean = false): Stream<Path> {
         val patternParts = pattern.split("*").filter { it.isNotEmpty() }
         Timber.i("$pattern -> $patternParts")
