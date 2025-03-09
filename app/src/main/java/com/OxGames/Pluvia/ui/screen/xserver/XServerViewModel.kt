@@ -405,8 +405,12 @@ class XServerViewModel : ViewModel() {
                 Timber.e("Could not locate game drive")
                 'D'
             }
-            "/dir $drive:/${appLaunchInfo.workingDir} \"${appLaunchInfo.executable}\""
+
+            "/dir $drive:/${appLaunchInfo.workingDir} \"${appLaunchInfo.executable}" +
+                "${if (container.launchParams.isNotBlank()) container.launchParams.trim() else ""}\""
         }
+
+        Timber.i("WineStartCommand: $args")
 
         return "winhandler.exe $args"
     }

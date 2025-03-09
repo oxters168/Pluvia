@@ -114,6 +114,13 @@ object PrefManager {
         }
 
     /* Container Default Settings */
+    private val LAUNCH_OPTIONS = stringPreferencesKey("launch_params")
+    var launchParams: String
+        get() = getPref(LAUNCH_OPTIONS, "")
+        set(value) {
+            setPref(LAUNCH_OPTIONS, value)
+        }
+
     private val SCREEN_SIZE = stringPreferencesKey("screen_size")
     var screenSize: String
         get() = getPref(SCREEN_SIZE, Container.DEFAULT_SCREEN_SIZE)
