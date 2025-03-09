@@ -232,9 +232,10 @@ class MainViewModel @Inject constructor(
                         processes.add(process)
                     } while (parentWindow != null)
 
-                    GameProcessInfo(appId = appId, processes = processes).let {
-                        // TODO add preference to allow notifying or not.
-                        SteamService.notifyRunningProcesses(it)
+                    if (PrefManager.broadcastPlayingGame) {
+                        GameProcessInfo(appId = appId, processes = processes).let {
+                            SteamService.notifyRunningProcesses(it)
+                        }
                     }
                 }
             }

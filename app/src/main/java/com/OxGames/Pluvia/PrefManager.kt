@@ -434,6 +434,13 @@ object PrefManager {
         set(value) {
             setPref(OPEN_WEB_LINKS_EXTERNALLY, value)
         }
+
+    private val BROADCAST_PLAYING_GAME = booleanPreferencesKey("broadcast_playing_game")
+    var broadcastPlayingGame: Boolean
+        get() = getPref(BROADCAST_PLAYING_GAME, true)
+        set(value) {
+            setPref(BROADCAST_PLAYING_GAME, value)
+        }
     // endregion
 
     // region Screens
