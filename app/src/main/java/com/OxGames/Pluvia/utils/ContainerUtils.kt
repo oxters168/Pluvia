@@ -56,6 +56,7 @@ object ContainerUtils {
             box64Version = PrefManager.box64Version,
             box86Preset = PrefManager.box86Preset,
             box64Preset = PrefManager.box64Preset,
+            launchParams = PrefManager.launchParams,
 
             csmt = PrefManager.csmt,
             videoPciDeviceID = PrefManager.videoPciDeviceID,
@@ -84,6 +85,7 @@ object ContainerUtils {
         PrefManager.box64Version = containerData.box64Version
         PrefManager.box86Preset = containerData.box86Preset
         PrefManager.box64Preset = containerData.box64Preset
+        PrefManager.launchParams = containerData.launchParams
 
         PrefManager.csmt = containerData.csmt
         PrefManager.videoPciDeviceID = containerData.videoPciDeviceID
@@ -143,6 +145,7 @@ object ContainerUtils {
             box86Preset = container.box86Preset,
             box64Preset = container.box64Preset,
             desktopTheme = container.desktopTheme,
+            launchParams = container.launchParams,
 
             csmt = csmt,
             videoPciDeviceID = videoPciDeviceID,
@@ -200,6 +203,7 @@ object ContainerUtils {
         container.box86Preset = containerData.box86Preset
         container.box64Preset = containerData.box64Preset
         container.desktopTheme = containerData.desktopTheme
+        container.launchParams = containerData.launchParams
         container.saveData()
     }
 
@@ -262,6 +266,7 @@ object ContainerUtils {
                 box86Preset = PrefManager.box86Preset,
                 box64Preset = PrefManager.box64Preset,
                 desktopTheme = WineThemeManager.DEFAULT_DESKTOP_THEME,
+                launchParams = PrefManager.launchParams,
 
                 csmt = PrefManager.csmt,
                 videoPciDeviceID = PrefManager.videoPciDeviceID,

@@ -26,7 +26,7 @@ public class Container {
     public static final String DEFAULT_DXWRAPPER = "dxvk";
     public static final String DEFAULT_WINCOMPONENTS = "direct3d=1,directsound=1,directmusic=0,directshow=0,directplay=0,vcrun2010=1,wmdecoder=1";
     public static final String FALLBACK_WINCOMPONENTS = "direct3d=0,directsound=0,directmusic=0,directshow=0,directplay=0,vcrun2010=0,wmdecoder=0";
-    public static final String DEFAULT_DRIVES = "D:"+Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+"E:/data/data/com.winlator/storage";
+    public static final String DEFAULT_DRIVES = "D:" + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "E:/data/data/com.winlator/storage";
     public static final byte STARTUP_SELECTION_NORMAL = 0;
     public static final byte STARTUP_SELECTION_ESSENTIAL = 1;
     public static final byte STARTUP_SELECTION_AGGRESSIVE = 2;
@@ -55,9 +55,11 @@ public class Container {
     private File rootDir;
     private JSONObject extraData;
 
+    private String launchParams = "";
+
     public Container(int id) {
         this.id = id;
-        this.name = "Container-"+id;
+        this.name = "Container-" + id;
     }
 
     public String getName() {
@@ -180,13 +182,21 @@ public class Container {
         this.cpuListWoW64 = cpuListWoW64 != null && !cpuListWoW64.isEmpty() ? cpuListWoW64 : null;
     }
 
-    public String getBox86Version() { return box86Version; }
+    public String getBox86Version() {
+        return box86Version;
+    }
 
-    public void setBox86Version(String box86Version) { this.box86Version = box86Version; }
+    public void setBox86Version(String box86Version) {
+        this.box86Version = box86Version;
+    }
 
-    public String getBox64Version() { return box64Version; }
+    public String getBox64Version() {
+        return box64Version;
+    }
 
-    public void setBox64Version(String box64Version) { this.box64Version = box64Version; }
+    public void setBox64Version(String box64Version) {
+        this.box64Version = box64Version;
+    }
 
     public String getBox86Preset() {
         return box86Preset;
@@ -223,8 +233,7 @@ public class Container {
     public String getExtra(String name, String fallback) {
         try {
             return extraData != null && extraData.has(name) ? extraData.getString(name) : fallback;
-        }
-        catch (JSONException e) {
+        } catch (JSONException e) {
             return fallback;
         }
     }
@@ -234,10 +243,8 @@ public class Container {
         try {
             if (value != null) {
                 extraData.put(name, value);
-            }
-            else extraData.remove(name);
-        }
-        catch (JSONException e) {
+            } else extraData.remove(name);
+        } catch (JSONException e) {
             Log.e("Container", "Failed to put extra: " + e);
         }
     }
@@ -255,7 +262,7 @@ public class Container {
     }
 
     public File getDesktopDir() {
-        return new File(rootDir, ".wine/drive_c/users/"+ImageFs.USER+"/Desktop/");
+        return new File(rootDir, ".wine/drive_c/users/" + ImageFs.USER + "/Desktop/");
     }
 
     public File getStartMenuDir() {
@@ -263,7 +270,7 @@ public class Container {
     }
 
     public File getIconsDir(int size) {
-        return new File(rootDir, ".local/share/icons/hicolor/"+size+"x"+size+"/apps/");
+        return new File(rootDir, ".local/share/icons/hicolor/" + size + "x" + size + "/apps/");
     }
 
     public String getDesktopTheme() {
@@ -272,6 +279,14 @@ public class Container {
 
     public void setDesktopTheme(String desktopTheme) {
         this.desktopTheme = desktopTheme;
+    }
+
+    public String getLaunchParams() {
+        return launchParams;
+    }
+
+    public void setLaunchParams(String launchParams) {
+        this.launchParams = launchParams;
     }
 
     public Iterable<String[]> drivesIterator() {
@@ -288,6 +303,7 @@ public class Container {
         }
         return drive;
     }
+
     public static Iterable<String[]> drivesIterator(final String drives) {
         final int[] index = {drives.indexOf(":")};
         final String[] item = new String[2];
@@ -299,9 +315,9 @@ public class Container {
 
             @Override
             public String[] next() {
-                item[0] = String.valueOf(drives.charAt(index[0]-1));
-                int nextIndex = drives.indexOf(":", index[0]+1);
-                item[1] = drives.substring(index[0]+1, nextIndex != -1 ? nextIndex-1 : drives.length());
+                item[0] = String.valueOf(drives.charAt(index[0] - 1));
+                int nextIndex = drives.indexOf(":", index[0] + 1);
+                item[1] = drives.substring(index[0] + 1, nextIndex != -1 ? nextIndex - 1 : drives.length());
                 index[0] = nextIndex;
                 return item;
             }
@@ -332,11 +348,11 @@ public class Container {
             data.put("box64Preset", box64Preset);
             data.put("desktopTheme", desktopTheme);
             data.put("extraData", extraData);
+            data.put("launchParams", launchParams);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
             FileUtils.writeString(getConfigFile(), data.toString());
-        }
-        catch (JSONException e) {
+        } catch (JSONException e) {
             Log.e("Container", "Failed to save data: " + e);
         }
     }
@@ -349,52 +365,52 @@ public class Container {
         for (Iterator<String> it = data.keys(); it.hasNext(); ) {
             String key = it.next();
             switch (key) {
-                case "name" :
+                case "name":
                     setName(data.getString(key));
                     break;
-                case "screenSize" :
+                case "screenSize":
                     setScreenSize(data.getString(key));
                     break;
-                case "envVars" :
+                case "envVars":
                     setEnvVars(data.getString(key));
                     break;
-                case "cpuList" :
+                case "cpuList":
                     setCPUList(data.getString(key));
                     break;
-                case "cpuListWoW64" :
+                case "cpuListWoW64":
                     setCPUListWoW64(data.getString(key));
                     break;
-                case "graphicsDriver" :
+                case "graphicsDriver":
                     setGraphicsDriver(data.getString(key));
                     break;
-                case "wincomponents" :
+                case "wincomponents":
                     setWinComponents(data.getString(key));
                     break;
-                case "dxwrapper" :
+                case "dxwrapper":
                     setDXWrapper(data.getString(key));
                     break;
-                case "dxwrapperConfig" :
+                case "dxwrapperConfig":
                     setDXWrapperConfig(data.getString(key));
                     break;
-                case "drives" :
+                case "drives":
                     setDrives(data.getString(key));
                     break;
-                case "showFPS" :
+                case "showFPS":
                     setShowFPS(data.getBoolean(key));
                     break;
-                case "wow64Mode" :
+                case "wow64Mode":
                     setWoW64Mode(data.getBoolean(key));
                     break;
-                case "startupSelection" :
-                    setStartupSelection((byte)data.getInt(key));
+                case "startupSelection":
+                    setStartupSelection((byte) data.getInt(key));
                     break;
-                case "extraData" : {
+                case "extraData": {
                     JSONObject extraData = data.getJSONObject(key);
                     checkObsoleteOrMissingProperties(extraData);
                     setExtraData(extraData);
                     break;
                 }
-                case "wineVersion" :
+                case "wineVersion":
                     setWineVersion(data.getString(key));
                     break;
                 case "box86Version":
@@ -403,17 +419,20 @@ public class Container {
                 case "box64Version":
                     setBox64Version(data.getString(key));
                     break;
-                case "box86Preset" :
+                case "box86Preset":
                     setBox86Preset(data.getString(key));
                     break;
-                case "box64Preset" :
+                case "box64Preset":
                     setBox64Preset(data.getString(key));
                     break;
-                case "audioDriver" :
+                case "audioDriver":
                     setAudioDriver(data.getString(key));
                     break;
-                case "desktopTheme" :
+                case "desktopTheme":
                     setDesktopTheme(data.getString(key));
+                    break;
+                case "launchParams":
+                    setLaunchParams(data.getString(key));
                     break;
             }
         }
@@ -430,8 +449,7 @@ public class Container {
                 String dxwrapper = data.getString("dxwrapper");
                 if (dxwrapper.equals("original-wined3d")) {
                     data.put("dxwrapper", DEFAULT_DXWRAPPER);
-                }
-                else if (dxwrapper.startsWith("d8vk-") || dxwrapper.startsWith("dxvk-")) {
+                } else if (dxwrapper.startsWith("d8vk-") || dxwrapper.startsWith("dxvk-")) {
                     data.put("dxwrapper", dxwrapper.substring(0, dxwrapper.indexOf("-")));
                 }
             }
@@ -440,8 +458,7 @@ public class Container {
                 String graphicsDriver = data.getString("graphicsDriver");
                 if (graphicsDriver.equals("turnip-zink")) {
                     data.put("graphicsDriver", "turnip");
-                }
-                else if (graphicsDriver.equals("llvmpipe")) {
+                } else if (graphicsDriver.equals("llvmpipe")) {
                     data.put("graphicsDriver", "virgl");
                 }
             }
@@ -471,12 +488,11 @@ public class Container {
                     }
                 }
 
-                result += (!result.isEmpty() ? "," : "")+wincomponent1[0]+"="+value;
+                result += (!result.isEmpty() ? "," : "") + wincomponent1[0] + "=" + value;
             }
 
             data.put("wincomponents", result);
-        }
-        catch (JSONException e) {
+        } catch (JSONException e) {
             Log.e("Container", "Failed to check obsolete or missing properties: " + e);
         }
     }
@@ -484,14 +500,14 @@ public class Container {
     public static String getFallbackCPUList() {
         String cpuList = "";
         int numProcessors = Runtime.getRuntime().availableProcessors();
-        for (int i = 0; i < numProcessors; i++) cpuList += (!cpuList.isEmpty() ? "," : "")+i;
+        for (int i = 0; i < numProcessors; i++) cpuList += (!cpuList.isEmpty() ? "," : "") + i;
         return cpuList;
     }
 
     public static String getFallbackCPUListWoW64() {
         String cpuList = "";
         int numProcessors = Runtime.getRuntime().availableProcessors();
-        for (int i = numProcessors / 2; i < numProcessors; i++) cpuList += (!cpuList.isEmpty() ? "," : "")+i;
+        for (int i = numProcessors / 2; i < numProcessors; i++) cpuList += (!cpuList.isEmpty() ? "," : "") + i;
         return cpuList;
     }
 }

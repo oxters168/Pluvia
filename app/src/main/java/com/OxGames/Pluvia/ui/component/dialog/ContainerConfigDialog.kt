@@ -148,6 +148,8 @@ fun ContainerConfigDialog(
         }
         var showEnvVarCreateDialog by rememberSaveable { mutableStateOf(false) }
 
+        var launchParams by rememberSaveable { mutableStateOf(config.launchParams) }
+
         val applyScreenSizeToConfig: () -> Unit = {
             val screenSize = if (screenSizeIndex == 0) {
                 if (customScreenWidth.isNotEmpty() && customScreenHeight.isNotEmpty()) {
@@ -600,6 +602,18 @@ fun ContainerConfigDialog(
                                     // TODO: add way to create new drive
                                     // directoryLauncher.launch(null)
                                     Toast.makeText(context, "Adding drives not yet available", Toast.LENGTH_LONG).show()
+                                },
+                            )
+                        }
+                        SettingsGroup(title = { Text(text = "Launch Options") }) {
+                            OutlinedTextField(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 32.dp),
+                                value = launchParams,
+                                onValueChange = {
+                                    launchParams = it
+                                    config = config.copy(launchParams = it)
                                 },
                             )
                         }
