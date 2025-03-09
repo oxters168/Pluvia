@@ -32,6 +32,7 @@ fun SettingsGroupInterface(
     val context = LocalContext.current
 
     var openWebLinks by rememberSaveable { mutableStateOf(PrefManager.openWebLinksExternally) }
+    var broadcastPlayingGame by rememberSaveable { mutableStateOf(PrefManager.broadcastPlayingGame) }
 
     var openAppThemeDialog by rememberSaveable { mutableStateOf(false) }
     var openAppPaletteDialog by rememberSaveable { mutableStateOf(false) }
@@ -118,6 +119,16 @@ fun SettingsGroupInterface(
             onCheckedChange = {
                 openWebLinks = it
                 PrefManager.openWebLinksExternally = it
+            },
+        )
+        SettingsSwitch(
+            colors = settingsTileColorsAlt(),
+            title = { Text(text = "Show Playing Game") },
+            subtitle = { Text(text = "Notify steam that you're playing a game. This turns you green.") },
+            state = broadcastPlayingGame,
+            onCheckedChange = {
+                broadcastPlayingGame = it
+                PrefManager.broadcastPlayingGame = it
             },
         )
     }
