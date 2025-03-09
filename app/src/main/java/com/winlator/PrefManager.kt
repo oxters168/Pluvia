@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
@@ -45,6 +46,14 @@ object PrefManager {
     @JvmStatic
     fun deInit() {
         dataStore = null
+    }
+
+    @JvmStatic
+    fun clear(context: Context) {
+        init(context)
+        scope.launch {
+            dataStore?.edit { it.clear() }
+        }
     }
 
     @JvmStatic

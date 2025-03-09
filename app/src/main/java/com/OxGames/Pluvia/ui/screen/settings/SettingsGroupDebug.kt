@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import java.io.File
+import timber.log.Timber
 
 @Suppress("UnnecessaryOptInAnnotation") // ExperimentalFoundationApi
 @OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
@@ -112,6 +114,42 @@ fun SettingsGroupDebug() {
             colors = settingsTileColorsDebug(),
             title = { Text(text = "Clear Local Database") },
             subtitle = { Text("[Closes app] May help fix issues with library items or messages.") },
+            onClick = {},
+        )
+
+        var containerResetVerify by remember { mutableStateOf(false) } // Okay to not be rememberSavable
+        SettingsMenuLink(
+            modifier = Modifier.combinedClickable(
+                onLongClick = {
+                    if (!containerResetVerify) {
+                        Toast.makeText(context, "Are you sure? Long click again to confirm", Toast.LENGTH_SHORT).show()
+                        containerResetVerify = true
+                    } else {
+                        File(context.filesDir, "imagefs").also {
+                            val result = it.deleteRecursively()
+                            Timber.i("imagefs deleted? $result")
+                        }
+                        File(context.filesDir, "pulseaudio").also {
+                            val result = it.deleteRecursively()
+                            Timber.i("pulseaudio deleted? $result")
+                        }
+                        File(context.filesDir, "splitcompat").also {
+                            val result = it.deleteRecursively()
+                            Timber.i("splitcompat deleted? $result")
+                        }
+                        com.winlator.PrefManager.clear(context)
+                        Toast.makeText(context, "Containers reset", Toast.LENGTH_SHORT).show()
+                        containerResetVerify = false
+                    }
+                },
+                onClick = {
+                    Toast.makeText(context, "Long click to activate", Toast.LENGTH_SHORT).show()
+                    containerResetVerify = false
+                },
+            ),
+            colors = settingsTileColorsDebug(),
+            title = { Text(text = "Wipe and reset ALL containers") },
+            subtitle = { Text("This will wipe the container, default container settings, and all per-game container settings.") },
             onClick = {},
         )
 
