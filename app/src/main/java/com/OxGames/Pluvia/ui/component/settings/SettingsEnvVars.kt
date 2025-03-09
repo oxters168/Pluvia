@@ -1,7 +1,11 @@
 package com.OxGames.Pluvia.ui.component.settings
 
+import android.content.res.Configuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
+import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.base.internal.LocalSettingsGroupEnabled
 import com.alorma.compose.settings.ui.base.internal.SettingsTileColors
 import com.alorma.compose.settings.ui.base.internal.SettingsTileDefaults
@@ -39,6 +43,7 @@ fun SettingsEnvVars(
                     },
                 )
             }
+
             EnvVarSelectionType.MULTI_SELECT -> {
                 val values = value.split(",")
                     .map { envVarInfo!!.possibleValues.indexOf(it) }
@@ -67,6 +72,7 @@ fun SettingsEnvVars(
                     },
                 )
             }
+
             EnvVarSelectionType.NONE -> {
                 if (envVarInfo?.possibleValues?.isNotEmpty() == true) {
                     SettingsListDropdown(
@@ -100,6 +106,21 @@ fun SettingsEnvVars(
                     )
                 }
             }
+        }
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
+@Composable
+private fun Preview_SettingsEnvVars() {
+    PluviaTheme {
+        SettingsGroup(title = { Text(text = "Test") }) {
+            SettingsEnvVars(
+                envVars = EnvVars("EnvVars=1").also { it.put("Boolean", true) },
+                onEnvVarsChange = {},
+                knownEnvVars = mapOf(),
+            )
         }
     }
 }
