@@ -24,6 +24,7 @@ import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import com.winlator.core.FileUtils
 import java.io.File
 import timber.log.Timber
 
@@ -126,6 +127,7 @@ fun SettingsGroupDebug() {
                         containerResetVerify = true
                     } else {
                         File(context.filesDir, "imagefs").also {
+                            it.walkTopDown().forEach { FileUtils.delete(it) }
                             val result = it.deleteRecursively()
                             Timber.i("imagefs deleted? $result")
                         }
