@@ -351,7 +351,7 @@ public class Container {
             data.put("launchParams", launchParams);
 
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
-            FileUtils.writeString(getConfigFile(), data.toString());
+            FileUtils.writeString(getConfigFile(), data.toString(4));
         } catch (JSONException e) {
             Log.e("Container", "Failed to save data: " + e);
         }
