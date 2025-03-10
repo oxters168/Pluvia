@@ -1,7 +1,9 @@
 package com.OxGames.Pluvia
 
 import android.content.Context
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.text.SimpleDateFormat
@@ -22,10 +24,45 @@ class CrashHandler(
         private const val LOG_CAT_COUNT = 150
         private const val CRASH_FILE_HISTORY_COUNT = 1
 
+        val timestamp: String
+            get() = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(Date())
+
+        /**
+         * Logcat command
+         */
+        private fun logcatCommand(count: Int): String = "logcat -d -t $count --pid=${android.os.Process.myPid()}"
+
         fun initialize(context: Context) {
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
             val crashHandler = CrashHandler(context.applicationContext, defaultHandler)
             Thread.setDefaultUncaughtExceptionHandler(crashHandler)
+        }
+
+        /**
+         * Helper method to get logcat info live
+         */
+        fun getAppLogs(lineCount: Int = LOG_CAT_COUNT): String {
+            var process: Process? = null
+            var reader: BufferedReader? = null
+
+            return try {
+                process = Runtime.getRuntime().exec(logcatCommand(lineCount))
+                reader = BufferedReader(InputStreamReader(process.inputStream))
+
+                val log = StringBuilder()
+                var line: String?
+
+                while (reader.readLine().also { line = it } != null) {
+                    log.append(line).append("\n")
+                }
+
+                log.toString()
+            } catch (e: Exception) {
+                "Failed to capture logs: ${e.message}"
+            } finally {
+                reader?.close()
+                process?.destroy()
+            }
         }
     }
 
@@ -37,7 +74,7 @@ class CrashHandler(
 
     private val recentLogcat: String
         get() = try {
-            val process = Runtime.getRuntime().exec("logcat -d -t $LOG_CAT_COUNT --pid=${android.os.Process.myPid()}")
+            val process = Runtime.getRuntime().exec(logcatCommand(LOG_CAT_COUNT))
             process.inputStream.bufferedReader().use { it.readText() }
         } catch (e: Exception) {
             "Failed to retrieve logcat: ${e.message}"
@@ -66,11 +103,11 @@ class CrashHandler(
                 throwable.printStackTrace(pw)
             }.toString()
 
-            val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(Date())
+            val time = timestamp
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
 
             val crashReport = buildString {
-                appendLine("Timestamp: $timestamp")
+                appendLine("Timestamp: $time")
                 appendLine("App Version: ${packageInfo.versionName} (${packageInfo.longVersionCode})")
                 appendLine()
                 appendLine("---------- Device Information ----------")
@@ -88,7 +125,7 @@ class CrashHandler(
                 appendLine(recentLogcat)
             }
 
-            File(crashFileDir, "pluvia_crash_$timestamp.txt").writeText(crashReport)
+            File(crashFileDir, "pluvia_crash_$time.txt").writeText(crashReport)
 
             cleanupOldCrashFiles()
         } catch (e: Exception) {

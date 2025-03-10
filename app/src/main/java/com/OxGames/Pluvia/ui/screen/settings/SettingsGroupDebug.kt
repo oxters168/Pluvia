@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import coil.annotation.ExperimentalCoilApi
 import coil.imageLoader
+import com.OxGames.Pluvia.CrashHandler
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.component.dialog.CrashLogDialog
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
@@ -57,6 +58,22 @@ fun SettingsGroupDebug() {
                 }
             }
         } catch (e: Exception) {
+            Toast.makeText(context, "Failed to save crash log to destination", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /* Save log cat */
+    val saveLogCat = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/plain"),
+    ) { resultUri ->
+        try {
+            resultUri?.let {
+                val logs = CrashHandler.getAppLogs(1000)
+                context.contentResolver.openOutputStream(resultUri)?.use { outputStream ->
+                    outputStream.write(logs.toByteArray())
+                }
+            }
+        } catch (e: Exception) {
             Toast.makeText(context, "Failed to save logcat to destination", Toast.LENGTH_SHORT).show()
         }
     }
@@ -70,6 +87,16 @@ fun SettingsGroupDebug() {
     )
 
     SettingsGroup(title = { Text(text = "Debug") }) {
+        SettingsMenuLink(
+            colors = settingsTileColors(),
+            title = { Text(text = "Save logcat") },
+            subtitle = { Text(text = "Saves a snapshot of the logcat only for this app's PID") },
+            onClick = {
+                val defaultFileName = "app_logs_${CrashHandler.timestamp}.txt"
+                saveLogCat.launch(defaultFileName)
+            },
+        )
+
         SettingsMenuLink(
             colors = settingsTileColors(),
             title = { Text(text = "View latest crash") },
