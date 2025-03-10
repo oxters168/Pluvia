@@ -7,7 +7,6 @@ import android.os.Environment;
 import android.os.StatFs;
 import android.system.ErrnoException;
 import android.system.Os;
-import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -76,7 +75,7 @@ public abstract class FileUtils {
             os.write(data, 0, data.length);
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            Timber.e(e);
         }
         return false;
     }
@@ -88,14 +87,14 @@ public abstract class FileUtils {
                 file.createNewFile();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Timber.e(e);
         }
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
             bw.write(data);
             bw.flush();
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            Timber.e(e);
         }
         return false;
     }
@@ -109,7 +108,7 @@ public abstract class FileUtils {
             (new File(linkFile)).delete();
             Os.symlink(linkTarget, linkFile);
         } catch (ErrnoException e) {
-            Log.e("FileUtils", "Failed to symlink: " + e);
+            Timber.e(e, "Failed to symlink");
         }
     }
 
@@ -196,7 +195,7 @@ public abstract class FileUtils {
                     } else copy(context, relativePath, dstFile);
                 }
             } catch (IOException e) {
-                Log.e("FileUtils", "Failed to copy directory: " + e);
+                Timber.e(e, "Failed to copy directory");
             }
         } else {
             if (dstFile.isDirectory()) dstFile = new File(dstFile, FileUtils.getName(assetFile));
@@ -206,7 +205,7 @@ public abstract class FileUtils {
                  BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(dstFile), StreamUtils.BUFFER_SIZE)) {
                 StreamUtils.copy(inStream, outStream);
             } catch (IOException e) {
-                Log.e("FileUtils", "Failed to copy file: " + e);
+                Timber.e(e, "Failed to copy file");
             }
         }
     }
@@ -218,7 +217,7 @@ public abstract class FileUtils {
             String line;
             while ((line = reader.readLine()) != null) lines.add(line);
         } catch (IOException e) {
-            e.printStackTrace();
+            Timber.e(e);
         }
         return lines;
     }
@@ -245,7 +244,7 @@ public abstract class FileUtils {
         try {
             Os.chmod(file.getAbsolutePath(), mode);
         } catch (ErrnoException e) {
-            Log.e("FileUtils", "Failed to chmod " + file.getAbsolutePath() + ": " + e);
+            Timber.e("Failed to chmod " + file.getAbsolutePath() + ": " + e);
         }
     }
 
@@ -349,7 +348,7 @@ public abstract class FileUtils {
                 result = !line.isEmpty() ? Integer.parseInt(line) : 0;
             }
         } catch (Exception e) {
-            Log.e("FileUtils", "Failed to read int: " + e);
+            Timber.e(e, "Failed to read int");
         }
         return result;
     }

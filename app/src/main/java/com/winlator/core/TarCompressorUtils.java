@@ -1,9 +1,7 @@
 package com.winlator.core;
 
 import android.content.Context;
-import android.content.res.AssetManager;
 import android.net.Uri;
-import android.util.Log;
 
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
@@ -37,9 +35,7 @@ public abstract class TarCompressorUtils {
             }
             tar.closeArchiveEntry();
         }
-        catch (Exception e) {
-            Log.e("TarCompressorUtils", "Failed to add file: " + e);
-        }
+        catch (Exception e) {}
     }
 
     private static void addLinkFile(ArchiveOutputStream tar, File file, String entryName) {
@@ -49,9 +45,7 @@ public abstract class TarCompressorUtils {
             tar.putArchiveEntry(entry);
             tar.closeArchiveEntry();
         }
-        catch (Exception e) {
-            Log.e("TarCompressorUtils", "Failed to add link file: " + e);
-        }
+        catch (Exception e) {}
     }
 
     private static void addDirectory(ArchiveOutputStream tar, File folder, String basePath) throws IOException {
@@ -97,18 +91,16 @@ public abstract class TarCompressorUtils {
             }
             tar.finish();
         }
-        catch (IOException e) {
-            Log.e("TarCompressorUtils", "Failed to compress: " + e);
-        }
+        catch (IOException e) {}
     }
 
-    public static boolean extract(Type type, AssetManager assetManager, String assetFile, File destination) {
-        return extract(type, assetManager, assetFile, destination, null);
+    public static boolean extract(Type type, Context context, String assetFile, File destination) {
+        return extract(type, context, assetFile, destination, null);
     }
 
-    public static boolean extract(Type type, AssetManager assetManager, String assetFile, File destination, OnExtractFileListener onExtractFileListener) {
+    public static boolean extract(Type type, Context context, String assetFile, File destination, OnExtractFileListener onExtractFileListener) {
         try {
-            return extract(type, assetManager.open(assetFile), destination, onExtractFileListener);
+            return extract(type, context.getAssets().open(assetFile), destination, onExtractFileListener);
         }
         catch (IOException e) {
             return false;

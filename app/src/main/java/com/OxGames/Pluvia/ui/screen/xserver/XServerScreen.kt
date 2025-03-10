@@ -17,27 +17,20 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
-import com.OxGames.Pluvia.ui.data.XServerState
 import com.OxGames.Pluvia.utils.ContainerUtils
 import com.winlator.container.ContainerManager
-import com.winlator.core.DXVKHelper
-import com.winlator.core.OnExtractFileListener
-import com.winlator.core.ProcessHelper
-import com.winlator.core.WineInfo
-import com.winlator.core.envvars.EnvVars
 import com.winlator.inputcontrols.TouchMouse
 import com.winlator.widget.XServerView
 import com.winlator.winhandler.WinHandler
-import com.winlator.xenvironment.ImageFs
 import com.winlator.xserver.Keyboard
 import com.winlator.xserver.Property
 import com.winlator.xserver.ScreenInfo
 import com.winlator.xserver.Window
 import com.winlator.xserver.WindowManager
 import com.winlator.xserver.XServer
-import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.name
 import kotlinx.coroutines.launch
@@ -51,10 +44,12 @@ fun XServerScreen(
     onExit: () -> Unit,
     onWindowMapped: ((Window) -> Unit)? = null,
     onWindowUnmapped: ((Window) -> Unit)? = null,
-    viewModel: XServerViewModel = viewModel(),
+    viewModel: XServerViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val xServerState by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
@@ -62,23 +57,6 @@ fun XServerScreen(
                 XServerViewModel.XServerUiEvent.OnExit -> onExit()
                 XServerViewModel.XServerUiEvent.OnNavigateBack -> navigateBack()
             }
-        }
-    }
-
-    val xServerState = rememberSaveable(stateSaver = XServerState.Saver) {
-        if (ContainerUtils.hasContainer(context, appId)) {
-            val container = ContainerUtils.getContainer(context, appId)
-            mutableStateOf(
-                XServerState(
-                    graphicsDriver = container.graphicsDriver,
-                    audioDriver = container.audioDriver,
-                    dxwrapper = container.dxWrapper,
-                    dxwrapperConfig = DXVKHelper.parseConfig(container.dxWrapperConfig),
-                    screenSize = container.screenSize,
-                ),
-            )
-        } else {
-            mutableStateOf(XServerState())
         }
     }
 
@@ -97,7 +75,7 @@ fun XServerScreen(
         dismissBtnText = "Cancel",
         icon = Icons.AutoMirrored.Filled.ExitToApp,
         title = "Exit Game",
-        message = "Are you sure you want to close ${viewModel.gameName}?",
+        message = "Are you sure you want to close ${xServerState.gameName}?",
     )
 
     BackHandler {
@@ -115,19 +93,16 @@ fun XServerScreen(
         factory = {
             Timber.i("Creating XServerView and XServer")
 
-            viewModel.appId = appId
+            viewModel.updateAppID(appId)
 
-            XServerView(
-                context,
-                XServer(ScreenInfo(xServerState.value.screenSize)),
-            ).apply {
+            XServerView(context, XServer(ScreenInfo(xServerState.screenSize))).apply {
                 viewModel.xServerView = this
 
-                val renderer = this.renderer
                 renderer.isCursorVisible = false
 
                 xServer.renderer = renderer
                 xServer.winHandler = WinHandler(xServer, this)
+
                 viewModel.touchMouse = TouchMouse(xServer)
                 viewModel.keyboard = Keyboard(xServer)
 
@@ -140,9 +115,9 @@ fun XServerScreen(
                 xServer.windowManager.addOnWindowModificationListener(
                     object : WindowManager.OnWindowModificationListener {
                         override fun onUpdateWindowContent(window: Window) {
-                            if (!xServerState.value.winStarted && window.isApplicationWindow()) {
+                            if (!xServerState.winStarted && window.isApplicationWindow()) {
                                 renderer.setCursorVisible(true)
-                                xServerState.value.winStarted = true
+                                viewModel.winStarted(true)
                             }
                         }
 
@@ -158,7 +133,9 @@ fun XServerScreen(
                                     "\n\thasParent: ${window.parent != null}" +
                                     "\n\tchildrenSize: ${window.children.size}",
                             )
+
                             viewModel.assignTaskAffinity(window, xServer.winHandler)
+
                             onWindowMapped?.invoke(window)
                         }
 
@@ -171,6 +148,7 @@ fun XServerScreen(
                                     "\n\thasParent: ${window.parent != null}" +
                                     "\n\tchildrenSize: ${window.children.size}",
                             )
+
                             // changeFrameRatingVisibility(window, null)
                             onWindowUnmapped?.invoke(window)
                         }
@@ -178,78 +156,19 @@ fun XServerScreen(
                 )
 
                 if (viewModel.xEnvironment != null) {
-                    viewModel.xEnvironment = viewModel.shiftXEnvironmentToContext(
-                        context = context,
-                        xServer = xServer,
-                    )
+                    viewModel.xEnvironment = viewModel.shiftXEnvironmentToContext(xServer = xServer)
                 } else {
                     val containerManager = ContainerManager(context)
                     val container = ContainerUtils.getContainer(context, appId)
-                    // Timber.d("1 Container drives: ${container.drives}")
                     containerManager.activateContainer(container)
-                    // Timber.d("2 Container drives: ${container.drives}")
 
-                    viewModel.taskAffinityMask = ProcessHelper.getAffinityMask(container.getCPUList(true)).toShort().toInt()
-                    viewModel.taskAffinityMaskWoW64 =
-                        ProcessHelper.getAffinityMask(container.getCPUListWoW64(true)).toShort().toInt()
-                    viewModel.firstTimeBoot = container.getExtra("appVersion").isEmpty()
-                    Timber.i("First time boot: ${viewModel.firstTimeBoot}")
-
-                    val wineVersion = container.wineVersion
-                    xServerState.value = xServerState.value.copy(
-                        wineInfo = WineInfo.fromIdentifier(context, wineVersion),
-                    )
-
-                    if (xServerState.value.wineInfo != WineInfo.MAIN_WINE_VERSION) {
-                        ImageFs.find(context).winePath = xServerState.value.wineInfo.path
-                    }
-
-                    val onExtractFileListener = if (!xServerState.value.wineInfo.isWin64) {
-                        OnExtractFileListener { destination, _ ->
-                            destination?.path?.let {
-                                if (it.contains("system32/")) {
-                                    null
-                                } else {
-                                    File(it.replace("syswow64/", "system32/"))
-                                }
-                            }
-                        }
-                    } else {
-                        null
-                    }
-
-                    Timber.i("Doing things once")
-                    val envVars = EnvVars()
-
-                    viewModel.setupWineSystemFiles(
-                        context = context,
-                        xServerState = xServerState,
-                        container = container,
-                        containerManager = containerManager,
-                        envVars = envVars,
-                        onExtractFileListener = onExtractFileListener,
-                    )
-                    viewModel.extractGraphicsDriverFiles(
-                        context = context,
-                        graphicsDriver = xServerState.value.graphicsDriver,
-                        dxwrapper = xServerState.value.dxwrapper,
-                        dxwrapperConfig = xServerState.value.dxwrapperConfig!!,
-                        container = container,
-                        envVars = envVars,
-                    )
-                    viewModel.changeWineAudioDriver(xServerState.value.audioDriver, container, ImageFs.find(context))
-                    viewModel.xEnvironment = viewModel.setupXEnvironment(
-                        context = context,
-                        appId = appId,
-                        bootToContainer = bootToContainer,
-                        xServerState = xServerState,
-                        envVars = envVars,
-                        container = container,
-                    )
+                    viewModel.setBootConfig(container, containerManager, bootToContainer)
                 }
             }
         },
         update = {},
-        onRelease = {},
+        onRelease = {
+            Timber.w("AndroidView Release")
+        },
     )
 }
