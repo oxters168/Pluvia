@@ -79,6 +79,8 @@ fun PluviaMain(
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
+            Timber.i("Received UI event: $event")
+
             when (event) {
                 MainViewModel.MainUiEvent.LaunchApp -> {
                     navController.navigate(PluviaScreen.XServer.route)
@@ -144,7 +146,7 @@ fun PluviaMain(
     }
 
     LaunchedEffect(navController) {
-        Timber.i("navController changed")
+        Timber.i("LaunchedEffect - navController changed")
 
         if (!state.hasLaunched) {
             viewModel.setHasLaunched(true)
@@ -166,6 +168,8 @@ fun PluviaMain(
 
     // TODO merge to VM?
     LaunchedEffect(state.currentScreen) {
+        Timber.i("LaunchedEffect - currentScreen: ${state.currentScreen}")
+
         // do the following each time we navigate to a new screen
         if (state.resettedScreen != state.currentScreen) {
             viewModel.setScreen()
@@ -396,8 +400,10 @@ fun PluviaMain(
             ) {
                 HomeScreen(
                     onClickPlay = { launchAppId, asContainer ->
-                        viewModel.setLaunchedAppId(launchAppId)
-                        viewModel.setBootToContainer(asContainer)
+                        Timber.i("onClickPlay: $launchAppId, $asContainer")
+
+                        viewModel.setLaunchAppInfo(launchAppId, asContainer)
+
                         preLaunchApp(
                             context = context,
                             appId = launchAppId,
@@ -485,25 +491,28 @@ fun preLaunchApp(
     setMessageDialogState: (MessageDialogState) -> Unit,
     onSuccess: () -> Unit,
 ) {
+    Timber.i("Pre launching app: $appId, $ignorePendingOperations, $preferredSave")
+
     setLoadingDialogVisible(true)
     // TODO: add a way to cancel
     // TODO: add fail conditions
     CoroutineScope(Dispatchers.IO).launch {
         // set up Ubuntu file system
         SplitCompat.install(context)
-        val imageFsInstallSuccess =
-            ImageFsInstaller.installIfNeededFuture(context, context.assets) { progress ->
-                // Log.d("XServerScreen", "$progress")
-                setLoadingProgress(progress / 100f)
-            }.get()
+        ImageFsInstaller.installIfNeededFuture(context, context.assets) { progress ->
+            // Log.d("XServerScreen", "$progress")
+            setLoadingProgress(progress / 100f)
+        }.get()
         setLoadingProgress(-1f)
 
         // create container if it does not already exist
         // TODO: combine somehow with container creation in HomeLibraryAppScreen
+        Timber.i("Loading container manager and getting container info")
         val containerManager = ContainerManager(context)
         val container = ContainerUtils.getOrCreateContainer(context, appId)
         // must activate container before downloading save files
         containerManager.activateContainer(container)
+        Timber.i("Got container: ${container.name}")
 
         // sync save files and check no pending remote operations are running
         val prefixToPath: (String) -> String = { prefix ->
@@ -518,6 +527,8 @@ fun preLaunchApp(
         ).await()
 
         setLoadingDialogVisible(false)
+
+        Timber.i("Post Sync Info was: $postSyncInfo")
 
         when (postSyncInfo.syncResult) {
             SyncResult.Conflict -> {

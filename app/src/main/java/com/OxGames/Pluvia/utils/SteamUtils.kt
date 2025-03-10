@@ -7,14 +7,9 @@ import com.OxGames.Pluvia.service.SteamService
 import `in`.dragonbra.javasteam.util.HardwareUtils
 import java.io.File
 import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
-import kotlin.io.path.name
 
 object SteamUtils {
 

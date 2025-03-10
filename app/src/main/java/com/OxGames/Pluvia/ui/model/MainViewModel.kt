@@ -175,12 +175,8 @@ class MainViewModel @Inject constructor(
         _state.update { it.copy(resettedScreen = it.currentScreen) }
     }
 
-    fun setLaunchedAppId(value: Int) {
-        _state.update { it.copy(launchedAppId = value) }
-    }
-
-    fun setBootToContainer(value: Boolean) {
-        _state.update { it.copy(bootToContainer = value) }
+    fun setLaunchAppInfo(launchedAppId: Int, bootToContainer: Boolean) {
+        _state.update { it.copy(launchedAppId = launchedAppId, bootToContainer = bootToContainer) }
     }
 
     fun launchApp() {
@@ -206,13 +202,11 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             SteamService.getAppInfoOf(appId)?.let { appInfo ->
                 // TODO: this should not be a search, the app should have been launched with a specific launch config that we then use to compare
-                val launchConfig = SteamService.getWindowsLaunchInfos(appId).firstOrNull {
+                SteamService.getWindowsLaunchInfos(appId).firstOrNull {
                     val gameExe = Paths.get(it.executable.replace('\\', '/')).name.lowercase()
                     val windowExe = window.className.lowercase()
                     gameExe == windowExe
-                }
-
-                if (launchConfig != null) {
+                }?.let {
                     val steamProcessId = Process.myPid()
                     val processes = mutableListOf<AppProcessInfo>()
                     var currentWindow: Window = window
