@@ -2,6 +2,7 @@ package com.OxGames.Pluvia.ui.component.dialog
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -31,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -73,56 +76,57 @@ fun GamesListDialog(
                 ) { paddingValues ->
                     val uriHandler = LocalUriHandler.current
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(
-                                top = WindowInsets.statusBars
-                                    .asPaddingValues()
-                                    .calculateTopPadding() + paddingValues.calculateTopPadding(),
-                                bottom = 24.dp + paddingValues.calculateBottomPadding(),
-                                start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                                end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
-                            ),
-                    ) {
-                        if (list.isEmpty()) {
-                            item {
-                                LoadingScreen()
+                    Box {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    top = WindowInsets.statusBars
+                                        .asPaddingValues()
+                                        .calculateTopPadding() + paddingValues.calculateTopPadding(),
+                                    bottom = 24.dp + paddingValues.calculateBottomPadding(),
+                                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
+                                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
+                                ),
+                        ) {
+                            itemsIndexed(items = list, key = { _, item -> item.appId }) { idx, item ->
+                                ListItem(
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .clickable {
+                                            uriHandler.openUri(Constants.Library.STORE_URL + item.appId)
+                                        },
+                                    colors = ListItemDefaults.colors(
+                                        containerColor = Color.Transparent,
+                                    ),
+                                    headlineContent = { Text(text = item.name) },
+                                    supportingContent = {
+                                        Column {
+                                            CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodySmall) {
+                                                if (item.playtimeTwoWeeks > 10) {
+                                                    val twoWeeks = SteamUtils.formatPlayTime(item.playtimeTwoWeeks)
+                                                    Text(text = "Playtime last 2 weeks: $twoWeeks hrs")
+                                                }
+                                                val total = SteamUtils.formatPlayTime(item.playtimeForever)
+                                                Text(text = "Total Playtime: $total hrs")
+                                            }
+                                        }
+                                    },
+                                    leadingContent = {
+                                        ListItemImage(
+                                            image = { "${Constants.Library.ICON_URL}${item.appId}/${item.imgIconUrl}.jpg" },
+                                        )
+                                    },
+                                )
+
+                                if (idx < list.lastIndex) {
+                                    HorizontalDivider()
+                                }
                             }
                         }
-                        itemsIndexed(items = list, key = { _, item -> item.appId }) { idx, item ->
-                            ListItem(
-                                modifier = Modifier
-                                    .animateItem()
-                                    .clickable {
-                                        uriHandler.openUri(Constants.Library.STORE_URL + item.appId)
-                                    },
-                                colors = ListItemDefaults.colors(
-                                    containerColor = Color.Transparent,
-                                ),
-                                headlineContent = { Text(text = item.name) },
-                                supportingContent = {
-                                    Column {
-                                        CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodySmall) {
-                                            if (item.playtimeTwoWeeks > 10) {
-                                                val twoWeeks = SteamUtils.formatPlayTime(item.playtimeTwoWeeks)
-                                                Text(text = "Playtime last 2 weeks: $twoWeeks hrs")
-                                            }
-                                            val total = SteamUtils.formatPlayTime(item.playtimeForever)
-                                            Text(text = "Total Playtime: $total hrs")
-                                        }
-                                    }
-                                },
-                                leadingContent = {
-                                    ListItemImage(
-                                        image = { "${Constants.Library.ICON_URL}${item.appId}/${item.imgIconUrl}.jpg" },
-                                    )
-                                },
-                            )
 
-                            if (idx < list.lastIndex) {
-                                HorizontalDivider()
-                            }
+                        if (list.isEmpty()) {
+                            LoadingScreen()
                         }
                     }
                 }
@@ -131,34 +135,32 @@ fun GamesListDialog(
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
-@Composable
-private fun Preview_GamesListDialog() {
-    PluviaTheme {
-        GamesListDialog(
-            visible = true,
-            list = List(25) {
-                OwnedGames(
-                    appId = it,
-                    name = "Game Name: $it",
-                    playtimeTwoWeeks = 210 * it,
-                    playtimeForever = 19154 * it,
-                    imgIconUrl = "",
-                    sortAs = "Game Name Alt: $it",
-                )
-            },
-            onDismissRequest = { },
-        )
-    }
+internal class GamesListPreview : PreviewParameterProvider<List<OwnedGames>> {
+    override val values = sequenceOf(
+        List(25) {
+            OwnedGames(
+                appId = it,
+                name = "Game Name: $it",
+                playtimeTwoWeeks = 210 * it,
+                playtimeForever = 19154 * it,
+                imgIconUrl = "",
+                sortAs = "Game Name Alt: $it",
+            )
+        },
+        emptyList(),
+    )
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
 @Composable
-private fun Preview_GamesListDialog_EmptyList() {
+private fun Preview_GamesListDialog(
+    @PreviewParameter(GamesListPreview::class) list: List<OwnedGames>,
+) {
     PluviaTheme {
         GamesListDialog(
             visible = true,
-            list = emptyList(),
+            list = list,
             onDismissRequest = { },
         )
     }

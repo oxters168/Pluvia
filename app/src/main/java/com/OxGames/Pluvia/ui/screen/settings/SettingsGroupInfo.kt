@@ -1,6 +1,7 @@
 package com.OxGames.Pluvia.ui.screen.settings
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -12,7 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalUriHandler
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PrefManager
-import com.OxGames.Pluvia.ui.component.dialog.LibrariesDialog
+import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsAlt
 import com.alorma.compose.settings.ui.SettingsGroup
@@ -26,9 +27,26 @@ fun SettingsGroupInfo() {
         var askForTip by rememberSaveable { mutableStateOf(!PrefManager.tipped) }
         var showLibrariesDialog by rememberSaveable { mutableStateOf(false) }
 
-        LibrariesDialog(
+        MessageDialog(
             visible = showLibrariesDialog,
             onDismissRequest = { showLibrariesDialog = false },
+            onConfirmClick = { showLibrariesDialog = false },
+            confirmBtnText = "Close",
+            icon = Icons.Default.Info,
+            title = "Libraries Used",
+            message = """
+                JavaSteam - github.com/Longi94/JavaSteam
+                Winlator - github.com/brunodev85/winlator
+                Ubuntu RootFs - releases.ubuntu.com/focal
+                Wine - winehq.org
+                Box86/Box64 - box86.org
+                PRoot - proot-me.github.io
+                Mesa (Turnip/Zink/VirGL) - mesa3d.org
+                DXVK - github.com/doitsujin/dxvk
+                VKD3D - gitlab.winehq.org/wine/vkd3d
+                D8VK - github.com/AlpyneDreams/d8vk
+                CNC DDraw - github.com/FunkyFr3sh/cnc-ddraw
+            """.trimIndent(),
         )
 
         SettingsMenuLink(

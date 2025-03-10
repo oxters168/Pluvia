@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.component.dialog
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,10 +35,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.OxGames.Pluvia.ui.component.settings.SettingsEnvVars
+import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.winlator.box86_64.Box86_64Preset
 import com.winlator.box86_64.Box86_64PresetManager
@@ -97,7 +100,9 @@ fun Box64PresetsDialog(
                             .padding(paddingValues),
                     ) {
                         OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             value = presetName,
                             enabled = isCustom(),
                             onValueChange = {
@@ -141,7 +146,9 @@ fun Box64PresetsDialog(
                             },
                         )
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -231,5 +238,14 @@ fun Box64PresetsDialog(
                 }
             },
         )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
+@Composable
+private fun Preview_Box64PresetsDialog() {
+    PluviaTheme {
+        Box64PresetsDialog(visible = true, onDismissRequest = {})
     }
 }

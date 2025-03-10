@@ -696,3 +696,18 @@ private fun winComponentsItemTitle(string: String): String {
     }
     return stringResource(resource)
 }
+
+// won't render because of 'Environment' in Container
+//@Preview
+//@Preview
+//@Composable
+//private fun Preview_ContainerConfigDialog() {
+//    PluviaTheme {
+//        ContainerConfigDialog(
+//            title = "Title",
+//            initialConfig = ContainerData(),
+//            onDismissRequest = {},
+//            onSave = {},
+//        )
+//    }
+//}
