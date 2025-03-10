@@ -51,7 +51,7 @@ public abstract class FileUtils {
 
     public static String readString(Context context, String assetFile) {
         var string = new String(read(context, assetFile), StandardCharsets.UTF_8);
-        Timber.d("Read String from %s: %s", assetFile, string);
+        Timber.i("Read String from %s: %s", assetFile, string);
         return string;
     }
 

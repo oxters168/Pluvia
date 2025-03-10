@@ -21,7 +21,7 @@ class CrashHandler(
 ) : Thread.UncaughtExceptionHandler {
 
     companion object {
-        private const val LOG_CAT_COUNT = 150
+        private const val LOG_CAT_COUNT = 256
         private const val CRASH_FILE_HISTORY_COUNT = 1
 
         val timestamp: String
