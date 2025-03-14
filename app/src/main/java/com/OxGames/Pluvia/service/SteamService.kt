@@ -219,11 +219,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         private var syncInProgress: Boolean = false
 
-        // Cache app info to avoid database lookups
-        private val appInfoCache = ConcurrentHashMap<Int, SteamApp?>()
-
-        // Cache installation paths to avoid repeated string operations
-        private val appPathCache = ConcurrentHashMap<Int, String>()
+        private val appCache = ConcurrentHashMap<Int, Pair<String, Boolean>>()
 
         var isStopping: Boolean = false
             private set
@@ -307,21 +303,33 @@ class SteamService : Service(), IChallengeUrlChanged {
                 return false
             }
 
-            val path = appPathCache[appId] ?: run {
-                val app = appInfoCache.getOrPut(appId) {
-                    runBlocking(Dispatchers.IO) { instance?.appDao?.findApp(appId) }
+            appCache[appId]?.let { cacheEntry ->
+                if (cacheEntry.second) {
+                    return true
                 }
 
-                val appName = app?.config?.installDir?.takeIf { it.isNotEmpty() } ?: app?.name.orEmpty()
-                val newPath = Paths.get(PrefManager.appInstallPath, appName).pathString
+                val isNowInstalled = runBlocking(Dispatchers.IO) {
+                    Files.exists(Paths.get(cacheEntry.first))
+                }
 
-                appPathCache[appId] = newPath
-                newPath
+                if (isNowInstalled) {
+                    appCache[appId] = Pair(cacheEntry.first, true)
+                }
+
+                return isNowInstalled
             }
 
-            return runBlocking(Dispatchers.IO) {
+            val app = runBlocking(Dispatchers.IO) { instance?.appDao?.findApp(appId) }
+            val appName = app?.config?.installDir?.takeIf { it.isNotEmpty() } ?: app?.name.orEmpty()
+            val path = Paths.get(PrefManager.appInstallPath, appName).pathString
+
+            val isInstalled = runBlocking(Dispatchers.IO) {
                 Files.exists(Paths.get(path))
             }
+
+            appCache[appId] = Pair(path, isInstalled)
+
+            return isInstalled
         }
 
         fun getAppDlc(appId: Int): Map<Int, DepotInfo> {
@@ -369,9 +377,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
             val appDirPath = getAppDirPath(appId)
 
-            // Delete item from cache
-            appPathCache.remove(appId)
-            appInfoCache.remove(appId)
+            appCache.remove(appId)
 
             return File(appDirPath).deleteRecursively()
         }
