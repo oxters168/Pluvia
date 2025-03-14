@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalUriHandler
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsAlt
@@ -31,9 +32,9 @@ fun SettingsGroupInfo() {
             visible = showLibrariesDialog,
             onDismissRequest = { showLibrariesDialog = false },
             onConfirmClick = { showLibrariesDialog = false },
-            confirmBtnText = "Close",
+            confirmBtnText = R.string.close,
             icon = Icons.Default.Info,
-            title = "Libraries Used",
+            title = R.string.dialog_title_libraries,
             message = """
                 JavaSteam - github.com/Longi94/JavaSteam
                 Winlator - github.com/brunodev85/winlator

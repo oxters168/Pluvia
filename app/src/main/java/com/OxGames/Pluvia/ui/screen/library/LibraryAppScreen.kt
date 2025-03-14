@@ -288,10 +288,10 @@ fun AppScreen(
                     msgDialogState = MessageDialogState(
                         visible = true,
                         type = DialogType.CANCEL_APP_DOWNLOAD,
-                        title = context.getString(R.string.cancel_download_prompt_title),
+                        title = R.string.cancel_download_prompt_title,
                         message = "Are you sure you want to cancel the download of the app?",
-                        confirmBtnText = context.getString(R.string.yes),
-                        dismissBtnText = context.getString(R.string.no),
+                        confirmBtnText = R.string.yes,
+                        dismissBtnText = R.string.no,
                     )
                 } else if (!isInstalled) {
                     val depots = SteamService.getDownloadableDepots(appId)
@@ -312,22 +312,22 @@ fun AppScreen(
                         msgDialogState = MessageDialogState(
                             visible = true,
                             type = DialogType.NOT_ENOUGH_SPACE,
-                            title = context.getString(R.string.not_enough_space),
+                            title = R.string.not_enough_space,
                             message = "The app being installed needs $installSize of space but " +
                                 "there is only $availableSpace left on this device",
-                            confirmBtnText = context.getString(R.string.acknowledge),
+                            confirmBtnText = R.string.acknowledge,
                         )
                     } else {
                         msgDialogState = MessageDialogState(
                             visible = true,
                             type = DialogType.INSTALL_APP,
-                            title = context.getString(R.string.download_prompt_title),
+                            title = R.string.download_prompt_title,
                             message = "The app being installed has the following space requirements. Would you like to proceed?" +
                                 "\n\n\tDownload Size: $downloadSize" +
                                 "\n\tSize on Disk: $installSize" +
                                 "\n\tAvailable Space: $availableSpace",
-                            confirmBtnText = context.getString(R.string.proceed),
-                            dismissBtnText = context.getString(R.string.cancel),
+                            confirmBtnText = R.string.proceed,
+                            dismissBtnText = R.string.cancel,
                         )
                     }
                 } else {
@@ -354,23 +354,23 @@ fun AppScreen(
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.INSTALL_IMAGEFS,
-                                    title = "Download & Install ImageFS",
+                                    title = R.string.dialog_title_download_install_fs,
                                     message = "The Ubuntu image needs to be downloaded and installed before " +
                                         "being able to edit the configuration. This operation might take " +
                                         "a few minutes. Would you like to continue?",
-                                    confirmBtnText = "Proceed",
-                                    dismissBtnText = "Cancel",
+                                    confirmBtnText = R.string.proceed,
+                                    dismissBtnText = R.string.cancel,
                                 )
                             } else {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.INSTALL_IMAGEFS,
-                                    title = "Install ImageFS",
+                                    title = R.string.dialog_title_install_fs,
                                     message = "The Ubuntu image needs to be installed before being able to edit " +
                                         "the configuration. This operation might take a few minutes. " +
                                         "Would you like to continue?",
-                                    confirmBtnText = "Proceed",
-                                    dismissBtnText = "Cancel",
+                                    confirmBtnText = R.string.proceed,
+                                    dismissBtnText = R.string.cancel,
                                 )
                             }
                         } else {
@@ -397,10 +397,10 @@ fun AppScreen(
                                     msgDialogState = MessageDialogState(
                                         visible = true,
                                         type = DialogType.DELETE_APP,
-                                        title = context.getString(R.string.delete_prompt_title),
+                                        title = R.string.delete_prompt_title,
                                         message = "Are you sure you want to delete this app?\n\n\tSize on Disk: $sizeOnDisk",
-                                        confirmBtnText = context.getString(R.string.delete_app),
-                                        dismissBtnText = context.getString(R.string.cancel),
+                                        confirmBtnText = R.string.delete_app,
+                                        dismissBtnText = R.string.cancel,
                                     )
                                 },
                             ),
@@ -561,7 +561,7 @@ private fun AppScreenContent(
                     SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(date)
                 }
 
-                GameInfoRow(key = "Controller Support:", value = appInfo.controllerSupport.name)
+                GameInfoRow(key = "Controller Support:", value = stringResource(appInfo.controllerSupport.string))
                 GameInfoRow(key = "Developer:", value = appInfo.developer)
                 GameInfoRow(key = "Publisher:", value = appInfo.publisher)
                 GameInfoRow(key = "Release date:", value = date)

@@ -1,6 +1,7 @@
 package com.OxGames.Pluvia.ui.component.dialog
 
 import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,9 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 /**
@@ -26,7 +29,7 @@ fun LoadingDialog(
     visible: Boolean,
     onDismissRequest: () -> Unit = {},
     progress: Float,
-    message: String = "Loading...",
+    @StringRes message: Int = R.string.loading,
 ) {
     when {
         visible -> {
@@ -40,7 +43,7 @@ fun LoadingDialog(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(message)
+                        Text(text = stringResource(message))
                         Spacer(modifier = Modifier.height(16.dp))
                         if (progress >= 0) {
                             LinearProgressIndicator(

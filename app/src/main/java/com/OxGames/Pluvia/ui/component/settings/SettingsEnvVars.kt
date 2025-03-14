@@ -31,16 +31,14 @@ fun SettingsEnvVars(
                 SettingsSwitchWithAction(
                     colors = colors,
                     enabled = enabled,
-                    title = { Text(identifier) },
+                    title = { Text(text = identifier) },
                     state = envVarInfo?.possibleValues?.indexOf(value) != 0,
                     onCheckedChange = {
                         val newValue = envVarInfo!!.possibleValues[if (it) 1 else 0]
                         envVars.put(identifier, newValue)
                         onEnvVarsChange(envVars)
                     },
-                    action = envVarAction?.let {
-                        { envVarAction(identifier) }
-                    },
+                    action = envVarAction?.let { { envVarAction(identifier) } },
                 )
             }
 
@@ -51,7 +49,7 @@ fun SettingsEnvVars(
                 SettingsMultiListDropdown(
                     colors = colors,
                     enabled = enabled,
-                    title = { Text(identifier) },
+                    title = { Text(text = identifier) },
                     values = values,
                     items = envVarInfo!!.possibleValues,
                     fallbackDisplay = value,
@@ -67,9 +65,7 @@ fun SettingsEnvVars(
                         )
                         onEnvVarsChange(envVars)
                     },
-                    action = envVarAction?.let {
-                        { envVarAction(identifier) }
-                    },
+                    action = envVarAction?.let { { envVarAction(identifier) } },
                 )
             }
 
@@ -78,7 +74,7 @@ fun SettingsEnvVars(
                     SettingsListDropdown(
                         colors = colors,
                         enabled = enabled,
-                        title = { Text(identifier) },
+                        title = { Text(text = identifier) },
                         value = envVarInfo.possibleValues.indexOf(value),
                         items = envVarInfo.possibleValues,
                         fallbackDisplay = value,
@@ -86,23 +82,19 @@ fun SettingsEnvVars(
                             envVars.put(identifier, envVarInfo.possibleValues[it])
                             onEnvVarsChange(envVars)
                         },
-                        action = envVarAction?.let {
-                            { envVarAction(identifier) }
-                        },
+                        action = envVarAction?.let { { envVarAction(identifier) } },
                     )
                 } else {
                     SettingsTextField(
                         colors = colors,
                         enabled = enabled,
-                        title = { Text(identifier) },
+                        title = { Text(text = identifier) },
                         value = value,
                         onValueChange = {
                             envVars.put(identifier, it)
                             onEnvVarsChange(envVars)
                         },
-                        action = envVarAction?.let {
-                            { envVarAction(identifier) }
-                        },
+                        action = envVarAction?.let { { envVarAction(identifier) } },
                     )
                 }
             }

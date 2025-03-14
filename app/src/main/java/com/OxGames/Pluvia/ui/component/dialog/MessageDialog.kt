@@ -1,6 +1,7 @@
 package com.OxGames.Pluvia.ui.component.dialog
 
 import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material3.AlertDialog
@@ -10,6 +11,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -17,6 +19,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @Composable
@@ -25,10 +28,10 @@ fun MessageDialog(
     onDismissRequest: (() -> Unit)? = null,
     onConfirmClick: (() -> Unit)? = null,
     onDismissClick: (() -> Unit)? = null,
-    confirmBtnText: String = "Confirm",
-    dismissBtnText: String = "Dismiss",
+    @StringRes confirmBtnText: Int = R.string.confirm,
+    @StringRes dismissBtnText: Int = R.string.dismiss,
     icon: ImageVector? = null,
-    title: String? = null,
+    @StringRes title: Int? = null,
     message: String? = null,
     useHtmlInMsg: Boolean = false,
 ) {
@@ -36,7 +39,7 @@ fun MessageDialog(
         visible -> {
             AlertDialog(
                 icon = icon?.let { { Icon(imageVector = icon, contentDescription = null) } },
-                title = title?.let { { Text(it) } },
+                title = title?.let { { Text(text = stringResource(it)) } },
                 text = message?.let {
                     {
                         if (useHtmlInMsg) {
@@ -53,7 +56,7 @@ fun MessageDialog(
                                 ),
                             )
                         } else {
-                            Text(it)
+                            Text(text = it)
                         }
                     }
                 },
@@ -61,14 +64,14 @@ fun MessageDialog(
                 dismissButton = onDismissClick?.let {
                     {
                         TextButton(onClick = it) {
-                            Text(dismissBtnText)
+                            Text(text = stringResource(dismissBtnText))
                         }
                     }
                 },
                 confirmButton = {
                     onConfirmClick?.let {
                         TextButton(onClick = it) {
-                            Text(confirmBtnText)
+                            Text(text = stringResource(confirmBtnText))
                         }
                     }
                 },
@@ -84,15 +87,8 @@ private fun Preview_MessageDialog() {
         MessageDialog(
             visible = true,
             icon = Icons.Default.Gamepad,
-            title = "Title",
-            message = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
-                "do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-                "Ut enim ad minim veniam, quis nostrud exercitation ullamco " +
-                "laboris nisi ut aliquip ex ea commodo consequat. Duis aute " +
-                "irure dolor in reprehenderit in voluptate velit esse cillum " +
-                "dolore eu fugiat nulla pariatur. Excepteur sint occaecat " +
-                "cupidatat non proident, sunt in culpa qui officia deserunt " +
-                "mollit anim id est laborum.",
+            title = R.string.dialog_title_unsaved_changes,
+            message = stringResource(R.string.lorem),
             onDismissRequest = {},
             onDismissClick = {},
             onConfirmClick = {},

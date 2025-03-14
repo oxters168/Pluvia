@@ -167,10 +167,10 @@ fun ContainerConfigDialog(
             if (initialConfig != config) {
                 dismissDialogState = MessageDialogState(
                     visible = true,
-                    title = "Unsaved Changes",
-                    message = "Are you sure you'd like to discard your changes?",
-                    confirmBtnText = "Discard",
-                    dismissBtnText = "Cancel",
+                    title = R.string.dialog_title_unsaved_changes,
+                    message = context.getString(R.string.dialog_message_unsaved_changes),
+                    confirmBtnText = R.string.discard,
+                    dismissBtnText = R.string.cancel,
                 )
             } else {
                 onDismissRequest()
@@ -193,7 +193,7 @@ fun ContainerConfigDialog(
             var envVarValue by rememberSaveable { mutableStateOf("") }
             AlertDialog(
                 onDismissRequest = { showEnvVarCreateDialog = false },
-                title = { Text(text = "New Environment Variable") },
+                title = { Text(text = stringResource(R.string.dialog_title_new_env_variable)) },
                 text = {
                     var knownVarsMenuOpen by rememberSaveable { mutableStateOf(false) }
                     Column {
@@ -201,14 +201,14 @@ fun ContainerConfigDialog(
                             OutlinedTextField(
                                 value = envVarName,
                                 onValueChange = { envVarName = it },
-                                label = { Text(text = "Name") },
+                                label = { Text(text = stringResource(R.string.name)) },
                                 trailingIcon = {
                                     IconButton(
                                         onClick = { knownVarsMenuOpen = true },
                                         content = {
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Outlined.ViewList,
-                                                contentDescription = "List known variable names",
+                                                contentDescription = stringResource(R.string.desc_container_known_variable_name),
                                             )
                                         },
                                     )
@@ -233,7 +233,7 @@ fun ContainerConfigDialog(
                                     }
                                 } else {
                                     DropdownMenuItem(
-                                        text = { Text(text = "No more known variables") },
+                                        text = { Text(text = stringResource(R.string.container_no_more_variables)) },
                                         onClick = {},
                                     )
                                 }
@@ -242,14 +242,14 @@ fun ContainerConfigDialog(
                         OutlinedTextField(
                             value = envVarValue,
                             onValueChange = { envVarValue = it },
-                            label = { Text(text = "Value") },
+                            label = { Text(text = stringResource(R.string.value)) },
                         )
                     }
                 },
                 dismissButton = {
                     TextButton(
                         onClick = { showEnvVarCreateDialog = false },
-                        content = { Text(text = "Cancel") },
+                        content = { Text(text = stringResource(R.string.cancel)) },
                     )
                 },
                 confirmButton = {
@@ -261,7 +261,7 @@ fun ContainerConfigDialog(
                             config = config.copy(envVars = envVars.toString())
                             showEnvVarCreateDialog = false
                         },
-                        content = { Text(text = "OK") },
+                        content = { Text(text = stringResource(R.string.acknowledge)) },
                     )
                 },
             )
@@ -316,11 +316,11 @@ fun ContainerConfigDialog(
                             .fillMaxSize(),
                     ) {
                         SettingsGroup(
-                            title = { Text(text = "General") },
+                            title = { Text(text = stringResource(R.string.general)) },
                         ) {
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Screen Size") },
+                                title = { Text(text = stringResource(R.string.container_screen_size)) },
                                 value = screenSizeIndex,
                                 items = screenSizes,
                                 onItemSelected = {
@@ -338,7 +338,7 @@ fun ContainerConfigDialog(
                                                     applyScreenSizeToConfig()
                                                 },
                                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                                label = { Text(text = "Width") },
+                                                label = { Text(text = stringResource(R.string.width)) },
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(
@@ -355,7 +355,7 @@ fun ContainerConfigDialog(
                                                     applyScreenSizeToConfig()
                                                 },
                                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                                label = { Text(text = "Height") },
+                                                label = { Text(text = stringResource(R.string.height)) },
                                             )
                                         }
                                     }
@@ -366,7 +366,7 @@ fun ContainerConfigDialog(
                             // TODO: add way to pick driver version
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Graphics Driver") },
+                                title = { Text(text = stringResource(R.string.container_gpu_driver)) },
                                 value = graphicsDriverIndex,
                                 items = graphicsDrivers,
                                 onItemSelected = {
@@ -377,7 +377,7 @@ fun ContainerConfigDialog(
                             // TODO: add way to pick DXVK version
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "DX Wrapper") },
+                                title = { Text(text = stringResource(R.string.container_dxvk_wrapper)) },
                                 value = dxWrapperIndex,
                                 items = dxWrappers,
                                 onItemSelected = {
@@ -398,7 +398,7 @@ fun ContainerConfigDialog(
                             // TODO: add way to configure audio driver
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Audio Driver") },
+                                title = { Text(text = stringResource(R.string.container_audio_driver)) },
                                 value = audioDriverIndex,
                                 items = audioDrivers,
                                 onItemSelected = {
@@ -408,19 +408,19 @@ fun ContainerConfigDialog(
                             )
                             SettingsSwitch(
                                 colors = settingsTileColorsAlt(),
-                                title = { Text(text = "Show FPS") },
+                                title = { Text(text = stringResource(R.string.container_show_fps)) },
                                 state = config.showFPS,
                                 onCheckedChange = {
                                     config = config.copy(showFPS = it)
                                 },
                             )
                         }
-                        SettingsGroup(title = { Text(text = "Wine Configuration") }) {
+                        SettingsGroup(title = { Text(text = stringResource(R.string.container_group_wine_config)) }) {
                             // TODO: add desktop settings
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "GPU Name") },
-                                subtitle = { Text(text = "WineD3D") },
+                                title = { Text(text = stringResource(R.string.container_gpu_name)) },
+                                subtitle = { Text(text = stringResource(R.string.container_wined3d)) },
                                 value = gpuNameIndex,
                                 items = gpuCards.values.map { it.name },
                                 onItemSelected = {
@@ -430,8 +430,8 @@ fun ContainerConfigDialog(
                             )
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Offscreen Rendering Mode") },
-                                subtitle = { Text(text = "WineD3D") },
+                                title = { Text(text = stringResource(R.string.container_offscreen_rendering_mode)) },
+                                subtitle = { Text(text = stringResource(R.string.container_wined3d)) },
                                 value = renderingModeIndex,
                                 items = renderingModes,
                                 onItemSelected = {
@@ -441,8 +441,8 @@ fun ContainerConfigDialog(
                             )
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Video Memory Size") },
-                                subtitle = { Text(text = "WineD3D") },
+                                title = { Text(text = stringResource(R.string.container_video_memory_size)) },
+                                subtitle = { Text(text = stringResource(R.string.container_wined3d)) },
                                 value = videoMemIndex,
                                 items = videoMemSizes,
                                 onItemSelected = {
@@ -452,8 +452,8 @@ fun ContainerConfigDialog(
                             )
                             SettingsSwitch(
                                 colors = settingsTileColorsAlt(),
-                                title = { Text(text = "Enable CSMT (Command Stream Multi-Thread)") },
-                                subtitle = { Text(text = "WineD3D") },
+                                title = { Text(text = stringResource(R.string.container_enable_csmt)) },
+                                subtitle = { Text(text = stringResource(R.string.container_wined3d)) },
                                 state = config.csmt,
                                 onCheckedChange = {
                                     config = config.copy(csmt = it)
@@ -461,8 +461,8 @@ fun ContainerConfigDialog(
                             )
                             SettingsSwitch(
                                 colors = settingsTileColorsAlt(),
-                                title = { Text(text = "Enable Strict Shader Math") },
-                                subtitle = { Text(text = "WineD3D") },
+                                title = { Text(text = stringResource(R.string.container_enable_strict_shader)) },
+                                subtitle = { Text(text = stringResource(R.string.container_wined3d)) },
                                 state = config.strictShaderMath,
                                 onCheckedChange = {
                                     config = config.copy(strictShaderMath = it)
@@ -470,8 +470,8 @@ fun ContainerConfigDialog(
                             )
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Mouse Warp Override") },
-                                subtitle = { Text(text = "DirectInput") },
+                                title = { Text(text = stringResource(R.string.container_mouse_warp)) },
+                                subtitle = { Text(text = stringResource(R.string.container_direct_input)) },
                                 value = mouseWarpIndex,
                                 items = mouseWarps,
                                 onItemSelected = {
@@ -480,7 +480,7 @@ fun ContainerConfigDialog(
                                 },
                             )
                         }
-                        SettingsGroup(title = { Text(text = "Win Components") }) {
+                        SettingsGroup(title = { Text(text = stringResource(R.string.container_group_win_components)) }) {
                             for (wincomponent in KeyValueSet(config.wincomponents)) {
                                 val compId = wincomponent[0]
                                 val compName = winComponentsItemTitle(compId)
@@ -488,7 +488,10 @@ fun ContainerConfigDialog(
                                 SettingsListDropdown(
                                     colors = settingsTileColors(),
                                     title = { Text(compName) },
-                                    subtitle = { Text(if (compId.startsWith("direct")) "DirectX" else "General") },
+                                    subtitle = {
+                                        val res = if (compId.startsWith("direct")) R.string.directx else R.string.general
+                                        Text(text = stringResource(res))
+                                    },
                                     value = compValue,
                                     items = winCompOpts,
                                     onItemSelected = {
@@ -499,7 +502,7 @@ fun ContainerConfigDialog(
                                 )
                             }
                         }
-                        SettingsGroup(title = { Text(text = "Environment Variables") }) {
+                        SettingsGroup(title = { Text(text = stringResource(R.string.container_group_env_vars)) }) {
                             val envVars = EnvVars(config.envVars)
                             if (config.envVars.isNotEmpty()) {
                                 SettingsEnvVars(
@@ -518,7 +521,10 @@ fun ContainerConfigDialog(
                                                 )
                                             },
                                             content = {
-                                                Icon(Icons.Filled.Delete, contentDescription = "Delete variable")
+                                                Icon(
+                                                    imageVector = Icons.Filled.Delete,
+                                                    contentDescription = stringResource(R.string.desc_delete_variable),
+                                                )
                                             },
                                         )
                                     },
@@ -526,7 +532,7 @@ fun ContainerConfigDialog(
                             } else {
                                 SettingsCenteredLabel(
                                     colors = settingsTileColors(),
-                                    title = { Text(text = "No environment variables") },
+                                    title = { Text(text = stringResource(R.string.container_no_env_variables)) },
                                 )
                             }
                             SettingsMenuLink(
@@ -537,7 +543,7 @@ fun ContainerConfigDialog(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.AddCircleOutline,
-                                            contentDescription = "Add environment variable",
+                                            contentDescription = stringResource(R.string.desc_add_env_variable),
                                         )
                                     }
                                 },
@@ -546,7 +552,7 @@ fun ContainerConfigDialog(
                                 },
                             )
                         }
-                        SettingsGroup(title = { Text(text = "Drives") }) {
+                        SettingsGroup(title = { Text(text = stringResource(R.string.container_group_drives)) }) {
                             // TODO: make the game drive un-deletable
                             // val directoryLauncher = rememberLauncherForActivityResult(
                             //     ActivityResultContracts.OpenDocumentTree()
@@ -564,8 +570,8 @@ fun ContainerConfigDialog(
                                     val drivePath = drive[1]
                                     SettingsMenuLink(
                                         colors = settingsTileColors(),
-                                        title = { Text(driveLetter) },
-                                        subtitle = { Text(drivePath) },
+                                        title = { Text(text = driveLetter) },
+                                        subtitle = { Text(text = drivePath) },
                                         onClick = {},
                                         // action = {
                                         //     IconButton(
@@ -582,7 +588,7 @@ fun ContainerConfigDialog(
                             } else {
                                 SettingsCenteredLabel(
                                     colors = settingsTileColors(),
-                                    title = { Text(text = "No drives") },
+                                    title = { Text(text = stringResource(R.string.container_no_drives)) },
                                 )
                             }
 
@@ -594,7 +600,7 @@ fun ContainerConfigDialog(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.AddCircleOutline,
-                                            contentDescription = "Add environment variable",
+                                            contentDescription = stringResource(R.string.desc_add_env_variable),
                                         )
                                     }
                                 },
@@ -605,7 +611,7 @@ fun ContainerConfigDialog(
                                 },
                             )
                         }
-                        SettingsGroup(title = { Text(text = "Launch Options") }) {
+                        SettingsGroup(title = { Text(text = stringResource(R.string.container_group_launch_options)) }) {
                             OutlinedTextField(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -617,11 +623,11 @@ fun ContainerConfigDialog(
                                 },
                             )
                         }
-                        SettingsGroup(title = { Text(text = "Advanced") }) {
+                        SettingsGroup(title = { Text(text = stringResource(R.string.advanced)) }) {
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Box64 Version") },
-                                subtitle = { Text(text = "Box64") },
+                                title = { Text(text = stringResource(R.string.container_box64_version)) },
+                                subtitle = { Text(text = stringResource(R.string.box64)) },
                                 value = box64Versions.indexOfFirst { StringUtils.parseIdentifier(it) == config.box64Version },
                                 items = box64Versions,
                                 onItemSelected = {
@@ -633,7 +639,7 @@ fun ContainerConfigDialog(
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
                                 title = { Text(text = "Box64 Preset") },
-                                subtitle = { Text(text = "Box64") },
+                                subtitle = { Text(text = stringResource(R.string.box64)) },
                                 value = box64Presets.indexOfFirst { it.id == config.box64Preset },
                                 items = box64Presets.map { it.name },
                                 onItemSelected = {
@@ -644,8 +650,8 @@ fun ContainerConfigDialog(
                             )
                             SettingsListDropdown(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Startup Selection") },
-                                subtitle = { Text(text = "System") },
+                                title = { Text(text = stringResource(R.string.container_startup_selection)) },
+                                subtitle = { Text(text = stringResource(R.string.system)) },
                                 value = config.startupSelection.toInt(),
                                 items = startupSelectionEntries,
                                 onItemSelected = {
@@ -656,7 +662,7 @@ fun ContainerConfigDialog(
                             )
                             SettingsCPUList(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Processor Affinity") },
+                                title = { Text(text = stringResource(R.string.container_proc_affinity)) },
                                 value = config.cpuList,
                                 onValueChange = {
                                     config = config.copy(
@@ -666,7 +672,7 @@ fun ContainerConfigDialog(
                             )
                             SettingsCPUList(
                                 colors = settingsTileColors(),
-                                title = { Text(text = "Processor Affinity (32-bit apps)") },
+                                title = { Text(text = stringResource(R.string.container_proc_affinity_32)) },
                                 value = config.cpuListWoW64,
                                 onValueChange = { config = config.copy(cpuListWoW64 = it) },
                             )

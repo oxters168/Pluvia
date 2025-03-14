@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.utils.ContainerUtils
 import com.winlator.container.ContainerManager
@@ -71,10 +72,10 @@ fun XServerScreen(
             exitDialogVisible = false
         },
         onDismissClick = { exitDialogVisible = false },
-        confirmBtnText = "Close",
-        dismissBtnText = "Cancel",
+        confirmBtnText = R.string.close,
+        dismissBtnText = R.string.cancel,
         icon = Icons.AutoMirrored.Filled.ExitToApp,
-        title = "Exit Game",
+        title = R.string.dialog_title_exit_game,
         message = "Are you sure you want to close ${xServerState.gameName}?",
     )
 

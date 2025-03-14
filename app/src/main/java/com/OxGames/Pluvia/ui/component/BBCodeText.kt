@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
@@ -88,10 +89,7 @@ enum class BBCode(val pattern: String, val groupCount: Int = 1) {
         }
 
     companion object {
-        fun pattern(): Regex = entries
-            .map { it.pattern }
-            .joinToString("|")
-            .toRegex()
+        fun pattern(): Regex = entries.joinToString("|") { it.pattern }.toRegex()
     }
 }
 
@@ -129,6 +127,7 @@ fun BBCodeText(
                         appendInlineContent(emoticon, "[emoji]")
                     }
                 }
+
                 match.groups[BBCode.H1.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(
@@ -139,6 +138,7 @@ fun BBCodeText(
                         block = { append(match.groupValues[BBCode.H1.groupIndex()]) },
                     )
                 }
+
                 match.groups[BBCode.H2.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(
@@ -149,6 +149,7 @@ fun BBCodeText(
                         block = { append(match.groupValues[BBCode.H2.groupIndex()]) },
                     )
                 }
+
                 match.groups[BBCode.H3.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(
@@ -159,6 +160,7 @@ fun BBCodeText(
                         block = { append(match.groupValues[BBCode.H3.groupIndex()]) },
                     )
                 }
+
                 match.groups[BBCode.BOLD.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(fontWeight = FontWeight.Bold, baselineShift = BaselineShift(0.2f)),
@@ -166,24 +168,28 @@ fun BBCodeText(
 
                     )
                 }
+
                 match.groups[BBCode.UNDERLINE.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(textDecoration = TextDecoration.Underline, baselineShift = BaselineShift(0.2f)),
                         block = { append(match.groupValues[BBCode.UNDERLINE.groupIndex()]) },
                     )
                 }
+
                 match.groups[BBCode.ITALIC.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(fontStyle = FontStyle.Italic, baselineShift = BaselineShift(0.2f)),
                         block = { append(match.groupValues[BBCode.ITALIC.groupIndex()]) },
                     )
                 }
+
                 match.groups[BBCode.STRIKE_THROUGH.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(textDecoration = TextDecoration.LineThrough, baselineShift = BaselineShift(0.2f)),
                         block = { append(match.groupValues[BBCode.STRIKE_THROUGH.groupIndex()]) },
                     )
                 }
+
                 match.groups[BBCode.SPOILER.groupIndex()] != null -> {
                     val spoilerText = match.groupValues[BBCode.SPOILER.groupIndex()]
                     val spoilerId = "spoiler_${match.range.first}"
@@ -201,6 +207,7 @@ fun BBCodeText(
                     )
                     pop()
                 }
+
                 match.groups[BBCode.URL.groupIndex()] != null &&
                     match.groups[BBCode.URL.groupIndex() + 1] != null
                 -> {
@@ -218,6 +225,7 @@ fun BBCodeText(
                     )
                     pop()
                 }
+
                 match.groups[BBCode.PLAIN_URL.groupIndex()] != null -> {
                     val url = match.groupValues[BBCode.PLAIN_URL.groupIndex()]
                     pushStringAnnotation("URL", url)
@@ -231,18 +239,21 @@ fun BBCodeText(
                     )
                     pop()
                 }
+
                 match.groups[BBCode.HORIZONTAL_RULE.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(textDecoration = TextDecoration.LineThrough, baselineShift = BaselineShift(0.2f)),
                         block = { append("        ") },
                     )
                 }
+
                 match.groups[BBCode.CODE.groupIndex()] != null -> {
                     withStyle(
                         style = SpanStyle(fontFamily = FontFamily.Monospace, baselineShift = BaselineShift(0.2f)),
                         block = { append(match.groupValues[BBCode.CODE.groupIndex()]) },
                     )
                 }
+
                 match.groups[BBCode.QUOTE.groupIndex()] != null &&
                     match.groups[BBCode.QUOTE.groupIndex() + 1] != null
                 -> {
@@ -254,12 +265,16 @@ fun BBCodeText(
                     ) {
                         withStyle(
                             style = SpanStyle(fontStyle = FontStyle.Italic, baselineShift = BaselineShift(0.2f)),
-                            block = { append("Originally posted by ${match.groupValues[BBCode.QUOTE.groupIndex()]}:\n") },
+                            block = {
+                                val string = stringResource(R.string.text_quoted, match.groupValues[BBCode.QUOTE.groupIndex()])
+                                append(string)
+                            },
                         )
 
                         append(match.groupValues[BBCode.QUOTE.groupIndex() + 1])
                     }
                 }
+
                 match.groups[BBCode.STICKER.groupIndex()] != null -> {
                     val stickerType = match.groupValues[BBCode.STICKER.groupIndex()]
                     val stickerId = "sticker_$stickerType"
@@ -308,7 +323,10 @@ fun BBCodeText(
                                             CircularProgressIndicator()
                                         },
                                         failure = {
-                                            Icon(Icons.Filled.QuestionMark, null)
+                                            Icon(
+                                                imageVector = Icons.Filled.QuestionMark,
+                                                contentDescription = stringResource(R.string.desc_failed_image),
+                                            )
                                         },
                                         previewPlaceholder = painterResource(R.drawable.ic_logo_color),
                                     )
@@ -341,7 +359,10 @@ fun BBCodeText(
                                         CircularProgressIndicator()
                                     },
                                     failure = {
-                                        Icon(Icons.Filled.QuestionMark, null)
+                                        Icon(
+                                            imageVector = Icons.Filled.QuestionMark,
+                                            contentDescription = stringResource(R.string.desc_failed_image),
+                                        )
                                     },
                                     previewPlaceholder = painterResource(R.drawable.ic_logo_color),
                                 )

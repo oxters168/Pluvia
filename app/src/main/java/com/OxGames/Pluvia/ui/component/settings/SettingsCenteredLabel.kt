@@ -36,18 +36,16 @@ fun SettingsCenteredLabel(
     val decoratedTitle: @Composable () -> Unit = {
         ProvideFontSize(
             fontSize = 20.sp,
-        ) {
-            title()
-        }
+            content = { title() },
+        )
     }
     val decoratedSubtitle: @Composable (() -> Unit)? =
         subtitle?.let {
             {
                 ProvideFontSize(
                     fontSize = 14.sp,
-                ) {
-                    subtitle()
-                }
+                    content = { subtitle() },
+                )
             }
         }
 
@@ -81,9 +79,10 @@ private fun ProvideFontSize(
     fontSize: TextUnit,
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize)) {
-        content()
-    }
+    CompositionLocalProvider(
+        value = LocalTextStyle provides MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize),
+        content = content,
+    )
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)

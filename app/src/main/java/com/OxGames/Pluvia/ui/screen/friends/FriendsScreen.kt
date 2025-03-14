@@ -651,9 +651,9 @@ private fun ProfileDetailsScreen(
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.FRIEND_BLOCK,
-                                    confirmBtnText = "Block",
-                                    dismissBtnText = "Cancel",
-                                    title = "Block Friend",
+                                    confirmBtnText = R.string.block,
+                                    dismissBtnText = R.string.cancel,
+                                    title = R.string.friend_block,
                                     message = "Are you sure you want to block ${state.profileFriend.nameOrNickname}?\n" +
                                         "This will block them on all steam clients.",
                                 )
@@ -667,9 +667,9 @@ private fun ProfileDetailsScreen(
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.FRIEND_REMOVE,
-                                    confirmBtnText = "Remove",
-                                    dismissBtnText = "Cancel",
-                                    title = "Remove Friend",
+                                    confirmBtnText = R.string.remove,
+                                    dismissBtnText = R.string.cancel,
+                                    title = R.string.friend_remove,
                                     message = "Are you sure you want to remove ${state.profileFriend.nameOrNickname}?\n" +
                                         "This will remove them on all steam clients.",
                                 )
@@ -691,9 +691,9 @@ private fun ProfileDetailsScreen(
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.FRIEND_FAVORITE,
-                                    confirmBtnText = "Favorite",
-                                    dismissBtnText = "Cancel",
-                                    title = "Favorite Friend",
+                                    confirmBtnText = R.string.favorite,
+                                    dismissBtnText = R.string.cancel,
+                                    title = R.string.friend_favorite,
                                     message = "Are you sure you want to favorite ${state.profileFriend.nameOrNickname}?\n" +
                                         "This will favorite them on all steam clients.",
                                 )

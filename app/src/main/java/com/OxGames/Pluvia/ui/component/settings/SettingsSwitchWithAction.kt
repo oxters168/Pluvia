@@ -62,7 +62,7 @@ private fun Preview_SettingsSwitchWithAction() {
             SettingsSwitchWithAction(
                 state = true,
                 onCheckedChange = {},
-                title = { Text("Boolean Field") },
+                title = { Text(text = "Boolean Field") },
             )
         }
     }

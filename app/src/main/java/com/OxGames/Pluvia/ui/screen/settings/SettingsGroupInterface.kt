@@ -11,7 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.ui.component.dialog.SingleChoiceDialog
 import com.OxGames.Pluvia.ui.enums.HomeDestination
@@ -43,8 +45,8 @@ fun SettingsGroupInterface(
     SingleChoiceDialog(
         openDialog = openAppThemeDialog,
         icon = Icons.Default.BrightnessMedium,
-        title = "App Theme",
-        items = AppTheme.entries.map { it.text },
+        title = R.string.dialog_title_app_theme,
+        items = AppTheme.entries.map { stringResource(it.string) },
         onSelected = {
             val entry = AppTheme.entries[it]
             onAppTheme(entry)
@@ -58,7 +60,7 @@ fun SettingsGroupInterface(
     SingleChoiceDialog(
         openDialog = openAppPaletteDialog,
         icon = Icons.Default.ColorLens,
-        title = "Palette Style",
+        title = R.string.dialog_title_palette_style,
         items = PaletteStyle.entries.map { it.name },
         onSelected = {
             val entry = PaletteStyle.entries[it]
@@ -73,7 +75,7 @@ fun SettingsGroupInterface(
     SingleChoiceDialog(
         openDialog = openStartScreenDialog,
         icon = Icons.Default.Map,
-        title = "Start Screen",
+        title = R.string.dialog_title_start_screen,
         items = HomeDestination.entries.map { context.getString(it.title) },
         onSelected = {
             val entry = HomeDestination.entries[it]

@@ -13,8 +13,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.base.internal.LocalSettingsGroupEnabled
@@ -68,7 +70,7 @@ fun SettingsCPUList(
                                 onValueChange(newAffinity.joinToString(","))
                             },
                         )
-                        Text(text = "CPU$cpu")
+                        Text(text = stringResource(R.string.cpu_item))
                     }
                 }
             }

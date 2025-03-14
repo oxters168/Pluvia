@@ -35,10 +35,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.settings.SettingsEnvVars
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
@@ -70,7 +72,7 @@ fun Box64PresetsDialog(
                 Scaffold(
                     topBar = {
                         CenterAlignedTopAppBar(
-                            title = { Text(text = "Box64 Presets") },
+                            title = { Text(text = stringResource(R.string.title_box64_presets)) },
                             actions = {
                                 IconButton(
                                     onClick = onDismissRequest,
@@ -109,7 +111,7 @@ fun Box64PresetsDialog(
                                 presetName = it.replace("|", "")
                                 Box86_64PresetManager.editPreset(prefix, context, presetId, presetName, EnvVars(envVars))
                             },
-                            label = { Text("Preset name") },
+                            label = { Text(text = stringResource(R.string.box64_name_label)) },
                             trailingIcon = {
                                 IconButton(
                                     colors = IconButtonDefaults.iconButtonColors()
@@ -152,7 +154,7 @@ fun Box64PresetsDialog(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("Environment Variables")
+                            Text(text = stringResource(R.string.box64_env_variables))
                             Row {
                                 IconButton(
                                     onClick = {
@@ -163,7 +165,7 @@ fun Box64PresetsDialog(
                                     content = {
                                         Icon(
                                             imageVector = Icons.Filled.ContentCopy,
-                                            contentDescription = "Duplicate preset",
+                                            contentDescription = stringResource(R.string.desc_box64_copy_preset),
                                         )
                                     },
                                 )
@@ -180,7 +182,7 @@ fun Box64PresetsDialog(
                                     content = {
                                         Icon(
                                             imageVector = Icons.Outlined.AddCircle,
-                                            contentDescription = "Create preset",
+                                            contentDescription = stringResource(R.string.desc_box64_create_preset),
                                         )
                                     },
                                 )
@@ -196,7 +198,7 @@ fun Box64PresetsDialog(
                                     content = {
                                         Icon(
                                             imageVector = Icons.Filled.Delete,
-                                            contentDescription = "Delete preset",
+                                            contentDescription = stringResource(R.string.desc_box64_delete_preset),
                                         )
                                     },
                                 )
@@ -228,7 +230,10 @@ fun Box64PresetsDialog(
                                                 ?: Timber.w("Could not find string resource of $resName")
                                         },
                                         content = {
-                                            Icon(Icons.Outlined.Info, contentDescription = "Variable info")
+                                            Icon(
+                                                imageVector = Icons.Outlined.Info,
+                                                contentDescription = stringResource(R.string.desc_box64_variable_info),
+                                            )
                                         },
                                     )
                                 },

@@ -24,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.enums.HomeDestination
 import com.OxGames.Pluvia.ui.model.HomeViewModel
@@ -57,13 +58,13 @@ fun HomeScreen(
         visible = homeState.confirmExit,
         onDismissRequest = { viewModel.onConfirmExit(false) },
         icon = Icons.AutoMirrored.Filled.ExitToApp,
-        title = "Are you sure you want to close Pluvia?",
-        confirmBtnText = "Close",
+        title = R.string.dialog_title_close_app,
+        confirmBtnText = R.string.close,
         onConfirmClick = {
             viewModel.onConfirmExit(false)
             onClickExit()
         },
-        dismissBtnText = "Cancel",
+        dismissBtnText = R.string.cancel,
         onDismissClick = { viewModel.onConfirmExit(false) },
     )
 

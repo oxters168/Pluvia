@@ -73,15 +73,20 @@ fun ProfileDialog(
                         Text(text = name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     },
                     supportingContent = {
-                        Text(text = state.name)
+                        val string = when (state) {
+                            EPersonaState.Online -> R.string.status_online
+                            EPersonaState.Away -> R.string.status_away
+                            else -> R.string.status_invisible
+                        }
+
+                        Text(text = stringResource(string))
                     },
                 )
                 /* Online Status */
                 Spacer(modifier = Modifier.height(16.dp))
 
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    val status =
-                        listOf(EPersonaState.Online, EPersonaState.Away, EPersonaState.Invisible)
+                    val status = listOf(EPersonaState.Online, EPersonaState.Away, EPersonaState.Invisible)
                     status.forEachIndexed { index, state ->
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(
@@ -94,7 +99,12 @@ fun ProfileDialog(
                             },
                             selected = state == selectedItem,
                             label = {
-                                Text(state.name)
+                                val string = when (state) {
+                                    EPersonaState.Online -> R.string.status_online
+                                    EPersonaState.Away -> R.string.status_away
+                                    else -> R.string.status_invisible
+                                }
+                                Text(text = stringResource(string))
                             },
                         )
                     }
@@ -105,19 +115,19 @@ fun ProfileDialog(
                 FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = onSettings) {
                     Icon(imageVector = Icons.Default.Settings, contentDescription = null)
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Text(text = "Settings")
+                    Text(text = stringResource(R.string.settings))
                 }
 
                 FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = onLogout) {
                     Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null)
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Text(text = "Log Out")
+                    Text(text = stringResource(R.string.log_out))
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "Close")
+                Text(text = stringResource(R.string.close))
             }
         },
     )

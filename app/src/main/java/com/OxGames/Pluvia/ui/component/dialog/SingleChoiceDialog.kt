@@ -1,6 +1,7 @@
 package com.OxGames.Pluvia.ui.component.dialog
 
 import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,10 +28,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
@@ -39,7 +42,7 @@ fun SingleChoiceDialog(
     openDialog: Boolean,
     icon: ImageVector? = null,
     iconDescription: String? = null,
-    title: String,
+    @StringRes title: Int,
     items: List<String>,
     currentItem: Int,
     onSelected: (Int) -> Unit,
@@ -56,9 +59,13 @@ fun SingleChoiceDialog(
                 Icon(imageVector = it, contentDescription = iconDescription)
             }
         },
-        title = { Text(text = title) },
+        title = { Text(text = stringResource(title)) },
         text = {
-            Column(modifier = Modifier.selectableGroup().verticalScroll(rememberScrollState())) {
+            Column(
+                modifier = Modifier
+                    .selectableGroup()
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 items.forEachIndexed { index, entry ->
                     Row(
                         Modifier
@@ -88,7 +95,7 @@ fun SingleChoiceDialog(
         confirmButton = {
             TextButton(
                 onClick = onDismiss,
-                content = { Text(text = "Close") },
+                content = { Text(text = stringResource(R.string.close)) },
             )
         },
     )
@@ -106,9 +113,9 @@ private fun Preview_SingleChoiceDialog() {
     PluviaTheme {
         SingleChoiceDialog(
             openDialog = true,
-            items = list.map { it.text },
+            items = list.map { stringResource(it.string) },
             icon = Icons.Default.BrightnessMedium,
-            title = "App Theme",
+            title = R.string.dialog_title_app_theme,
             currentItem = theme.ordinal,
             onSelected = { theme = list[it] },
             onDismiss = { },

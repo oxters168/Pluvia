@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.base.internal.LocalSettingsGroupEnabled
@@ -54,10 +56,12 @@ fun SettingsListDropdown(
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
     SettingsTileScaffold(
-        modifier = Modifier.clickable(
-            enabled = enabled,
-            onClick = { isDropdownExpanded = true },
-        ).then(modifier),
+        modifier = Modifier
+            .clickable(
+                enabled = enabled,
+                onClick = { isDropdownExpanded = true },
+            )
+            .then(modifier),
         enabled = enabled,
         title = title,
         subtitle = subtitle,
@@ -103,7 +107,7 @@ fun SettingsListDropdown(
                 } else {
                     Icons.Filled.ArrowDropDown
                 },
-                contentDescription = "Dropdown arrow",
+                contentDescription = stringResource(R.string.desc_dropdown_arrow),
             )
             if (action != null) {
                 Spacer(modifier.width(16.dp))
@@ -122,7 +126,7 @@ private fun Preview_SettingsListDropdown() {
             SettingsListDropdown(
                 value = 2,
                 items = listOf("One", "Two", "Three", "Four"),
-                title = { Text("Text Field") },
+                title = { Text(text = "Text Field") },
                 onItemSelected = {},
             )
         }

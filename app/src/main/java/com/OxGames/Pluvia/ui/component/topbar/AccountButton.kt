@@ -13,8 +13,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.PluviaApp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.events.SteamEvent
 import com.OxGames.Pluvia.service.SteamService
@@ -82,7 +84,7 @@ fun AccountButton(
         content = {
             ListItemImage(
                 image = { SteamUtils.getAvatarURL(persona?.avatarHash) },
-                contentDescription = "Logged in account user profile",
+                contentDescription = stringResource(R.string.desc_account_button),
             )
         },
     )
@@ -94,7 +96,7 @@ fun AccountButton(
 private fun Preview_AccountButton() {
     PluviaTheme {
         CenterAlignedTopAppBar(
-            title = { Text("Top App Bar") },
+            title = { Text(text = "Top App Bar") },
             actions = {
                 AccountButton(
                     onSettings = {},

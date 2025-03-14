@@ -31,6 +31,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.OxGames.Pluvia.Constants
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.OwnedGames
 import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.component.LoadingScreen
@@ -64,11 +66,16 @@ fun GamesListDialog(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
                         CenterAlignedTopAppBar(
-                            title = { Text(text = "Games") },
+                            title = { Text(text = stringResource(R.string.games)) },
                             navigationIcon = {
                                 IconButton(
                                     onClick = onDismissRequest,
-                                    content = { Icon(Icons.Default.Close, null) },
+                                    content = {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.desc_close_dialog),
+                                        )
+                                    },
                                 )
                             },
                         )
@@ -105,10 +112,10 @@ fun GamesListDialog(
                                             CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodySmall) {
                                                 if (item.playtimeTwoWeeks > 10) {
                                                     val twoWeeks = SteamUtils.formatPlayTime(item.playtimeTwoWeeks)
-                                                    Text(text = "Playtime last 2 weeks: $twoWeeks hrs")
+                                                    Text(text = stringResource(R.string.games_played_two_weeks, twoWeeks))
                                                 }
                                                 val total = SteamUtils.formatPlayTime(item.playtimeForever)
-                                                Text(text = "Total Playtime: $total hrs")
+                                                Text(text = stringResource(R.string.games_played_forever, total))
                                             }
                                         }
                                     },

@@ -1,11 +1,13 @@
 package com.OxGames.Pluvia.enums
 
+import androidx.annotation.StringRes
+import com.OxGames.Pluvia.R
 import timber.log.Timber
 
-enum class ControllerSupport(val code: Int) {
-    none(0),
-    partial(1),
-    full(2),
+enum class ControllerSupport(val code: Int, @StringRes val string: Int) {
+    none(0, R.string.controller_none),
+    partial(1, R.string.controller_partial),
+    full(2, R.string.controller_full),
     ;
 
     companion object {

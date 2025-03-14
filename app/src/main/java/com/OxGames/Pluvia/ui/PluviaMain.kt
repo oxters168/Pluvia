@@ -27,6 +27,7 @@ import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.enums.LoginResult
 import com.OxGames.Pluvia.enums.PathType
@@ -117,13 +118,13 @@ fun PluviaMain(
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.CRASH,
-                                    title = "Recent Crash",
+                                    title = R.string.dialog_title_recent_crash,
                                     message = "Sorry about that!\n" +
                                         "It would be nice to know about the recent issue you've had.\n" +
                                         "You can view and export the most recent crash log in the app's settings " +
                                         "and attach it as a Github issue in the project's repository.\n" +
                                         "Link to the Github repo is also in settings!",
-                                    confirmBtnText = "OK",
+                                    confirmBtnText = R.string.acknowledge,
                                 )
                             } else if (!(PrefManager.tipped || BuildConfig.GOLD) && !state.annoyingDialogShown) {
                                 viewModel.setAnnoyingDialogShown(true)
@@ -132,8 +133,8 @@ fun PluviaMain(
                                     type = DialogType.SUPPORT,
                                     message = "Thank you for using Pluvia, please consider supporting " +
                                         "us by tipping whatever amount is comfortable to you",
-                                    confirmBtnText = "Tip",
-                                    dismissBtnText = "Close",
+                                    confirmBtnText = R.string.tip,
+                                    dismissBtnText = R.string.close,
                                 )
                             }
                         }
@@ -536,12 +537,12 @@ fun preLaunchApp(
                     MessageDialogState(
                         visible = true,
                         type = DialogType.SYNC_CONFLICT,
-                        title = "Save Conflict",
+                        title = R.string.dialog_title_sync_conflict,
                         message = "There is a new remote save and a new local save, which would you " +
                             "like to keep?\n\nLocal save:\n\t${Date(postSyncInfo.localTimestamp)}" +
                             "\nRemote save:\n\t${Date(postSyncInfo.remoteTimestamp)}",
-                        dismissBtnText = "Keep local",
-                        confirmBtnText = "Keep remote",
+                        dismissBtnText = R.string.dialog_action_keep_local,
+                        confirmBtnText = R.string.dialog_action_keep_remote,
                     ),
                 )
             }
@@ -555,9 +556,9 @@ fun preLaunchApp(
                     MessageDialogState(
                         visible = true,
                         type = DialogType.SYNC_FAIL,
-                        title = "Sync Error",
+                        title = R.string.dialog_title_sync_error,
                         message = "Failed to sync save files: ${postSyncInfo.syncResult}",
-                        dismissBtnText = "Ok",
+                        dismissBtnText = R.string.acknowledge,
                     ),
                 )
             }
@@ -582,12 +583,12 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.PENDING_UPLOAD_IN_PROGRESS,
-                                    title = "Upload in Progress",
+                                    title = R.string.dialog_title_sync_upload,
                                     message = "You played ${SteamService.getAppInfoOf(appId)?.name} " +
                                         "on the device ${pro.machineName} " +
                                         "(${Date(pro.timeLastUpdated * 1000L)}) and the save of " +
                                         "that session is still uploading.\nTry again later.",
-                                    dismissBtnText = "Ok",
+                                    dismissBtnText = R.string.acknowledge,
                                 ),
                             )
                         }
@@ -597,7 +598,7 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.PENDING_UPLOAD,
-                                    title = "Pending Upload",
+                                    title = R.string.dialog_title_pending_upload,
                                     message = "You played " +
                                         "${SteamService.getAppInfoOf(appId)?.name} " +
                                         "on the device ${pro.machineName} " +
@@ -607,8 +608,8 @@ fun preLaunchApp(
                                         "this game, but that may create a conflict " +
                                         "when your previous game progress " +
                                         "successfully uploads.",
-                                    confirmBtnText = "Play anyway",
-                                    dismissBtnText = "Cancel",
+                                    confirmBtnText = R.string.dialog_action_play_anyway,
+                                    dismissBtnText = R.string.cancel,
                                 ),
                             )
                         }
@@ -618,7 +619,7 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.APP_SESSION_ACTIVE,
-                                    title = "App Running",
+                                    title = R.string.dialog_title_app_running,
                                     message = "You are logged in on another device (${pro.machineName}) " +
                                         "already playing ${SteamService.getAppInfoOf(appId)?.name} " +
                                         "(${Date(pro.timeLastUpdated * 1000L)}), and that save " +
@@ -626,8 +627,8 @@ fun preLaunchApp(
                                         "but that will disconnect the other session from Steam " +
                                         "and may create a save conflict when that session " +
                                         "progress is synced",
-                                    confirmBtnText = "Play anyway",
-                                    dismissBtnText = "Cancel",
+                                    confirmBtnText = R.string.dialog_action_play_anyway,
+                                    dismissBtnText = R.string.cancel,
                                 ),
                             )
                         }
@@ -638,9 +639,9 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.APP_SESSION_SUSPENDED,
-                                    title = "Sync Error",
+                                    title = R.string.dialog_title_sync_error,
                                     message = "App session suspended",
-                                    dismissBtnText = "Ok",
+                                    dismissBtnText = R.string.acknowledge,
                                 ),
                             )
                         }
@@ -651,9 +652,9 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.PENDING_OPERATION_NONE,
-                                    title = "Sync Error",
+                                    title = R.string.dialog_title_sync_error,
                                     message = "Received pending remote operations whose operation was 'none'",
-                                    dismissBtnText = "Ok",
+                                    dismissBtnText = R.string.acknowledge,
                                 ),
                             )
                         }
@@ -664,9 +665,9 @@ fun preLaunchApp(
                         MessageDialogState(
                             visible = true,
                             type = DialogType.MULTIPLE_PENDING_OPERATIONS,
-                            title = "Sync Error",
+                            title = R.string.dialog_title_sync_error,
                             message = "Multiple pending remote operations, try again later",
-                            dismissBtnText = "Ok",
+                            dismissBtnText = R.string.acknowledge,
                         ),
                     )
                 }

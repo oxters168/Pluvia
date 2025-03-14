@@ -72,7 +72,7 @@ private fun Preview_SettingsTextField() {
             SettingsTextField(
                 value = "12345678".repeat(2),
                 onValueChange = {},
-                title = { Text("Text Field") },
+                title = { Text(text = "Text Field") },
             )
         }
     }
