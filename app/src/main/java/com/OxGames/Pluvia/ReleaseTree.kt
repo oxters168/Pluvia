@@ -20,7 +20,7 @@ class ReleaseTree : Timber.Tree() {
             Log.INFO -> 'I'
             Log.WARN -> 'W'
             Log.ERROR -> 'E'
-            Log.ASSERT -> "A"
+            Log.ASSERT -> 'A'
             else -> 'V' // Treat anything else as Verbose
         }
 
