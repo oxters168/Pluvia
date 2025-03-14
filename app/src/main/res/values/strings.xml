@@ -95,6 +95,7 @@
     <!-- Top App Bar Titles -->
     <string name="title_box64_presets">Box64 Presets</string>
     <string name="title_web_view">Pluvia Web View</string>
+    <string name="title_settings">Settings</string>
 
     <!-- One Word Text -->
     <string name="confirm">Confirm</string>
@@ -242,6 +243,89 @@
     <string name="desc_filters">Filters button</string>
     <string name="search_text_placeholder">Search for games</string>
     <string name="desc_library_search_clear">Clear search query</string>
+    <string name="dialog_title_container_config">%1$s Config</string>
+    <string name="desc_failed_image_alt">[Image not found]</string>
+    <string name="game_info_controller">Controller Support:</string>
+    <string name="game_info_developer">Developer:</string>
+    <string name="game_info_publisher">Publisher:</string>
+    <string name="game_info_release">Release date:</string>
+    <string name="desc_qr_image">QR Image</string>
+    <string name="login">Login</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="login_fab_credential">Credential Sign In</string>
+    <string name="login_fab_qr">QR Sign In</string>
+    <string name="retry">Retry</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="desc_login_hide_password">Hide password</string>
+    <string name="desc_login_show_password">Show password</string>
+    <string name="login_remember_session">Remember session</string>
+    <string name="toast_failed_crash_save">Failed to save crash log to destination</string>
+    <string name="toast_failed_log_save">Failed to save logcat to destination</string>
+    <string name="settings_default_crash_filename">No Filename</string>
+    <string name="settings_default_crash_message">Couldn\'t read crash log.</string>
+    <string name="settings_group_debug">Debug</string>
+    <string name="settings_save_logcat_title">Save logcat</string>
+    <string name="settings_save_logcat_subtitle">Saves a snapshot of the logcat only for this app\'s PID</string>
+    <string name="settings_view_logcat_title">View latest crash</string>
+    <string name="settings_view_logcat_subtitle">Shows the most recent crash log</string>
+    <string name="settings_view_logcat_subtitle_alt">No recent crash logs found</string>
+    <string name="toast_settings_activate">Long click to activate</string>
+    <string name="settings_clear_pref_title">Clear Preferences</string>
+    <string name="settings_clear_pref_subtitle">[Closes App] Logs out the client and wipes local preference data.</string>
+    <string name="settings_clear_db_title">Clear Local Database</string>
+    <string name="settings_clear_db_subtitle">[Closes app] May help fix issues with library items or messages.</string>
+    <string name="toast_containers_reset">Containers reset</string>
+    <string name="toast_container_reset_verify">Are you sure? Long click again to confirm</string>
+    <string name="settings_reset_containers_title">Wipe and reset ALL containers</string>
+    <string name="settings_reset_containers_subtitle">This will wipe the container, default container settings, and all per-game container settings.</string>
+    <string name="settings_reset_image_cache_title">Clear Image Cache</string>
+    <string name="settings_reset_image_cache_subtitle">Remove all images that were loaded.</string>
+    <string name="settings_group_emulation">Emulation</string>
+    <string name="dialog_title_default_container_config">Default Container Config</string>
+    <string name="settings_allowed_orientations_title">Allowed Orientations</string>
+    <string name="settings_allowed_orientations_subtitle">Choose which orientations can be rotated to when in-game</string>
+    <string name="settings_modify_default_config_title">Modify Default Config</string>
+    <string name="settings_modify_default_config_subtitle">The initial container settings for each game (does not affect already installed games)</string>
+    <string name="settings_box64_presets_title">Box64 Presets</string>
+    <string name="settings_box64_presets_subtitle">View, modify, and create Box64 presets</string>
+    <string name="settings_group_info">Info</string>
+    <string name="settings_tip_title">Send tip</string>
+    <string name="settings_tip_subtitle">Contribute to ongoing development</string>
+    <string name="settings_show_tip_title">Ask for tip on startup</string>
+    <string name="settings_show_tip_subtitle">Stops the tip message from appearing</string>
+    <string name="settings_show_source_title">Source code</string>
+    <string name="settings_show_source_subtitle">View the source code of this project</string>
+    <string name="settings_show_libraries_title">Libraries Used</string>
+    <string name="settings_show_libraries_subtitle">See what technologies make Pluvia possible</string>
+    <string name="settings_show_privacy_title">Privacy Policy</string>
+    <string name="settings_show_privacy_subtitle">Opens a link to Pluvia\'s privacy policy</string>
+    <string name="dialog_message_libraries">
+        JavaSteam - github.com/Longi94/JavaSteam\n
+        Winlator - github.com/brunodev85/winlator\n
+        Ubuntu RootFs - releases.ubuntu.com/focal\n
+        Wine - winehq.org\n
+        Box86/Box64 - box86.org\n
+        PRoot - proot-me.github.io\n
+        Mesa (Turnip/Zink/VirGL) - mesa3d.org\n
+        DXVK - github.com/doitsujin/dxvk\n
+        VKD3D - gitlab.winehq.org/wine/vkd3d\n
+        D8VK - github.com/AlpyneDreams/d8vk\n
+        CNC DDraw - github.com/FunkyFr3sh/cnc-ddraw</string>
+    <string name="settings_group_interface">Interface</string>
+    <string name="settings_start_destination_title">Start Destination</string>
+    <string name="settings_start_destination_subtitle">Choose between Library, Downloads, or Friends</string>
+    <string name="settings_app_theme_title">App Theme</string>
+    <string name="settings_app_theme_subtitle">Choose between Day, Night, or Auto</string>
+    <string name="settings_app_palette_title">Palette Style</string>
+    <string name="settings_app_palette_subtitle">Change the Material Design 3 color palette</string>
+    <string name="settings_web_links_title">Open web links externally</string>
+    <string name="settings_web_links_subtitle">Links open with your main web browser</string>
+    <string name="broadcast_game_title">Show Playing Game</string>
+    <string name="broadcast_game_subtitle">Notify steam that you\'re playing a game. This turns you green</string>
+    <string name="desc_library_icon">"%1$s client icon"</string>
+    <string name="desc_friend_avatar">"%1$s profile avatar"</string>
+    <string name="friend_add_favorite">Add to Favorites</string>
 
 
 </resources>

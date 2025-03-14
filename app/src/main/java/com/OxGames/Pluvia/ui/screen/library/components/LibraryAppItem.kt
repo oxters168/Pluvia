@@ -43,7 +43,7 @@ internal fun AppItem(
         leadingContent = {
             ListItemImage(
                 image = { appInfo.clientIconUrl },
-                contentDescription = null, // TODO
+                contentDescription = stringResource(R.string.desc_library_icon, appInfo.name),
             )
         },
     )

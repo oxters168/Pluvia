@@ -112,7 +112,7 @@ fun FriendItem(
             ListItemImage(
                 modifier = Modifier.clickable { onLongClick(friend) },
                 image = { SteamUtils.getAvatarURL(friend.avatarHash) },
-                contentDescription = null, // TODO
+                contentDescription = stringResource(R.string.desc_friend_avatar, friend.nameOrNickname),
             )
         },
     )

@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.library.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.utils.SteamUtils
@@ -15,7 +17,7 @@ import java.util.Locale
 
 @Composable
 internal fun GameInfoRow(
-    key: String,
+    @StringRes key: Int,
     value: String,
 ) {
     Row(
@@ -25,7 +27,7 @@ internal fun GameInfoRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = SteamUtils.fromHtml(key),
+            text = stringResource(key),
             style = MaterialTheme.typography.bodyLarge,
         )
         Text(

@@ -86,6 +86,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -689,7 +690,7 @@ private fun ProfileDetailsScreen(
                     ) {
                         ProfileButton(
                             icon = Icons.Outlined.Favorite,
-                            text = "Add to Favorites",
+                            text = stringResource(R.string.friend_add_favorite),
                             onClick = {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
@@ -707,7 +708,6 @@ private fun ProfileDetailsScreen(
                             icon = Icons.Outlined.Notifications,
                             text = "Set Alerts",
                             onClick = {
-                                // TODO
                                 Toast.makeText(context, "Notifications TODO", Toast.LENGTH_SHORT).show()
                             },
                         )

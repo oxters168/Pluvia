@@ -54,7 +54,9 @@ fun TwoFactorAuthScreenContent(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(text = message, textAlign = TextAlign.Center)
+
         Spacer(modifier = Modifier.height(16.dp))
+
         if (userLoginState.loginResult == LoginResult.DeviceConfirm) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         } else if (userLoginState.loginResult == LoginResult.EmailAuth ||
@@ -64,11 +66,13 @@ fun TwoFactorAuthScreenContent(
                 twoFactorText = userLoginState.twoFactorCode,
                 onTwoFactorTextChange = onSetTwoFactor,
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             ElevatedButton(
                 enabled = userLoginState.twoFactorCode.length == 5,
                 onClick = onLogin,
-                content = { Text(text = "Login") },
+                content = { Text(text = stringResource(R.string.login)) },
             )
         }
     }

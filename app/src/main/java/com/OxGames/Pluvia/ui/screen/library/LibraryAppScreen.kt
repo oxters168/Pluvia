@@ -244,7 +244,7 @@ fun AppScreen(
 
     ContainerConfigDialog(
         visible = showConfigDialog,
-        title = "${appInfo.name} Config",
+        title = stringResource(R.string.dialog_title_container_config, appInfo.name),
         initialConfig = containerData,
         onDismissRequest = { showConfigDialog = false },
         onSave = {
@@ -462,7 +462,7 @@ private fun AppScreenContent(
                         )
                         Text(
                             modifier = Modifier.align(Alignment.BottomEnd),
-                            text = "[Image not found]",
+                            text = stringResource(R.string.desc_failed_image_alt),
                         )
                     }
                 },
@@ -561,10 +561,10 @@ private fun AppScreenContent(
                     SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(date)
                 }
 
-                GameInfoRow(key = "Controller Support:", value = stringResource(appInfo.controllerSupport.string))
-                GameInfoRow(key = "Developer:", value = appInfo.developer)
-                GameInfoRow(key = "Publisher:", value = appInfo.publisher)
-                GameInfoRow(key = "Release date:", value = date)
+                GameInfoRow(key = R.string.game_info_controller, value = stringResource(appInfo.controllerSupport.string))
+                GameInfoRow(key = R.string.game_info_developer, value = appInfo.developer)
+                GameInfoRow(key = R.string.game_info_publisher, value = appInfo.publisher)
+                GameInfoRow(key = R.string.game_info_release, value = date)
             }
         }
     }

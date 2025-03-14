@@ -17,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
@@ -60,10 +62,8 @@ private fun SettingsScreenContent(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Settings") },
-                navigationIcon = {
-                    BackButton(onClick = onBack)
-                },
+                title = { Text(text = stringResource(R.string.title_settings)) },
+                navigationIcon = { BackButton(onClick = onBack) },
             )
         },
     ) { paddingValues ->

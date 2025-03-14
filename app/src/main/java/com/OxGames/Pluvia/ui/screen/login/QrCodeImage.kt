@@ -25,10 +25,12 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -67,7 +69,7 @@ fun QrCodeImage(
                 val bitmapPainter = remember(bitmap) { BitmapPainter(bitmap.asImageBitmap()) }
                 Image(
                     painter = bitmapPainter,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.desc_qr_image),
                     contentScale = ContentScale.FillBounds,
                     modifier = Modifier.size(size),
                 )

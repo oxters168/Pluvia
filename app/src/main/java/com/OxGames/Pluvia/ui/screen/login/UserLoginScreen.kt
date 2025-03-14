@@ -115,14 +115,17 @@ private fun UserLoginScreenContent(
         snackbarHost = { SnackbarHost(snackBarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.app_name))
-                },
+                title = { Text(text = stringResource(R.string.app_name)) },
                 actions = {
                     val uriHandler = LocalUriHandler.current
                     IconButton(
                         onClick = { uriHandler.openUri(Constants.Misc.PRIVACY_LINK) },
-                        content = { Icon(imageVector = Icons.Filled.PrivacyTip, contentDescription = "Privacy policy") },
+                        content = {
+                            Icon(
+                                imageVector = Icons.Filled.PrivacyTip,
+                                contentDescription = stringResource(R.string.privacy_policy),
+                            )
+                        },
                     )
                 },
             )
@@ -133,6 +136,12 @@ private fun UserLoginScreenContent(
                 val systemBarPadding = WindowInsets.systemBars
                     .only(WindowInsetsSides.End)
                     .asPaddingValues()
+
+                val fabString = if (userLoginState.loginScreen == LoginScreen.QR) {
+                    R.string.login_fab_credential
+                } else {
+                    R.string.login_fab_qr
+                }
 
                 ExtendedFloatingActionButton(
                     modifier = Modifier
@@ -146,12 +155,7 @@ private fun UserLoginScreenContent(
                         }
                     },
                     text = {
-                        val text = if (userLoginState.loginScreen == LoginScreen.QR) {
-                            "Credential Sign In"
-                        } else {
-                            "QR Sign In"
-                        }
-                        Text(text = text)
+                        Text(text = stringResource(fabString))
                     },
                     icon = {
                         val icon = if (userLoginState.loginScreen == LoginScreen.QR) {
@@ -159,7 +163,7 @@ private fun UserLoginScreenContent(
                         } else {
                             Icons.Filled.QrCode2
                         }
-                        Icon(imageVector = icon, contentDescription = null)
+                        Icon(imageVector = icon, contentDescription = stringResource(fabString))
                     },
                 )
             }
@@ -230,7 +234,7 @@ private fun UserLoginScreenContent(
                                 verticalArrangement = Arrangement.Center,
                             ) {
                                 if (userLoginState.isQrFailed) {
-                                    ElevatedButton(onClick = onQrRetry) { Text(text = "Retry") }
+                                    ElevatedButton(onClick = onQrRetry) { Text(text = stringResource(R.string.retry)) }
                                 } else if (userLoginState.qrCode.isNullOrEmpty()) {
                                     CircularProgressIndicator()
                                 } else {
@@ -270,7 +274,7 @@ private fun UsernamePassword(
             value = username,
             singleLine = true,
             onValueChange = onUsername,
-            label = { Text(text = "Username") },
+            label = { Text(text = stringResource(R.string.username)) },
         )
         OutlinedTextField(
             value = password,
@@ -278,7 +282,7 @@ private fun UsernamePassword(
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             onValueChange = onPassword,
-            label = { Text(text = "Password") },
+            label = { Text(text = stringResource(R.string.password)) },
             trailingIcon = {
                 val image = if (passwordVisible) {
                     Icons.Filled.Visibility
@@ -286,10 +290,10 @@ private fun UsernamePassword(
                     Icons.Filled.VisibilityOff
                 }
 
-                val description = if (passwordVisible) "Hide password" else "Show password"
+                val description = if (passwordVisible) R.string.desc_login_hide_password else R.string.desc_login_show_password
 
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, contentDescription = description)
+                    Icon(imageVector = image, contentDescription = stringResource(description))
                 }
             },
         )
@@ -300,13 +304,13 @@ private fun UsernamePassword(
                     checked = rememberSession,
                     onCheckedChange = onRememberSession,
                 )
-                Text(text = "Remember session")
+                Text(text = stringResource(R.string.login_remember_session))
             }
             Spacer(modifier = Modifier.width(24.dp))
             ElevatedButton(
                 onClick = onLoginBtnClick,
                 enabled = username.isNotEmpty() && password.isNotEmpty() && isSteamConnected,
-                content = { Text(text = "Login") },
+                content = { Text(text = stringResource(R.string.login)) },
             )
         }
     }

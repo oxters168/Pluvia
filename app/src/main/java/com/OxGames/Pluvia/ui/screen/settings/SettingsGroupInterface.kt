@@ -88,35 +88,29 @@ fun SettingsGroupInterface(
         },
     )
 
-    SettingsGroup(title = { Text(text = "Interface") }) {
+    SettingsGroup(title = { Text(text = stringResource(R.string.settings_group_interface)) }) {
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "Start Destination") },
-            subtitle = { Text(text = "Choose between Library, Downloads, or Friends") },
-            onClick = {
-                openStartScreenDialog = true
-            },
+            title = { Text(text = stringResource(R.string.settings_start_destination_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_start_destination_subtitle)) },
+            onClick = { openStartScreenDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "App Theme") },
-            subtitle = { Text(text = "Choose between Day, Night, or Auto") },
-            onClick = {
-                openAppThemeDialog = true
-            },
+            title = { Text(text = stringResource(R.string.settings_app_theme_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_app_theme_subtitle)) },
+            onClick = { openAppThemeDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "Palette Style") },
-            subtitle = { Text(text = "Change the Material Design 3 color palette") },
-            onClick = {
-                openAppPaletteDialog = true
-            },
+            title = { Text(text = stringResource(R.string.settings_app_palette_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_app_palette_subtitle)) },
+            onClick = { openAppPaletteDialog = true },
         )
         SettingsSwitch(
             colors = settingsTileColorsAlt(),
-            title = { Text(text = "Open web links externally") },
-            subtitle = { Text(text = "Links open with your main web browser") },
+            title = { Text(text = stringResource(R.string.settings_web_links_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_web_links_subtitle)) },
             state = openWebLinks,
             onCheckedChange = {
                 openWebLinks = it
@@ -125,8 +119,8 @@ fun SettingsGroupInterface(
         )
         SettingsSwitch(
             colors = settingsTileColorsAlt(),
-            title = { Text(text = "Show Playing Game") },
-            subtitle = { Text(text = "Notify steam that you're playing a game. This turns you green.") },
+            title = { Text(text = stringResource(R.string.broadcast_game_title)) },
+            subtitle = { Text(text = stringResource(R.string.broadcast_game_subtitle)) },
             state = broadcastPlayingGame,
             onCheckedChange = {
                 broadcastPlayingGame = it
