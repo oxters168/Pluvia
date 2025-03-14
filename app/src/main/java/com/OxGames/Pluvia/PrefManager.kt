@@ -17,6 +17,7 @@ import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.enums.AppFilter
 import com.OxGames.Pluvia.ui.enums.HomeDestination
 import com.OxGames.Pluvia.ui.enums.Orientation
+import com.OxGames.Pluvia.utils.application.Crypto
 import com.materialkolor.PaletteStyle
 import com.winlator.box86_64.Box86_64Preset
 import com.winlator.container.Container

@@ -71,7 +71,7 @@ import com.OxGames.Pluvia.ui.internal.fakeAppInfo
 import com.OxGames.Pluvia.ui.screen.library.components.GameInfoRow
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.utils.ContainerUtils
-import com.OxGames.Pluvia.utils.StorageUtils
+import com.OxGames.Pluvia.utils.FileUtils
 import com.google.android.play.core.splitcompat.SplitCompat
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
@@ -298,16 +298,16 @@ fun AppScreen(
                     Timber.d("There are ${depots.size} depots belonging to $appId")
                     // TODO: get space available based on where user wants to install
                     val availableBytes =
-                        StorageUtils.getAvailableSpace(context.filesDir.absolutePath)
-                    val availableSpace = StorageUtils.formatBinarySize(availableBytes)
+                        FileUtils.getAvailableSpace(context.filesDir.absolutePath)
+                    val availableSpace = FileUtils.formatBinarySize(availableBytes)
                     // TODO: un-hardcode "public" branch
-                    val downloadSize = StorageUtils.formatBinarySize(
+                    val downloadSize = FileUtils.formatBinarySize(
                         depots.values.sumOf {
                             it.manifests["public"]?.download ?: 0
                         },
                     )
                     val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
-                    val installSize = StorageUtils.formatBinarySize(installBytes)
+                    val installSize = FileUtils.formatBinarySize(installBytes)
                     if (availableBytes < installBytes) {
                         msgDialogState = MessageDialogState(
                             visible = true,
@@ -390,8 +390,8 @@ fun AppScreen(
                             AppMenuOption(
                                 AppOptionMenuType.Uninstall,
                                 onClick = {
-                                    val sizeOnDisk = StorageUtils.formatBinarySize(
-                                        StorageUtils.getFolderSize(SteamService.getAppDirPath(appId)),
+                                    val sizeOnDisk = FileUtils.formatBinarySize(
+                                        FileUtils.getFolderSize(SteamService.getAppDirPath(appId)),
                                     )
                                     // TODO: show loading screen of delete progress
                                     msgDialogState = MessageDialogState(

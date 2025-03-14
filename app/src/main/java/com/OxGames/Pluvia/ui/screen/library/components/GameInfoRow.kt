@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.OxGames.Pluvia.utils.fromHtml
+import com.OxGames.Pluvia.utils.SteamUtils
 import java.util.Locale
 
 @Composable
@@ -25,11 +25,11 @@ internal fun GameInfoRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = key.fromHtml(),
+            text = SteamUtils.fromHtml(key),
             style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-            text = value.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }.fromHtml(),
+            text = SteamUtils.fromHtml(value.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.End,
         )

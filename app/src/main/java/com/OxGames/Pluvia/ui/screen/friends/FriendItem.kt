@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.getAvatarURL
+import com.OxGames.Pluvia.utils.SteamUtils
 import com.materialkolor.ktx.isLight
 import `in`.dragonbra.javasteam.enums.EFriendRelationship
 import `in`.dragonbra.javasteam.enums.EPersonaState
@@ -105,7 +105,7 @@ fun FriendItem(
         leadingContent = {
             ListItemImage(
                 modifier = Modifier.clickable { onLongClick(friend) },
-                image = { friend.avatarHash.getAvatarURL() },
+                image = { SteamUtils.getAvatarURL(friend.avatarHash) },
             )
         },
     )

@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.getAvatarURL
+import com.OxGames.Pluvia.utils.SteamUtils
 import `in`.dragonbra.javasteam.enums.EPersonaState
 
 @Composable
@@ -66,7 +66,7 @@ fun ProfileDialog(
                     leadingContent = {
                         ListItemImage(
                             size = 48.dp,
-                            image = { avatarHash.getAvatarURL() },
+                            image = { SteamUtils.getAvatarURL(avatarHash) },
                         )
                     },
                     headlineContent = {

@@ -16,6 +16,7 @@ import org.json.JSONObject
 import timber.log.Timber
 
 object ContainerUtils {
+
     data class GpuInfo(
         val deviceId: Int,
         val vendorId: Int,

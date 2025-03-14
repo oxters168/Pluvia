@@ -21,7 +21,7 @@ import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.component.dialog.ProfileDialog
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.getAvatarURL
+import com.OxGames.Pluvia.utils.SteamUtils
 import `in`.dragonbra.javasteam.enums.EPersonaState
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -81,7 +81,7 @@ fun AccountButton(
         onClick = { showDialog = true },
         content = {
             ListItemImage(
-                image = { persona?.avatarHash?.getAvatarURL() },
+                image = { SteamUtils.getAvatarURL(persona?.avatarHash) },
                 contentDescription = "Logged in account user profile",
             )
         },

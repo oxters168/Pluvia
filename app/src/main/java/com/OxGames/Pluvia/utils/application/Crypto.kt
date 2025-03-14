@@ -1,4 +1,4 @@
-package com.OxGames.Pluvia
+package com.OxGames.Pluvia.utils.application
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties

@@ -78,7 +78,6 @@ import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
 import com.OxGames.Pluvia.ui.model.ChatViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.utils.SteamUtils
-import com.OxGames.Pluvia.utils.getAvatarURL
 import kotlinx.coroutines.launch
 
 @Composable
@@ -282,7 +281,7 @@ private fun ChatTopBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 ListItemImage(
-                    image = { steamFriend.avatarHash.getAvatarURL() },
+                    image = { SteamUtils.getAvatarURL(steamFriend.avatarHash) },
                     size = 40.dp,
                 )
 

@@ -3,6 +3,8 @@ package com.OxGames.Pluvia
 import android.os.StrictMode
 import androidx.navigation.NavController
 import com.OxGames.Pluvia.events.EventDispatcher
+import com.OxGames.Pluvia.utils.application.CrashHandler
+import com.OxGames.Pluvia.utils.application.ReleaseTree
 import com.google.android.play.core.splitcompat.SplitCompatApplication
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber

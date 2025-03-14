@@ -1,6 +1,7 @@
-package com.OxGames.Pluvia
+package com.OxGames.Pluvia.utils.application
 
 import android.content.Context
+import com.OxGames.Pluvia.PrefManager
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader

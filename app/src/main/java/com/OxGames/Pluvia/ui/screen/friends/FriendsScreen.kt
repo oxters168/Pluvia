@@ -110,8 +110,7 @@ import com.OxGames.Pluvia.ui.enums.DialogType
 import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
 import com.OxGames.Pluvia.ui.model.FriendsViewModel
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.getAvatarURL
-import com.OxGames.Pluvia.utils.getProfileUrl
+import com.OxGames.Pluvia.utils.SteamUtils
 import com.materialkolor.ktx.isLight
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
@@ -501,7 +500,7 @@ private fun ProfileDetailsScreen(
     var showInternalBrowserDialog by rememberSaveable { mutableStateOf(false) }
     WebViewDialog(
         isVisible = showInternalBrowserDialog,
-        url = state.profileFriend!!.id.getProfileUrl(),
+        url = SteamUtils.getProfileUrl(state.profileFriend!!.id),
         onDismissRequest = {
             showInternalBrowserDialog = false
         },
@@ -546,7 +545,7 @@ private fun ProfileDetailsScreen(
                     .clip(CircleShape)
                     .background(Color.DarkGray)
                     .size(92.dp),
-                imageModel = { state.profileFriend.avatarHash.getAvatarURL() },
+                imageModel = { SteamUtils.getAvatarURL(state.profileFriend.avatarHash) },
                 imageOptions = ImageOptions(
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
@@ -591,7 +590,7 @@ private fun ProfileDetailsScreen(
                     text = "Profile",
                     onClick = {
                         if (PrefManager.openWebLinksExternally) {
-                            uriHandler.openUri(state.profileFriend.id.getProfileUrl())
+                            uriHandler.openUri(SteamUtils.getProfileUrl(state.profileFriend.id))
                         } else {
                             showInternalBrowserDialog = true
                         }
