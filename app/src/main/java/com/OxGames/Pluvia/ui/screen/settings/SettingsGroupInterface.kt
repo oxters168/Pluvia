@@ -76,7 +76,7 @@ fun SettingsGroupInterface(
         openDialog = openStartScreenDialog,
         icon = Icons.Default.Map,
         title = R.string.dialog_title_start_screen,
-        items = HomeDestination.entries.map { context.getString(it.title) },
+        items = HomeDestination.entries.map { context.getString(it.string) },
         onSelected = {
             val entry = HomeDestination.entries[it]
             startScreenOption = entry

@@ -133,8 +133,8 @@ internal fun HomeNavigationWrapperUI(
         navigationSuiteItems = {
             HomeDestination.entries.forEach {
                 item(
-                    label = { Text(stringResource(it.title)) },
-                    icon = { Icon(it.icon, stringResource(it.title)) },
+                    label = { Text(text = stringResource(it.string)) },
+                    icon = { Icon(imageVector = it.icon, contentDescription = stringResource(it.string)) },
                     selected = (it == destination),
                     onClick = { onDestination(it) },
                 )

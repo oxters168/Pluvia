@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.OwnedGames
 import com.OxGames.Pluvia.db.dao.SteamFriendDao
 import com.OxGames.Pluvia.events.SteamEvent
@@ -148,10 +149,10 @@ class FriendsViewModel @Inject constructor(
 
                     val groupedList = sortedList.groupBy { friend ->
                         when {
-                            friend.isRequestRecipient -> "Friend Request"
-                            friend.isPlayingGame || friend.isInGameAwayOrSnooze -> "In-Game"
-                            friend.isOnline || friend.isAwayOrSnooze -> "Online"
-                            else -> "Offline"
+                            friend.isRequestRecipient -> R.string.friend_sticky_request
+                            friend.isPlayingGame || friend.isInGameAwayOrSnooze -> R.string.friend_sticky_game
+                            friend.isOnline || friend.isAwayOrSnooze -> R.string.friend_sticky_online
+                            else -> R.string.friend_sticky_offline
                         }
                     }.toMap()
 

@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.enums
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AvTimer
 import androidx.compose.material.icons.filled.Build
@@ -8,42 +9,43 @@ import androidx.compose.material.icons.filled.Diversity3
 import androidx.compose.material.icons.filled.InstallMobile
 import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppType
 import java.util.EnumSet
 
 enum class AppFilter(
     val code: Int,
-    val displayText: String,
+    @StringRes val displayText: Int,
     val icon: ImageVector,
 ) {
     INSTALLED(
         code = 0x01,
-        displayText = "Installed",
+        displayText = R.string.app_filter_installed,
         icon = Icons.Default.InstallMobile,
     ),
     GAME(
         code = 0x02,
-        displayText = "Game",
+        displayText = R.string.app_filter_game,
         icon = Icons.Default.VideogameAsset,
     ),
     APPLICATION(
         code = 0x04,
-        displayText = "Application",
+        displayText = R.string.app_filter_application,
         icon = Icons.Default.Computer,
     ),
     TOOL(
         code = 0x08,
-        displayText = "Tool",
+        displayText = R.string.app_filter_tool,
         icon = Icons.Default.Build,
     ),
     DEMO(
         code = 0x10,
-        displayText = "Demo",
+        displayText = R.string.app_filter_demo,
         icon = Icons.Default.AvTimer,
     ),
     SHARED(
         code = 0x20,
-        displayText = "Family",
+        displayText = R.string.app_filter_shared,
         icon = Icons.Default.Diversity3,
     ),
     // ALPHABETIC(

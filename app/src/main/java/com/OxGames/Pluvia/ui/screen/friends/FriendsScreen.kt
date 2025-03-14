@@ -253,6 +253,8 @@ private fun FriendsListPane(
             )
         },
     ) { paddingValues ->
+        val context = LocalContext.current
+
         LazyColumn(
             modifier = Modifier
                 .padding(
@@ -264,16 +266,17 @@ private fun FriendsListPane(
             contentPadding = PaddingValues(bottom = 72.dp),
         ) {
             state.friendsList.forEach { (key, value) ->
+                val header = context.getString(key)
                 stickyHeader {
                     StickyHeaderItem(
-                        isCollapsed = key in state.collapsedListSections,
-                        header = key,
+                        isCollapsed = header in state.collapsedListSections,
+                        header = header,
                         count = value.size,
-                        onHeaderAction = { onHeaderAction(key) },
+                        onHeaderAction = { onHeaderAction(header) },
                     )
                 }
 
-                if (key !in state.collapsedListSections) {
+                if (header !in state.collapsedListSections) {
                     itemsIndexed(value, key = { _, item -> item.id }) { idx, friend ->
                         FriendItem(
                             modifier = Modifier.animateItem(),
@@ -786,9 +789,9 @@ private fun Preview_FriendsScreenContent(
                 navigator = navigator,
                 state = FriendsState(
                     friendsList = mapOf(
-                        "In-Game" to fakeSteamFriends(),
-                        "Online" to fakeSteamFriends(id = 5, inGame = false),
-                        "Offline" to fakeSteamFriends(id = 10, online = false, inGame = false),
+                        R.string.friend_sticky_game to fakeSteamFriends(),
+                        R.string.friend_sticky_online to fakeSteamFriends(id = 5, inGame = false),
+                        R.string.friend_sticky_offline to fakeSteamFriends(id = 10, online = false, inGame = false),
                     ),
                     profileFriend = fakeSteamFriends()[1],
                     profileFriendInfo = ProfileInfoCallback(

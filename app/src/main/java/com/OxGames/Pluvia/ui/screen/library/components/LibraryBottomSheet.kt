@@ -34,7 +34,7 @@ fun LibraryBottomSheet(
             .fillMaxWidth()
             .padding(horizontal = 32.dp),
     ) {
-        Text(text = "App Type", style = MaterialTheme.typography.titleLarge)
+        Text(text = stringResource(R.string.filter_app_type), style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(8.dp))
         FlowRow {
             AppFilter.entries.forEach { appFilter ->
@@ -42,12 +42,13 @@ fun LibraryBottomSheet(
                 if (appFilter.code !in listOf(0x01, 0x20)) {
                     FlowFilterChip(
                         onClick = { onFilterChanged(appFilter) },
-                        label = { Text(text = appFilter.displayText) },
+                        label = { Text(text = stringResource(appFilter.displayText)) },
                         selected = selectedFilters.contains(appFilter),
                         leadingIcon = {
+                            val string = appFilter.displayText
                             Icon(
                                 imageVector = appFilter.icon,
-                                contentDescription = stringResource(R.string.chip_item, appFilter.displayText),
+                                contentDescription = stringResource(R.string.desc_chip_item, string),
                             )
                         },
                     )
@@ -55,19 +56,20 @@ fun LibraryBottomSheet(
             }
         }
 
-        Text(text = "App Status", style = MaterialTheme.typography.titleLarge)
+        Text(text = stringResource(R.string.filter_app_status), style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(8.dp))
         FlowRow {
             AppFilter.entries.forEach { appFilter ->
                 if (appFilter.code in listOf(0x01, 0x20)) {
                     FlowFilterChip(
                         onClick = { onFilterChanged(appFilter) },
-                        label = { Text(text = appFilter.displayText) },
+                        label = { Text(text = stringResource(appFilter.displayText)) },
                         selected = selectedFilters.contains(appFilter),
                         leadingIcon = {
+                            val string = appFilter.displayText
                             Icon(
                                 imageVector = appFilter.icon,
-                                contentDescription = stringResource(R.string.chip_item, appFilter.displayText),
+                                contentDescription = stringResource(R.string.desc_chip_item, string),
                             )
                         },
                     )

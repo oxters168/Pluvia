@@ -12,7 +12,9 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import `in`.dragonbra.javasteam.enums.EPersonaState
@@ -34,7 +36,7 @@ fun StickyHeaderItem(
                 else -> Icons.Outlined.KeyboardArrowUp
             }
             IconButton(onClick = onHeaderAction) {
-                Icon(imageVector = button, contentDescription = null)
+                Icon(imageVector = button, contentDescription = stringResource(R.string.desc_friend_header_action))
             }
         },
     )

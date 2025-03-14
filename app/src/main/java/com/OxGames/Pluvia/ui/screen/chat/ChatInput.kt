@@ -52,6 +52,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.semantics
@@ -278,7 +279,7 @@ private fun UserInputTextField(
         maxLines = 3,
         textStyle = LocalTextStyle.current.copy(color = LocalContentColor.current),
         placeholder = {
-            Text(text = "Send a message")
+            Text(text = stringResource(R.string.chat_input_placeholder))
         },
         leadingIcon = {
             val colors = if (isEmoticonShowing == EmojiStickerSelector.NONE) {
@@ -291,7 +292,10 @@ private fun UserInputTextField(
                 colors = colors,
                 onClick = onEmoticonClick,
                 content = {
-                    Icon(imageVector = Icons.Outlined.EmojiEmotions, null)
+                    Icon(
+                        imageVector = Icons.Outlined.EmojiEmotions,
+                        contentDescription = stringResource(R.string.desc_show_emojis),
+                    )
                 },
             )
         },
@@ -319,7 +323,7 @@ private fun UserInputTextField(
                 contentPadding = PaddingValues(0.dp),
                 content = {
                     Text(
-                        text = "Send",
+                        text = stringResource(R.string.send),
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 },
@@ -432,7 +436,7 @@ fun EmoteTable(
                         url + emoticon.name
                     },
                     imageOptions = ImageOptions(
-                        contentDescription = "${if (emoticon.isSticker) "Sticker" else "Emoticon"} ${emoticon.name}",
+                        contentDescription = stringResource(if (emoticon.isSticker) R.string.sticker else R.string.emoticon, emoticon.name),
                         contentScale = ContentScale.Inside,
                     ),
                     loading = {
@@ -443,7 +447,10 @@ fun EmoteTable(
                         )
                     },
                     failure = {
-                        Icon(Icons.Filled.QuestionMark, null)
+                        Icon(
+                            imageVector = Icons.Filled.QuestionMark,
+                            contentDescription = stringResource(R.string.desc_failed_image),
+                        )
                     },
                     previewPlaceholder = painterResource(R.drawable.ic_logo_color),
                 )

@@ -16,6 +16,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,7 +77,7 @@ fun XServerScreen(
         dismissBtnText = R.string.cancel,
         icon = Icons.AutoMirrored.Filled.ExitToApp,
         title = R.string.dialog_title_exit_game,
-        message = "Are you sure you want to close ${xServerState.gameName}?",
+        message = "Are you sure you want to close ${xServerState.gameName.ifEmpty { stringResource(R.string.empty_game_name) }}?",
     )
 
     BackHandler {

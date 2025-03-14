@@ -535,7 +535,7 @@ private fun AppScreenContent(
             Box {
                 IconButton(
                     onClick = { optionsMenuVisible = !optionsMenuVisible },
-                    content = { Icon(Icons.Filled.MoreVert, "Options") },
+                    content = { Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.options)) },
                 )
                 DropdownMenu(
                     expanded = optionsMenuVisible,
@@ -543,7 +543,7 @@ private fun AppScreenContent(
                 ) {
                     optionsMenu.forEach { menuOption ->
                         DropdownMenuItem(
-                            text = { Text(menuOption.optionType.text) },
+                            text = { Text(text = stringResource(menuOption.optionType.string)) },
                             onClick = {
                                 menuOption.onClick()
                                 optionsMenuVisible = false

@@ -10,8 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.screen.library.AppScreen
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
@@ -45,7 +47,7 @@ private fun LibraryEmptyDetailPane() {
         ) {
             Text(
                 modifier = Modifier.padding(24.dp),
-                text = "Select an item in the list to view game info",
+                text = stringResource(R.string.library_detail_no_selection),
             )
         }
     }

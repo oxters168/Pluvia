@@ -6,7 +6,7 @@ import com.OxGames.Pluvia.data.SteamFriend
 import `in`.dragonbra.javasteam.steam.handlers.steamfriends.callback.ProfileInfoCallback
 
 data class FriendsState(
-    val friendsList: Map<String, List<SteamFriend>> = emptyMap(),
+    val friendsList: Map<Int, List<SteamFriend>> = emptyMap(),
     val collapsedListSections: Set<String> = PrefManager.friendsListHeader,
     val profileFriend: SteamFriend? = null,
     val profileFriendInfo: ProfileInfoCallback? = null,

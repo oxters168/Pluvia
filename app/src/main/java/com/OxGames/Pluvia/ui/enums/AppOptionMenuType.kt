@@ -1,8 +1,11 @@
 package com.OxGames.Pluvia.ui.enums
 
-enum class AppOptionMenuType(val text: String) {
-    StorePage("Open store page"),
-    RunContainer("Open container"),
-    EditContainer("Edit container"),
-    Uninstall("Uninstall"),
+import androidx.annotation.StringRes
+import com.OxGames.Pluvia.R
+
+enum class AppOptionMenuType(@StringRes val string: Int) {
+    StorePage(R.string.app_option_menu_store),
+    RunContainer(R.string.app_option_menu_open),
+    EditContainer(R.string.app_option_menu_edit),
+    Uninstall(R.string.app_option_menu_remove),
 }

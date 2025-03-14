@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
@@ -96,8 +98,12 @@ fun FriendItem(
         },
         supportingContent = {
             if (friend.isPlayingGame) {
-                // TODO get game names
-                Text(text = "Playing: " + friend.gameName.ifEmpty { "${friend.gameAppID}" })
+                val gameName = if (friend.gameName.isBlank()) {
+                    stringResource(R.string.friend_playing_game_id, friend.gameAppID)
+                } else {
+                    stringResource(R.string.friend_playing_game, friend.gameName)
+                }
+                Text(text = gameName)
             } else {
                 Text(text = friend.state.name)
             }
@@ -106,6 +112,7 @@ fun FriendItem(
             ListItemImage(
                 modifier = Modifier.clickable { onLongClick(friend) },
                 image = { SteamUtils.getAvatarURL(friend.avatarHash) },
+                contentDescription = null, // TODO
             )
         },
     )

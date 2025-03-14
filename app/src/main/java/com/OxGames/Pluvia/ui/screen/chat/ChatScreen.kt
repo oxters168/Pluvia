@@ -53,6 +53,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.PlatformTextStyle
@@ -69,6 +71,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.FriendMessage
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.component.ListItemImage
@@ -111,14 +114,15 @@ private fun ChatScreenContent(
 ) {
     val snackbarHost = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val content = LocalContext.current
 
     // NOTE: This should be removed once chat is considered stable.
     LaunchedEffect(Unit) {
         if (!PrefManager.ackChatPreview) {
             scope.launch {
                 val result = snackbarHost.showSnackbar(
-                    message = "Chatting is still an early feature.\nPlease report any issues in the project repo.",
-                    actionLabel = "OK",
+                    message = content.getString(R.string.chat_preview_message),
+                    actionLabel = content.getString(R.string.acknowledge),
                 )
 
                 if (result == SnackbarResult.ActionPerformed) {
@@ -260,7 +264,7 @@ private fun NoChatHistoryBox() {
         ) {
             Text(
                 modifier = Modifier.padding(24.dp),
-                text = "No chat history",
+                text = stringResource(R.string.chat_no_history),
                 textAlign = TextAlign.Center,
             )
         }
