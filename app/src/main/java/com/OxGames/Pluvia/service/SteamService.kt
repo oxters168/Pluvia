@@ -219,6 +219,12 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         private var syncInProgress: Boolean = false
 
+        // Cache app info to avoid database lookups
+        private val appInfoCache = ConcurrentHashMap<Int, SteamApp?>()
+
+        // Cache installation paths to avoid repeated string operations
+        private val appPathCache = ConcurrentHashMap<Int, String>()
+
         var isStopping: Boolean = false
             private set
         var isConnected: Boolean = false
@@ -296,12 +302,26 @@ class SteamService : Service(), IChallengeUrlChanged {
         fun isAppInstalled(appId: Int): Boolean {
             val appDownloadInfo = getAppDownloadInfo(appId)
             val isNotDownloading = appDownloadInfo == null || appDownloadInfo.getProgress() >= 1f
-            val appDirPath = Paths.get(getAppDirPath(appId))
-            val pathExists = Files.exists(appDirPath)
 
-            // logD("isDownloading: $isNotDownloading && pathExists: $pathExists && appDirPath: $appDirPath")
+            if (!isNotDownloading) {
+                return false
+            }
 
-            return isNotDownloading && pathExists
+            val path = appPathCache[appId] ?: run {
+                val app = appInfoCache.getOrPut(appId) {
+                    runBlocking(Dispatchers.IO) { instance?.appDao?.findApp(appId) }
+                }
+
+                val appName = app?.config?.installDir?.takeIf { it.isNotEmpty() } ?: app?.name.orEmpty()
+                val newPath = Paths.get(PrefManager.appInstallPath, appName).pathString
+
+                appPathCache[appId] = newPath
+                newPath
+            }
+
+            return runBlocking(Dispatchers.IO) {
+                Files.exists(Paths.get(path))
+            }
         }
 
         fun getAppDlc(appId: Int): Map<Int, DepotInfo> {
@@ -348,6 +368,10 @@ class SteamService : Service(), IChallengeUrlChanged {
             }
 
             val appDirPath = getAppDirPath(appId)
+
+            // Delete item from cache
+            appPathCache.remove(appId)
+            appInfoCache.remove(appId)
 
             return File(appDirPath).deleteRecursively()
         }
