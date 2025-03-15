@@ -77,7 +77,10 @@ fun Box64PresetsDialog(
                                 IconButton(
                                     onClick = onDismissRequest,
                                     content = {
-                                        Icon(Icons.Default.Done, "Close Box64 Presets")
+                                        Icon(
+                                            imageVector = Icons.Default.Done,
+                                            contentDescription = stringResource(R.string.desc_box64_close),
+                                        )
                                     },
                                 )
                             },
@@ -120,7 +123,7 @@ fun Box64PresetsDialog(
                                     content = {
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Outlined.ViewList,
-                                            contentDescription = "Preset list",
+                                            contentDescription = stringResource(R.string.desc_box64_list_preset),
                                         )
                                     },
                                 )
@@ -134,11 +137,9 @@ fun Box64PresetsDialog(
                                                 onClick = {
                                                     presetId = preset.id
                                                     presetName = getPreset(presetId).name
-                                                    envVars = Box86_64PresetManager.getEnvVars(
-                                                        prefix,
-                                                        context,
-                                                        getPreset(presetId).id,
-                                                    ).toString()
+                                                    envVars = Box86_64PresetManager
+                                                        .getEnvVars(prefix, context, getPreset(presetId).id)
+                                                        .toString()
                                                     showPresets = false
                                                 },
                                             )
@@ -174,8 +175,13 @@ fun Box64PresetsDialog(
                                         val defaultEnvVars = EnvVarInfo.KNOWN_BOX64_VARS.values.joinToString(" ") {
                                             "${it.identifier}=${it.possibleValues.first()}"
                                         }
-                                        presetId = Box86_64PresetManager
-                                            .editPreset(prefix, context, null, "Unnamed", EnvVars(defaultEnvVars))
+                                        presetId = Box86_64PresetManager.editPreset(
+                                            prefix,
+                                            context,
+                                            null,
+                                            context.getString(R.string.unnamed),
+                                            EnvVars(defaultEnvVars),
+                                        )
                                         presetName = getPreset(presetId).name
                                         envVars = Box86_64PresetManager.getEnvVars(prefix, context, getPreset(presetId).id).toString()
                                     },

@@ -74,10 +74,10 @@ public abstract class Box86_64PresetManager {
 
     public static ArrayList<Box86_64Preset> getPresets(String prefix, Context context) {
         ArrayList<Box86_64Preset> presets = new ArrayList<>();
-        presets.add(new Box86_64Preset(Box86_64Preset.STABILITY, context.getString(R.string.stability)));
-        presets.add(new Box86_64Preset(Box86_64Preset.COMPATIBILITY, context.getString(R.string.compatibility)));
-        presets.add(new Box86_64Preset(Box86_64Preset.INTERMEDIATE, context.getString(R.string.intermediate)));
-        presets.add(new Box86_64Preset(Box86_64Preset.PERFORMANCE, context.getString(R.string.performance)));
+        presets.add(new Box86_64Preset(Box86_64Preset.STABILITY, context.getString(R.string.box64_stability)));
+        presets.add(new Box86_64Preset(Box86_64Preset.COMPATIBILITY, context.getString(R.string.box64_compatibility)));
+        presets.add(new Box86_64Preset(Box86_64Preset.INTERMEDIATE, context.getString(R.string.box64_intermediate)));
+        presets.add(new Box86_64Preset(Box86_64Preset.PERFORMANCE, context.getString(R.string.box64_performance)));
         for (String[] preset : customPresetsIterator(prefix, context))
             presets.add(new Box86_64Preset(preset[0], preset[1]));
         return presets;

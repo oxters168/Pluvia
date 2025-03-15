@@ -266,7 +266,7 @@ fun BBCodeText(
                         withStyle(
                             style = SpanStyle(fontStyle = FontStyle.Italic, baselineShift = BaselineShift(0.2f)),
                             block = {
-                                val string = stringResource(R.string.text_quoted, match.groupValues[BBCode.QUOTE.groupIndex()])
+                                val string = stringResource(R.string.chat_text_quoted, match.groupValues[BBCode.QUOTE.groupIndex()])
                                 append(string)
                             },
                         )

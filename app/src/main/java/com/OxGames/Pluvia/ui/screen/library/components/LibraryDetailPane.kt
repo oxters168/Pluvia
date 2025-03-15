@@ -47,7 +47,7 @@ private fun LibraryEmptyDetailPane() {
         ) {
             Text(
                 modifier = Modifier.padding(24.dp),
-                text = stringResource(R.string.library_detail_no_selection),
+                text = stringResource(R.string.library_no_selection),
             )
         }
     }

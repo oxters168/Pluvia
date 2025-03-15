@@ -137,7 +137,7 @@ private fun DownloadsScreenPane(
                 ) {
                     Text(
                         modifier = Modifier.padding(24.dp),
-                        text = stringResource(R.string.downloads_preview_msg),
+                        text = "\uD83D\uDEA7 Not Available \uD83D\uDEA7",
                     )
                 }
             },

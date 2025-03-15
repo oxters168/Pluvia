@@ -121,7 +121,7 @@ fun ProfileDialog(
                 FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = onLogout) {
                     Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null)
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Text(text = stringResource(R.string.log_out))
+                    Text(text = stringResource(R.string.logout))
                 }
             }
         },

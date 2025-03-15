@@ -288,8 +288,8 @@ fun AppScreen(
                     msgDialogState = MessageDialogState(
                         visible = true,
                         type = DialogType.CANCEL_APP_DOWNLOAD,
-                        title = R.string.cancel_download_prompt_title,
-                        message = "Are you sure you want to cancel the download of the app?",
+                        title = R.string.dialog_title_cancel_download,
+                        message = context.getString(R.string.dialog_message_cancel_download),
                         confirmBtnText = R.string.yes,
                         dismissBtnText = R.string.no,
                     )
@@ -312,20 +312,16 @@ fun AppScreen(
                         msgDialogState = MessageDialogState(
                             visible = true,
                             type = DialogType.NOT_ENOUGH_SPACE,
-                            title = R.string.not_enough_space,
-                            message = "The app being installed needs $installSize of space but " +
-                                "there is only $availableSpace left on this device",
-                            confirmBtnText = R.string.acknowledge,
+                            title = R.string.dialog_title_no_space,
+                            message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
+                            confirmBtnText = R.string.ok,
                         )
                     } else {
                         msgDialogState = MessageDialogState(
                             visible = true,
                             type = DialogType.INSTALL_APP,
-                            title = R.string.download_prompt_title,
-                            message = "The app being installed has the following space requirements. Would you like to proceed?" +
-                                "\n\n\tDownload Size: $downloadSize" +
-                                "\n\tSize on Disk: $installSize" +
-                                "\n\tAvailable Space: $availableSpace",
+                            title = R.string.dialog_title_download_app,
+                            message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
                             confirmBtnText = R.string.proceed,
                             dismissBtnText = R.string.cancel,
                         )
@@ -355,9 +351,7 @@ fun AppScreen(
                                     visible = true,
                                     type = DialogType.INSTALL_IMAGEFS,
                                     title = R.string.dialog_title_download_install_fs,
-                                    message = "The Ubuntu image needs to be downloaded and installed before " +
-                                        "being able to edit the configuration. This operation might take " +
-                                        "a few minutes. Would you like to continue?",
+                                    message = context.getString(R.string.dialog_message_download_install_fs),
                                     confirmBtnText = R.string.proceed,
                                     dismissBtnText = R.string.cancel,
                                 )
@@ -366,9 +360,7 @@ fun AppScreen(
                                     visible = true,
                                     type = DialogType.INSTALL_IMAGEFS,
                                     title = R.string.dialog_title_install_fs,
-                                    message = "The Ubuntu image needs to be installed before being able to edit " +
-                                        "the configuration. This operation might take a few minutes. " +
-                                        "Would you like to continue?",
+                                    message = context.getString(R.string.dialog_message_install_fs),
                                     confirmBtnText = R.string.proceed,
                                     dismissBtnText = R.string.cancel,
                                 )
@@ -397,9 +389,9 @@ fun AppScreen(
                                     msgDialogState = MessageDialogState(
                                         visible = true,
                                         type = DialogType.DELETE_APP,
-                                        title = R.string.delete_prompt_title,
-                                        message = "Are you sure you want to delete this app?\n\n\tSize on Disk: $sizeOnDisk",
-                                        confirmBtnText = R.string.delete_app,
+                                        title = R.string.dialog_title_delete_app,
+                                        message = context.getString(R.string.dialog_message_delete_app, sizeOnDisk),
+                                        confirmBtnText = R.string.delete,
                                         dismissBtnText = R.string.cancel,
                                     )
                                 },
@@ -501,11 +493,11 @@ private fun AppScreenContent(
                 onClick = onDownloadBtnClick,
                 content = {
                     val text = if (isInstalled) {
-                        stringResource(R.string.run_app)
+                        stringResource(R.string.play)
                     } else if (isDownloading) {
                         stringResource(R.string.cancel)
                     } else {
-                        stringResource(R.string.install_app)
+                        stringResource(R.string.install)
                     }
                     Text(text = text)
                 },

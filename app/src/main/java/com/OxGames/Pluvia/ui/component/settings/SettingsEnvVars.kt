@@ -38,7 +38,7 @@ fun SettingsEnvVars(
                         envVars.put(identifier, newValue)
                         onEnvVarsChange(envVars)
                     },
-                    action = envVarAction?.let { { envVarAction(identifier) } },
+                    action = envVarAction?.let { { it(identifier) } },
                 )
             }
 
@@ -65,7 +65,7 @@ fun SettingsEnvVars(
                         )
                         onEnvVarsChange(envVars)
                     },
-                    action = envVarAction?.let { { envVarAction(identifier) } },
+                    action = envVarAction?.let { { it(identifier) } },
                 )
             }
 
@@ -82,7 +82,7 @@ fun SettingsEnvVars(
                             envVars.put(identifier, envVarInfo.possibleValues[it])
                             onEnvVarsChange(envVars)
                         },
-                        action = envVarAction?.let { { envVarAction(identifier) } },
+                        action = envVarAction?.let { { it(identifier) } },
                     )
                 } else {
                     SettingsTextField(
@@ -94,7 +94,7 @@ fun SettingsEnvVars(
                             envVars.put(identifier, it)
                             onEnvVarsChange(envVars)
                         },
-                        action = envVarAction?.let { { envVarAction(identifier) } },
+                        action = envVarAction?.let { { it(identifier) } },
                     )
                 }
             }

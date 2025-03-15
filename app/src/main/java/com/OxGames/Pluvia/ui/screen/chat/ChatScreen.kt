@@ -122,7 +122,7 @@ private fun ChatScreenContent(
             scope.launch {
                 val result = snackbarHost.showSnackbar(
                     message = content.getString(R.string.chat_preview_message),
-                    actionLabel = content.getString(R.string.acknowledge),
+                    actionLabel = content.getString(R.string.ok),
                 )
 
                 if (result == SnackbarResult.ActionPerformed) {

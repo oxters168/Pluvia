@@ -41,7 +41,7 @@ internal fun LibraryList(
             ) {
                 Text(
                     modifier = Modifier.padding(24.dp),
-                    text = stringResource(R.string.library_list_no_items),
+                    text = stringResource(R.string.library_no_items),
                 )
             }
         }

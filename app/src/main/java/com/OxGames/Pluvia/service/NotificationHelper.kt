@@ -16,7 +16,6 @@ class NotificationHelper(private val context: Context) {
 
     companion object {
         private const val CHANNEL_ID = "pluvia_foreground_service"
-        private const val CHANNEL_NAME = "Pluvia Foreground Service"
         private const val NOTIFICATION_ID = 1
 
         const val ACTION_EXIT = "com.oxgames.pluvia.EXIT"
@@ -32,10 +31,10 @@ class NotificationHelper(private val context: Context) {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            CHANNEL_NAME,
+            context.getString(R.string.desc_fg_notification_title),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
-            description = "Allows to display Pluvia foreground notifications"
+            description = context.getString(R.string.desc_fg_notification)
             setShowBadge(false)
         }
 
@@ -86,7 +85,7 @@ class NotificationHelper(private val context: Context) {
             .setAutoCancel(false)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
-            .addAction(0, "Exit", stopPendingIntent) // 0 = no icon
+            .addAction(0, context.getString(R.string.exit), stopPendingIntent) // 0 = no icon
             .build()
     }
 }

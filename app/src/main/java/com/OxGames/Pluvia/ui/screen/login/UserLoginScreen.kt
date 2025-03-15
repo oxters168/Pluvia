@@ -123,7 +123,7 @@ private fun UserLoginScreenContent(
                         content = {
                             Icon(
                                 imageVector = Icons.Filled.PrivacyTip,
-                                contentDescription = stringResource(R.string.privacy_policy),
+                                contentDescription = stringResource(R.string.login_privacy_policy),
                             )
                         },
                     )

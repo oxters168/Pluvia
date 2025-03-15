@@ -261,7 +261,7 @@ fun ContainerConfigDialog(
                             config = config.copy(envVars = envVars.toString())
                             showEnvVarCreateDialog = false
                         },
-                        content = { Text(text = stringResource(R.string.acknowledge)) },
+                        content = { Text(text = stringResource(R.string.ok)) },
                     )
                 },
             )

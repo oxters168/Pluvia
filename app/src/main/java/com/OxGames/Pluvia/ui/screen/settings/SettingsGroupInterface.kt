@@ -119,8 +119,8 @@ fun SettingsGroupInterface(
         )
         SettingsSwitch(
             colors = settingsTileColorsAlt(),
-            title = { Text(text = stringResource(R.string.broadcast_game_title)) },
-            subtitle = { Text(text = stringResource(R.string.broadcast_game_subtitle)) },
+            title = { Text(text = stringResource(R.string.settings_broadcast_game_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_broadcast_game_subtitle)) },
             state = broadcastPlayingGame,
             onCheckedChange = {
                 broadcastPlayingGame = it

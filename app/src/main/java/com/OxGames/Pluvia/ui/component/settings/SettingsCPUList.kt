@@ -70,7 +70,7 @@ fun SettingsCPUList(
                                 onValueChange(newAffinity.joinToString(","))
                             },
                         )
-                        Text(text = stringResource(R.string.cpu_item))
+                        Text(text = stringResource(R.string.container_cpu_item, cpu))
                     }
                 }
             }

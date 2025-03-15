@@ -44,7 +44,7 @@ fun SettingsCenteredLabel(
             {
                 ProvideFontSize(
                     fontSize = 14.sp,
-                    content = { subtitle() },
+                    content = it,
                 )
             }
         }
@@ -93,6 +93,7 @@ private fun Preview_SettingsCenteredLabel() {
         SettingsGroup(title = { Text(text = "Test") }) {
             SettingsCenteredLabel(
                 title = { Text("Centered Label Text") },
+                subtitle = { Text(text = "Subtitle Text") },
             )
         }
     }

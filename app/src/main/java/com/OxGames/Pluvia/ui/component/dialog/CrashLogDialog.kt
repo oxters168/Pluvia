@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,13 +68,13 @@ fun CrashLogDialog(
                             navigationIcon = {
                                 IconButton(
                                     onClick = onDismissRequest,
-                                    content = { Icon(Icons.Default.Close, null) },
+                                    content = { Icon(Icons.Default.Close, stringResource(R.string.desc_close_dialog)) },
                                 )
                             },
                             actions = {
                                 IconButton(
                                     onClick = onSave,
-                                    content = { Icon(Icons.Default.Save, null) },
+                                    content = { Icon(Icons.Default.Save, stringResource(R.string.desc_save_crash)) },
                                 )
                             },
                         )

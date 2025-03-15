@@ -352,13 +352,13 @@ fun EmojiSelector(
                 .padding(horizontal = 8.dp),
         ) {
             ExtendedSelectorInnerButton(
-                text = "Emoticons",
+                text = stringResource(R.string.chat_emoticons),
                 onClick = { onInnerSelection(EmojiStickerSelector.EMOJI) },
                 selected = emojiSelector == EmojiStickerSelector.EMOJI,
                 modifier = Modifier.weight(1f),
             )
             ExtendedSelectorInnerButton(
-                text = "Stickers",
+                text = stringResource(R.string.chat_stickers),
                 onClick = { onInnerSelection(EmojiStickerSelector.STICKER) },
                 selected = emojiSelector == EmojiStickerSelector.STICKER,
                 modifier = Modifier.weight(1f),
@@ -436,7 +436,11 @@ fun EmoteTable(
                         url + emoticon.name
                     },
                     imageOptions = ImageOptions(
-                        contentDescription = stringResource(if (emoticon.isSticker) R.string.sticker else R.string.emoticon, emoticon.name),
+                        contentDescription = if (emoticon.isSticker) {
+                            stringResource(R.string.desc_chat_sticker, emoticon.name)
+                        } else {
+                            stringResource(R.string.desc_chat_emoticon, emoticon.name)
+                        },
                         contentScale = ContentScale.Inside,
                     ),
                     loading = {

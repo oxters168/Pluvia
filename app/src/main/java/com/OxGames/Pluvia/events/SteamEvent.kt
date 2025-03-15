@@ -14,11 +14,11 @@ sealed interface SteamEvent<T> : Event<T> {
     data class QrChallengeReceived(val challengeUrl: String) : SteamEvent<Unit>
 
     // data object AppInfoReceived : SteamEvent<Unit>
-    data object ForceCloseApp : SteamEvent<Unit>
     data object Disconnected : SteamEvent<Unit>
+    data object ForceCloseApp : SteamEvent<Unit>
     data object RemotelyDisconnected : SteamEvent<Unit>
 
     // This isn't a SteamEvent, but since its the only one now, it can stay
-    data class OnProfileInfo(val info: ProfileInfoCallback) : SteamEvent<Unit>
     data class OnAliasHistory(val names: List<String>) : SteamEvent<Unit>
+    data class OnProfileInfo(val info: ProfileInfoCallback) : SteamEvent<Unit>
 }

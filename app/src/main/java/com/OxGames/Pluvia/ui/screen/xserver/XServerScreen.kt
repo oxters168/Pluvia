@@ -77,7 +77,8 @@ fun XServerScreen(
         dismissBtnText = R.string.cancel,
         icon = Icons.AutoMirrored.Filled.ExitToApp,
         title = R.string.dialog_title_exit_game,
-        message = "Are you sure you want to close ${xServerState.gameName.ifEmpty { stringResource(R.string.empty_game_name) }}?",
+        message = context.getString(R.string.dialog_message_exit_game) +
+            xServerState.gameName.ifEmpty { stringResource(R.string.xserver_no_game_name) },
     )
 
     BackHandler {
