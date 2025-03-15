@@ -133,6 +133,7 @@
     <string name="desc_box64_list_preset">Preset list</string>
     <string name="desc_box64_variable_info">Variable info</string>
     <string name="desc_chat_emoticon">Emoticon %1$s</string>
+    <string name="desc_chat_scroll_down">Scroll back down to most recent chat message</string>
     <string name="desc_chat_sticker">Sticker %1$s</string>
     <string name="desc_chip_item">Chip Item %1$s</string>
     <string name="desc_close_dialog">Close Dialog</string>
@@ -144,7 +145,9 @@
     <string name="desc_fg_notification">Allows to display Pluvia foreground notifications</string>
     <string name="desc_fg_notification_title">Pluvia Foreground Service</string>
     <string name="desc_filters">Filters button</string>
+    <string name="desc_friend_alias_history">Show previous aliases</string>
     <string name="desc_friend_avatar">%1$s profile avatar</string>
+    <string name="desc_friend_edit_nickname">Edit friend\'s nickname</string>
     <string name="desc_friend_header_action">Collapse or Expand header</string>
     <string name="desc_library_icon">%1$s client icon</string>
     <string name="desc_library_search_clear">Clear search query</string>

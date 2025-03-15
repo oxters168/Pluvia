@@ -435,7 +435,7 @@ private fun ProfileDetailsScreen(
             onDismissRequest = {
                 setNickNameDialog = false
             },
-            icon = { Icon(imageVector = Icons.Default.Edit, contentDescription = null) },
+            icon = { Icon(imageVector = Icons.Default.Edit, contentDescription = stringResource(R.string.desc_friend_edit_nickname)) },
             title = { Text(text = "Set Nickname") },
             text = {
                 Column {
@@ -474,7 +474,7 @@ private fun ProfileDetailsScreen(
             onDismissRequest = {
                 showPreviousAliasDialog = false
             },
-            icon = { Icon(imageVector = Icons.Default.History, contentDescription = null) },
+            icon = { Icon(imageVector = Icons.Default.History, contentDescription = stringResource(R.string.desc_friend_alias_history)) },
             title = { Text(text = "Past Aliases") },
             text = {
                 LazyColumn {

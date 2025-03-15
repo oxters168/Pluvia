@@ -238,7 +238,10 @@ private fun ChatMessages(
                     }
                 },
                 content = {
-                    Icon(imageVector = Icons.Default.KeyboardDoubleArrowDown, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Default.KeyboardDoubleArrowDown,
+                        contentDescription = stringResource(R.string.desc_chat_scroll_down),
+                    )
                 },
             )
         }

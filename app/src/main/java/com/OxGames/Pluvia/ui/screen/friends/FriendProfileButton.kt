@@ -52,7 +52,7 @@ fun ProfileButton(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = text,
                 modifier = Modifier.size(24.dp),
             )
             Spacer(modifier = Modifier.height(4.dp))

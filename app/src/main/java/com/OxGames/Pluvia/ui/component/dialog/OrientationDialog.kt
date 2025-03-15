@@ -54,7 +54,7 @@ fun OrientationDialog(
         icon = {
             Icon(
                 imageVector = Icons.Default.ScreenRotation,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.dialog_title_orientations),
             )
         },
         title = {

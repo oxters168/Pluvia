@@ -113,13 +113,13 @@ fun ProfileDialog(
                 /* Action Buttons */
                 Spacer(modifier = Modifier.height(16.dp))
                 FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = onSettings) {
-                    Icon(imageVector = Icons.Default.Settings, contentDescription = null)
+                    Icon(imageVector = Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSize))
                     Text(text = stringResource(R.string.settings))
                 }
 
                 FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = onLogout) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                    Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = stringResource(R.string.logout))
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSize))
                     Text(text = stringResource(R.string.logout))
                 }

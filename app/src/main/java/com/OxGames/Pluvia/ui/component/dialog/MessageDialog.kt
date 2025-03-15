@@ -38,7 +38,7 @@ fun MessageDialog(
     when {
         visible -> {
             AlertDialog(
-                icon = icon?.let { { Icon(imageVector = icon, contentDescription = null) } },
+                icon = icon?.let { { Icon(imageVector = icon, contentDescription = title?.let { stringResource(it) }) } },
                 title = title?.let { { Text(text = stringResource(it)) } },
                 text = message?.let {
                     {
