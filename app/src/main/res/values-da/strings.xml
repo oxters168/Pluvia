@@ -168,7 +168,7 @@
     <string name="dialog_message_no_space">Den app, der installeres, kræver %1$s plads, men der er kun %2$s tilbage på denne enhed</string>
     <string name="dialog_message_sync_error">Kunne ikke synkronisere gemte filer: %1$s</string>
     <string name="dialog_message_sync_multiple">Flere afventende fjern oberationer. Prøv igen senere</string>
-    <string name="dialog_message_sync_none">Modtaget afventende fjern oberationer, hvis operation var \ingen\'</string>
+    <string name="dialog_message_sync_none">Modtaget afventende fjern oberationer, hvis ingen operation var aktiv.</string>
     <string name="dialog_message_sync_terminated">App-session suspenderet</string>
     <string name="dialog_message_tip">Tak fordi du bruger Pluvia. Overvej venligst at støtte os ved at give drikkepenge det beløb, der er behageligt for dig.</string>
     <string name="dialog_message_unsaved_changes">Er du sikker på, at du vil kassere dine ændringer?</string>
