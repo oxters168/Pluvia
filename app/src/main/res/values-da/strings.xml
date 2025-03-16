@@ -1,0 +1,407 @@
+<resources>
+    <string name="app_name">Pluvia</string>
+    <string name="title_ubuntufs">Ubuntu FS</string>
+
+    <!-- Winlator || Win Components -->
+    <string name="direct3d">Direct3D</string>
+    <string name="directsound">DirectSound</string>
+    <string name="directmusic">DirectMusic</string>
+    <string name="directplay">DirectPlay</string>
+    <string name="directshow">DirectShow</string>
+    <string name="directx">DirectX</string>
+    <string name="vcrun2010">Visual C++ 2010</string>
+    <string name="wmdecoder">Windows Media Decoder</string>
+
+    <!-- Placeholder Text || Don't Translate -->
+    <string name="lorem">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+        do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud exercitation ullamco
+        laboris nisi ut aliquip ex ea commodo consequat. Duis aute
+        irure dolor in reprehenderit in voluptate velit esse cillum
+        dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+        cupidatat non proident, sunt in culpa qui officia deserunt
+        mollit anim id est laborum.</string>
+
+    <!-- Navigation Titles -->
+    <string name="destination_downloads">Downloads</string>
+    <string name="destination_friends">Venner</string>
+    <string name="destination_library">Bibliotek</string>
+
+    <!-- App Theme Settings -->
+    <string name="theme_auto">Systemstandard</string>
+    <string name="theme_day">Lyst</string>
+    <string name="theme_night">Mørkt</string>
+    <string name="theme_amoled">Mørkt + AMOLED</string>
+
+    <!-- Top Bar Titles -->
+    <string name="title_box64_presets">Box64 Indstillinger</string>
+    <string name="title_web_view">Pluvia Webvisning</string>
+    <string name="title_settings">Indstillinger</string>
+    <string name="title_downloads">Downloads</string>
+
+    <!-- Two Factor Responses -->
+    <string name="steam_2fa_confirmation">Brug Steam-mobilappen til at bekræfte dit login...</string>
+    <string name="steam_2fa_device">Indtast venligst din 2-faktor godkendelseskode fra din godkendelsesapp.</string>
+    <string name="steam_2fa_email">Indtast venligst godkendelseskoden sendt til e-mailen på %s</string>
+    <string name="steam_2fa_incorrect">Den tidligere kode var forkert, prøv venligst igen.</string>
+
+    <!-- Single Words -->
+    <string name="advanced">Advanceret</string>
+    <string name="block">Blok</string>
+    <string name="box64">Box64</string>
+    <string name="cancel">Afslut</string>
+    <string name="close">Luk</string>
+    <string name="confirm">Bekræft</string>
+    <string name="copy">Kopier</string>
+    <string name="delete">Slet</string>
+    <string name="discard">Kassér</string>
+    <string name="dismiss">Afsked</string>
+    <string name="downloads">Downloads</string>
+    <string name="exit">Luk</string>
+    <string name="favorite">Favorit</string>
+    <string name="filters">Filtre</string>
+    <string name="games">Spil</string>
+    <string name="general">Generel</string>
+    <string name="height">Skærmhøjde</string>
+    <string name="home">Hjem</string>
+    <string name="install">Installer</string>
+    <string name="library">Bibliotek</string>
+    <string name="loading">Indlæser…</string>
+    <string name="login">Log ind</string>
+    <string name="logout">Log Ud</string>
+    <string name="name">Navn</string>
+    <string name="no">Nej</string>
+    <string name="ok">OK</string>
+    <string name="options">Valgmuligheder</string>
+    <string name="password">Adgangskode</string>
+    <string name="play">Spil</string>
+    <string name="proceed">Fortsæt</string>
+    <string name="remove">Slet</string>
+    <string name="retry">Prøv Igen</string>
+    <string name="send">Send</string>
+    <string name="settings">Indstillinger</string>
+    <string name="system">System</string>
+    <string name="tip">Tip</string>
+    <string name="unnamed">Unavngivet</string>
+    <string name="username">Brugernavn</string>
+    <string name="value">Værdi</string>
+    <string name="width">Skærmbredde</string>
+    <string name="yes">Ja</string>
+
+    <!-- Box 86 || Box 64 -->
+    <string name="box64_name_label">Indstillings navn</string>
+    <string name="box64_env_variables">Miljøvariabler</string>
+    <string name="box64_stability">Stabilitet</string>
+    <string name="box64_compatibility">Kompatibilitet</string>
+    <string name="box64_intermediate">Mellemliggende</string>
+    <string name="box64_performance">Ydeevne</string>
+    <string name="box86_64_env_var_help__dynarec_safeflags"><![CDATA[
+         Håndtering af flag på CALL/RET opkoder<br /><br />
+        <b>0</b> : Behandler CALL/RET, som om det aldrig havde brug for flag (hurtigere, ustabilt)<br />
+        <b>1</b> : De fleste RET har brug for flag, de fleste OPKALD vil ikke<br />
+        <b>2</b> : Alle CALL/RET skal bruge flag (langsommere)
+    ]]></string>
+    <string name="box86_64_env_var_help__dynarec_fastnan">Generation af -NAN som på x86</string>
+    <string name="box86_64_env_var_help__dynarec_fastround">Generering af præcis x86 afrunding</string>
+    <string name="box86_64_env_var_help__dynarec_x87double">Brug af Float/Double til x87-emulering</string>
+    <string name="box86_64_env_var_help__dynarec_bigblock"><![CDATA[
+        Dynarec bygger BigBlock<br /><br />
+        <b>0</b> : Forsøg ikke at bygge en så stor blok som muligt<br />
+        <b>1</b> : Byg Dynarec-blok så stor som muligt<br />
+        <b>2</b> : Byg Dynarec-blok større (fortsæt, når blokken overlapper, men kun for blokke i elverhukommelsen)<br />
+        <b>3</b> : Byg Dynarec-blok større (fortsæt, når blokken overlapper, for alle typer hukommelse)
+    ]]></string>
+    <string name="box86_64_env_var_help__dynarec_strongmem"><![CDATA[
+        Simulering af Strong Memory-model<br /><br />
+        <b>0</b> : Prøv ikke noget særligt<br />
+        <b>1</b> : Aktiver en hukommelsesbarriere, når du skriver til hukommelsen (på nogle MOV-opkoder)<br />
+        <b>2</b> : Alle 1 plus en hukommelsesbarriere ved hver skrivning til hukommelse ved hjælp af MOV<br />
+        <b>3</b> : Alle 2 plus Memory Barrier ved læsning fra hukommelsen og på nogle SSE/SSE2 opkoder
+    ]]></string>
+    <string name="box86_64_env_var_help__dynarec_forward">Definerer den maksimalt tilladte fremadrettede værdi, når der bygges en blok</string>
+    <string name="box86_64_env_var_help__dynarec_callret">Optimering af CALL/RET opkoder</string>
+    <string name="box86_64_env_var_help__dynarec_wait">Definerer, om Dynarec vil vente på, at FillBlock er klar</string>
+
+    <!-- Descriptions || Content Descriptions -->
+    <string name="desc_account_button">Logget ind som profil</string>
+    <string name="desc_add_env_variable">Tilføj miljøvariabel</string>
+    <string name="desc_box64_close">Close Box64 Indstillinger</string>
+    <string name="desc_box64_copy_preset">Dupliker Indstillinger</string>
+    <string name="desc_box64_create_preset">Opret Indstillinger</string>
+    <string name="desc_box64_delete_preset">Slet Indstillinger</string>
+    <string name="desc_box64_list_preset">indstillet liste</string>
+    <string name="desc_box64_variable_info">Variabel info</string>
+    <string name="desc_chat_emoticon">Humørikon %1$s</string>
+    <string name="desc_chat_scroll_down">Rul tilbage ned til den seneste chatbesked</string>
+    <string name="desc_chat_sticker">Klistermærke %1$s</string>
+    <string name="desc_chip_item">Chip Punkt %1$s</string>
+    <string name="desc_close_dialog">Luk Dialog</string>
+    <string name="desc_container_known_variable_name">Liste kendte variabelnavne</string>
+    <string name="desc_delete_variable">Slet variabel</string>
+    <string name="desc_dropdown_arrow">Dropdown-pil</string>
+    <string name="desc_failed_image">Billedet kunne ikke indlæses</string>
+    <string name="desc_failed_image_alt">[Billedet blev ikke fundet]</string>
+    <string name="desc_fg_notification">Giver mulighed for at vise Pluvia-forgrundsmeddelelser</string>
+    <string name="desc_fg_notification_title">Pluvia Forgrundstjeneste</string>
+    <string name="desc_filters">Filtre knap</string>
+    <string name="desc_friend_alias_history">Vis tidligere aliaser</string>
+    <string name="desc_friend_avatar">%1$s profil avatar</string>
+    <string name="desc_friend_edit_nickname">Rediger vens kaldenavn</string>
+    <string name="desc_friend_header_action">Skjul eller udvid overskrift</string>
+    <string name="desc_library_icon">%1$s klient ikon</string>
+    <string name="desc_library_search_clear">Ryd søgning</string>
+    <string name="desc_login_hide_password">Skjul adgangskode</string>
+    <string name="desc_login_show_password">Vis adgangskode</string>
+    <string name="desc_nav_back">Naviger tilbage</string>
+    <string name="desc_qr_image">QR BGem crashlogillede</string>
+    <string name="desc_save_crash">Gem crashlog</string>
+    <string name="desc_show_emojis">Vis eller skjul humørikoner og klistermærker</string>
+
+    <!-- Dialog Messages -->
+    <string name="dialog_message_cancel_download">Er du sikker på, at du vil annullere download af appen?</string>
+    <string name="dialog_message_delete_app">Er du sikker på, at du vil slette denne app?\n\n\tStørrelse på disk: %1$s</string>
+    <string name="dialog_message_download_app">Den app, der installeres, har følgende pladskrav. Vil du fortsætte? Downloadstørrelse: %1$s Størrelse på disk: %2$s Tilgængelig plads: %3$s</string>
+    <string name="dialog_message_download_install_fs">Ubuntu Isoen skal downloades og installeres, før du kan redigere konfigurationen. Denne handling kan tage et par minutter. Vil du fortsætte?</string>
+    <string name="dialog_message_exit_game">"Er du sikker på, at du vil lukke spillet "</string>
+    <string name="dialog_message_install_fs">Ubuntu-billedet skal installeres, før du kan redigere konfigurationen. Denne handling kan tage et par minutter. Vil du fortsætte?</string>
+    <string name="dialog_message_no_space">Den app, der installeres, kræver %1$s plads, men der er kun %2$s tilbage på denne enhed</string>
+    <string name="dialog_message_sync_error">Kunne ikke synkronisere gemte filer: %1$s</string>
+    <string name="dialog_message_sync_multiple">Flere afventende fjern oberationer. Prøv igen senere</string>
+    <string name="dialog_message_sync_none">Modtaget afventende fjern oberationer, hvis operation var \'ingen\'</string>
+    <string name="dialog_message_sync_terminated">App-session suspenderet</string>
+    <string name="dialog_message_tip">Tak fordi du bruger Pluvia. Overvej venligst at støtte os ved at give drikkepenge det beløb, der er behageligt for dig.</string>
+    <string name="dialog_message_unsaved_changes">Er du sikker på, at du vil kassere dine ændringer?</string>
+    <string name="dialog_message_libraries">
+        JavaSteam - github.com/Longi94/JavaSteam\n
+        Winlator - github.com/brunodev85/winlator\n
+        Ubuntu RootFs - releases.ubuntu.com/focal\n
+        Wine - winehq.org\n
+        Box86/Box64 - box86.org\n
+        PRoot - proot-me.github.io\n
+        Mesa (Turnip/Zink/VirGL) - mesa3d.org\n
+        DXVK - github.com/doitsujin/dxvk\n
+        VKD3D - gitlab.winehq.org/wine/vkd3d\n
+        D8VK - github.com/AlpyneDreams/d8vk\n
+        CNC DDraw - github.com/FunkyFr3sh/cnc-ddraw</string>
+    <string name="dialog_message_crash">
+        Undskyld!\n\n
+        Det ville være rart at vide om det seneste problem, du har haft.\n\n
+        Du kan se og eksportere den seneste crashlog i appens indstillinger\n\n
+        og vedhæft det som et Github-problem i projektets repository.\n\n
+        Link til Github repo er også i indstillinger!
+		- Du bedes kun skrive på engelsk på vores github -</string>
+    <string name="dialog_message_sync_conflict">
+        Der er en ny fjernlagring og en ny lokal lagring,
+        hvilken en vil du gerne beholde?\n\n
+        Lokalt:\n\t %1$s \n
+        Fjernlagring:\n\t%2$s</string>
+    <string name="dialog_message_app_running">
+        Du er logget ind på en anden enhed (%1$s) som allerede spiller %2$s (%3$s),
+        og den lagring er endnu ikke i skyen.\n
+        Du kan stadig spille dette spil, men det vil afbryde det andet
+        session fra Steam og kan skabe en lagringskonflikt, når sessionens fremskridt synkroniseres</string>
+    <string name="dialog_message_pending_upload">
+        Du spillede %1$s på enheden %2$s (%3$s), og den lagring er endnu ikke i skyen.
+        (upload ikke startet)\nDu kan stadig spille dette spil, men det kan skabe en konflikt
+        når dine tidligere spilfremskridt er uploadet.</string>
+    <string name="dialog_message_sync_upload">
+        Du spillede %1$s på enheden %2$s (%3$s), og lagringen af ​​den session uploades stadig.\nPrøv igen senere.</string>
+
+    <!-- Dialog Titles -->
+    <string name="dialog_title_app_running">App Kører</string>
+    <string name="dialog_title_app_theme">App Tema</string>
+    <string name="dialog_title_cancel_download">Annuller download</string>
+    <string name="dialog_title_close_app">Er du sikker på, at du vil lukke Pluvia?</string>
+    <string name="dialog_title_container_config">%1$s Konfig</string>
+    <string name="dialog_title_default_container_config">Standard Container Config</string>
+    <string name="dialog_title_delete_app">Slet App</string>
+    <string name="dialog_title_download_app">Installer App</string>
+    <string name="dialog_title_download_install_fs">Download &amp; Installer ImageFS</string>
+    <string name="dialog_title_exit_game">Forlad Spillet</string>
+    <string name="dialog_title_install_fs">Installer ImageFS</string>
+    <string name="dialog_title_libraries">Brugte biblioteker</string>
+    <string name="dialog_title_new_env_variable">Ny miljøvariabel</string>
+    <string name="dialog_title_no_space">Ikke nok plads</string>
+    <string name="dialog_title_orientations">Tilladte orienteringer</string>
+    <string name="dialog_title_palette_style">Palette stil</string>
+    <string name="dialog_title_pending_upload">Afventer upload</string>
+    <string name="dialog_title_recent_crash">Seneste nedbrud</string>
+    <string name="dialog_title_start_screen">Startskærm</string>
+    <string name="dialog_title_sync_conflict">Gem konflikt</string>
+    <string name="dialog_title_sync_error">Synkroniseringsfejl</string>
+    <string name="dialog_title_sync_upload">Upload i gang</string>
+    <string name="dialog_title_unsaved_changes">Ikke-gemte ændringer</string>
+
+    <!-- Dialog Actions -->
+    <string name="dialog_action_keep_local">Hold dig Lokalt</string>
+    <string name="dialog_action_keep_remote">Hold dig Fjernt</string>
+    <string name="dialog_action_play_anyway">Spil alligevel</string>
+
+    <!-- Library Filter Titles -->
+    <string name="filter_app_status">App Status</string>
+    <string name="filter_app_type">App Type</string>
+
+    <!-- Library Filter Items -->
+    <string name="app_filter_application">Application</string>
+    <string name="app_filter_demo">Demo</string>
+    <string name="app_filter_game">Spil</string>
+    <string name="app_filter_installed">Installeret</string>
+    <string name="app_filter_shared">Familie</string>
+    <string name="app_filter_tool">Værktøj</string>
+
+    <!-- Library App Launch Options -->
+    <string name="app_option_menu_edit">Rediger container</string>
+    <string name="app_option_menu_open">Åben container</string>
+    <string name="app_option_menu_remove">Afinstaller</string>
+    <string name="app_option_menu_store">Åbn butiksside</string>
+
+    <!-- Orientation -->
+    <string name="orientation_landscape">Landskab</string>
+    <string name="orientation_portrait">Portræt</string>
+	<string name="orientation_rev_landscape">Omvendt landskab</string>
+    Uspecificeret<string name="orientation_rev_portrait">Omvendt portræt</string>
+    <string name="orientation_unspecified">Uspecificeret</string>
+
+    <!-- Toast -->
+	<string name="toast_container_reset_verify">Er du sikker? Langt klik igen for at bekræfte</string>
+    <string name="toast_containers_reset">Nulstilling af beholdere</string>
+    <string name="toast_failed_crash_save">Kunne ikke gemme crashlog på destinationen</string>
+    <string name="toast_failed_log_save">Kunne ikke gemme logcat på destinationen</string>
+    <string name="toast_settings_activate">Lang klik for at aktivere</string>
+
+    <!-- Settings -->
+    <string name="settings_allowed_orientations_subtitle">Vælg, hvilke retninger der kan roteres til, når du er i spillet</string>
+    <string name="settings_allowed_orientations_title">Tilladte orienteringer</string>
+    <string name="settings_app_palette_subtitle">Skift Material Design 3-farvepaletten</string>
+    <string name="settings_app_palette_title">Palette stil</string>
+    <string name="settings_app_theme_subtitle">Vælg mellem Dag, Nat eller Auto</string>
+    <string name="settings_app_theme_title">App-tema</string>
+    <string name="settings_box64_presets_subtitle">Se, rediger og opret Box64-indstillinger</string>
+    <string name="settings_box64_presets_title">Box64 indstillinger</string>
+    <string name="settings_broadcast_game_subtitle">Giv Steam besked om, at du spiller et spil. Dette gør dig grøn</string>
+    <string name="settings_broadcast_game_title">Vis spille spil</string>
+    <string name="settings_clear_db_subtitle">[Lukker app] Kan hjælpe med at løse problemer med bibliotekselementer eller meddelelser.</string>
+    <string name="settings_clear_db_title">Ryd lokal database</string>
+    <string name="settings_clear_pref_subtitle">[Lukker app] Logger klienten ud og sletter lokale præferencedata.</string>
+    <string name="settings_clear_pref_title">Ryd præferencer</string>
+    <string name="settings_default_crash_filename">Intet filnavn</string>
+    <string name="settings_default_crash_message">Kunne ikke læse crashlog.</string>
+    <string name="settings_group_debug">Fejlretning</string>
+    <string name="settings_group_emulation">Emulering</string>
+    <string name="settings_group_info">Info</string>
+    <string name="settings_group_interface">Grænseflade</string>
+    <string name="settings_modify_default_config_subtitle">De indledende containerindstillinger for hvert spil (påvirker ikke allerede installerede spil)</string>
+    <string name="settings_modify_default_config_title">Rediger standardkonfiguration</string>
+    <string name="settings_reset_containers_subtitle">Dette vil slette containeren, standard containerindstillinger og alle containerindstillinger pr. spil.</string>
+    <string name="settings_reset_containers_title">Fjern og nulstil ALLE beholdere</string>
+    <string name="settings_reset_image_cache_subtitle">Fjern alle ISOer, der blev indlæst.</string>
+    <string name="settings_reset_image_cache_title">Ryd isocache</string>
+    <string name="settings_save_logcat_subtitle">Gemmer kun et øjebliksbillede af logcat for denne app's PID</string>
+    <string name="settings_save_logcat_title">Gem logcat</string>
+    <string name="settings_show_libraries_subtitle">Se hvilke teknologier der gør Pluvia mulig</string>
+    <string name="settings_show_libraries_title">Brugte biblioteker</string>
+    <string name="settings_show_privacy_subtitle">Åbner et link til Pluvias privatlivspolitik</string>
+    <string name="settings_show_privacy_title">Privatlivspolitik</string>
+    <string name="settings_show_source_subtitle">Se kildekoden til dette projekt</string>
+    <string name="settings_show_source_title">Kildekode</string>
+    <string name="settings_show_tip_subtitle">Stopper tipmeddelelsen i at blive vist</string>
+    <string name="settings_show_tip_title">Bed om drikkepenge ved opstart</string>
+    <string name="settings_start_destination_subtitle">Vælg mellem bibliotek, downloads eller venner</string>
+    <string name="settings_start_destination_title">Start Destination</string>
+    <string name="settings_tip_subtitle">Bidrage til den løbende udvikling</string>
+    <string name="settings_tip_title">Send tip</string>
+    <string name="settings_view_logcat_subtitle">Viser den seneste crash-log</string>
+    <string name="settings_view_logcat_subtitle_alt">Der blev ikke fundet nogen nylige crashlogs</string>
+    <string name="settings_view_logcat_title">Se seneste nedbrud</string>
+    <string name="settings_web_links_subtitle">Links åbnes med din primære webbrowser</string>
+    <string name="settings_web_links_title">Åbn weblinks eksternt</string>
+
+    <!-- Container -->
+    <string name="container_audio_driver">Audio Driver</string>
+    <string name="container_box64_version">Box64 Version</string>
+    <string name="container_direct_input">DirectInput</string>
+    <string name="container_dxvk_wrapper">DX Wrapper</string>
+    <string name="container_enable_csmt">Aktiver CSMT (Command Stream Multi-Thread)</string>
+    <string name="container_enable_strict_shader">Aktiver Strict Shader Math</string>
+    <string name="container_gpu_driver">Graphics Driver</string>
+    <string name="container_gpu_name">GPU Navn</string>
+    <string name="container_group_drives">Drives</string>
+    <string name="container_group_env_vars">Miljøvariabler</string>
+    <string name="container_group_launch_options">Startindstillinger</string>
+    <string name="container_group_win_components">Win Components</string>
+    <string name="container_group_wine_config">Wine Konfiguration</string>
+    <string name="container_mouse_warp">Mouse Warp Tilsidesæt</string>
+    <string name="container_no_drives">Ingen drev</string>
+    <string name="container_no_env_variables">Ingen miljøvariabler</string>
+    <string name="container_no_more_variables">Ikke flere kendte variable</string>
+    <string name="container_offscreen_rendering_mode">Offscreen-gengivelsestilstand</string>
+    <string name="container_proc_affinity">Processor Affinity</string>
+    <string name="container_proc_affinity_32">Processor Affinity (32-bit apps)</string>
+    <string name="container_screen_size">Skærmstørrelse</string>
+    <string name="container_show_fps">Vis FPS</string>
+    <string name="container_startup_selection">Opstartsvalg</string>
+    <string name="container_video_memory_size">Videohukommelsesstørrelse</string>
+    <string name="container_wined3d">WineD3D</string>
+    <string name="container_cpu_item">CPU%1$d</string>
+
+    <!-- Friends List Sticky Item Headers -->
+    <string name="friend_sticky_game">I Spil</string>
+    <string name="friend_sticky_offline">Offline</string>
+    <string name="friend_sticky_online">Online</string>
+    <string name="friend_sticky_request">Venneanmodning</string>
+
+    <!-- Library Selected App Game Info -->
+    <string name="game_info_controller">Controller Support:</string>
+    <string name="game_info_developer">Udvikler:</string>
+    <string name="game_info_publisher">Forlægger:</string>
+    <string name="game_info_release">Udgivelsesdato:</string>
+
+    <!-- Library Selected App Controller Support -->
+    <string name="controller_none">Ingen</string>
+    <string name="controller_partial">Delvis</string>
+    <string name="controller_full">Fuldt</string>
+
+    <!-- Chat -->
+    <string name="chat_input_placeholder">Send en besked</string>
+    <string name="chat_no_history">Ingen chathistorik</string>
+    <string name="chat_preview_message">Chat er stadig en tidlig funktion.\nRapportér venligst eventuelle problemer i projektets repo.</string>
+    <string name="chat_text_quoted">Oprindeligt indsendt af %1$s:\n</string>
+    <string name="chat_emoticons">Humørikoner</string>
+    <string name="chat_stickers">Klistermærker</string>
+
+    <!-- Friend -->
+    <string name="friend_add_favorite">Føj til favoritter</string>
+    <string name="friend_block">Bloker ven</string>
+    <string name="friend_favorite">Yndlingsven</string>
+    <string name="friend_playing_game">Spiller: %1$s</string>
+    <string name="friend_playing_game_id">Spiller: %1$d</string>
+    <string name="friend_remove">Fjern ven</string>
+    <string name="friend_shared_game">Familie Delt Spil</string>
+
+    <!-- Status -->
+    <string name="status_away">Væk</string>
+    <string name="status_invisible">Usynlig</string>
+    <string name="status_online">Online</string>
+
+    <!-- Search -->
+    <string name="search_text_placeholder">Søg efter spil</string>
+
+    <!-- Game Item -->
+    <string name="games_played_forever">Samlet spilletid: %1$s timer</string>
+    <string name="games_played_two_weeks">Spilletid sidste 2 uger: %1$s timer</string>
+
+    <!-- XServer -->
+    <string name="xserver_no_game_name">dit spil</string>
+
+    <!-- Login -->
+    <string name="login_fab_credential">Log ind med legitimationsoplysninger</string>
+    <string name="login_fab_qr">QR Log ind</string>
+    <string name="login_privacy_policy">Privatlivspolitik</string>
+    <string name="login_remember_session">Husk Mig</string>
+
+    <!-- Library -->
+    <string name="library_no_items">Ingen elementer angivet med valg</string>
+    <string name="library_no_selection">Vælg et element på listen for at se spiloplysninger</string>
+
+</resources>
