@@ -109,7 +109,9 @@ fun PluviaMain(
                     when (event.result) {
                         LoginResult.Success -> {
                             Timber.i("Navigating to library")
-                            navController.navigate(PluviaScreen.Home.route)
+                            navController.navigate(PluviaScreen.Home.route) {
+                                popUpTo(PluviaScreen.LoginUser.route) { inclusive = true }
+                            }
 
                             // If a crash happen, lets not ask for a tip yet.
                             // Instead, ask the user to contribute their issues to be addressed.
