@@ -85,6 +85,8 @@ class MainViewModel @Inject constructor(
     }
 
     init {
+        Timber.d("Initializing")
+
         PluviaApp.events.on<AndroidEvent.BackPressed, Unit>(onBackPressed)
         PluviaApp.events.on<SteamEvent.Connected, Unit>(onSteamConnected)
         PluviaApp.events.on<SteamEvent.Disconnected, Unit>(onSteamDisconnected)
@@ -106,6 +108,9 @@ class MainViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        super.onCleared()
+        Timber.d("onCleared")
+
         PluviaApp.events.off<AndroidEvent.BackPressed, Unit>(onBackPressed)
         PluviaApp.events.off<SteamEvent.Connected, Unit>(onSteamConnected)
         PluviaApp.events.off<SteamEvent.Disconnected, Unit>(onSteamDisconnected)

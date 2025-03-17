@@ -38,11 +38,14 @@ class FriendsViewModel @Inject constructor(
     }
 
     init {
+        Timber.d("Initializing")
+
         observeFriendList()
         PluviaApp.events.on<SteamEvent.OnAliasHistory, Unit>(onAliasHistory)
     }
 
     override fun onCleared() {
+        super.onCleared()
         Timber.d("onCleared")
 
         selectedFriendJob?.cancel()

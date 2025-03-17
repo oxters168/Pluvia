@@ -39,6 +39,8 @@ class LibraryViewModel @Inject constructor(
     private var appList: List<SteamApp> = emptyList()
 
     init {
+        Timber.d("Initializing")
+
         viewModelScope.launch(Dispatchers.IO) {
             steamAppDao.getAllOwnedApps(
                 // ownerIds = SteamService.familyMembers.ifEmpty { listOf(SteamService.userSteamId!!.accountID.toInt()) },
@@ -50,6 +52,11 @@ class LibraryViewModel @Inject constructor(
                 onFilterApps()
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        Timber.d("onCleared")
     }
 
     fun onModalBottomSheet(value: Boolean) {

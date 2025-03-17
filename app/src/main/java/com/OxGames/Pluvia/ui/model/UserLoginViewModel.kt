@@ -171,7 +171,7 @@ class UserLoginViewModel : ViewModel() {
     }
 
     init {
-        Timber.d("init")
+        Timber.d("Initializing")
 
         PluviaApp.events.on<SteamEvent.Connected, Unit>(onSteamConnected)
         PluviaApp.events.on<SteamEvent.Disconnected, Unit>(onSteamDisconnected)
@@ -198,6 +198,7 @@ class UserLoginViewModel : ViewModel() {
     }
 
     override fun onCleared() {
+        super.onCleared()
         Timber.d("onCleared")
 
         PluviaApp.events.off<SteamEvent.Connected, Unit>(onSteamConnected)

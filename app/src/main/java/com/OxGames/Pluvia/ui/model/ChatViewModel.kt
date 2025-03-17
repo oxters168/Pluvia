@@ -39,9 +39,12 @@ class ChatViewModel @Inject constructor(
     private var typingJob: Job? = null
     private var lastTypingSent = 0L
 
+    init {
+        Timber.d("Initializing")
+    }
+
     override fun onCleared() {
         super.onCleared()
-
         Timber.d("onCleared")
 
         chatJob?.cancel()

@@ -193,6 +193,7 @@ class XServerViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        super.onCleared()
         Timber.i("onCleared")
 
         PluviaApp.events.off<AndroidEvent.ActivityDestroyed, Unit>(onActivityDestroyed)
