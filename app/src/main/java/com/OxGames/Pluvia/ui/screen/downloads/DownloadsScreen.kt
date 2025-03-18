@@ -27,6 +27,7 @@ import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,6 +39,7 @@ import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.topbar.AccountButton
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun DownloadsScreen(
@@ -62,10 +64,13 @@ private fun DownloadsScreenContent(
 ) {
     val snackbarHost = remember { SnackbarHostState() }
     val navigator = rememberListDetailPaneScaffoldNavigator<Long>()
+    val scope = rememberCoroutineScope()
 
     // Pretty much the same as 'NavigableListDetailPaneScaffold'
     BackHandler(navigator.canNavigateBack(BackNavigationBehavior.PopUntilContentChange)) {
-        navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        scope.launch {
+            navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        }
     }
 
     ListDetailPaneScaffold(
@@ -77,7 +82,12 @@ private fun DownloadsScreenContent(
                 DownloadsScreenPane(
                     snackbarHost = snackbarHost,
                     onClick = {
-                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, 1L)
+                        scope.launch {
+                            navigator.navigateTo(
+                                pane = ListDetailPaneScaffoldRole.Detail,
+                                contentKey = 1L,
+                            )
+                        }
                     },
                     onBack = onBack,
                     onSettings = onSettings,
@@ -86,12 +96,14 @@ private fun DownloadsScreenContent(
             }
         },
         detailPane = {
-            val value = (navigator.currentDestination?.content ?: -1L)
+            val value = (navigator.currentDestination?.contentKey ?: -1L)
             DownloadsScreenDetail(
                 value = value,
                 onBack = {
                     // We're still in Adaptive navigation.
-                    navigator.navigateBack()
+                    scope.launch {
+                        navigator.navigateBack()
+                    }
                 },
             )
         },

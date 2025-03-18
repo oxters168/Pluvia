@@ -76,6 +76,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -120,6 +121,7 @@ import `in`.dragonbra.javasteam.enums.EResult
 import `in`.dragonbra.javasteam.steam.handlers.steamfriends.callback.ProfileInfoCallback
 import `in`.dragonbra.javasteam.types.SteamID
 import java.util.Date
+import kotlinx.coroutines.launch
 
 // TODO pressing back wont make the selected profile go to the initial details screen.
 
@@ -170,6 +172,7 @@ private fun FriendsScreenContent(
 ) {
     val listState = rememberLazyListState() // Hoisted high to preserve state
     val snackbarHost = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     var showGamesDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -183,7 +186,9 @@ private fun FriendsScreenContent(
 
     // Pretty much the same as 'NavigableListDetailPaneScaffold'
     BackHandler(navigator.canNavigateBack(BackNavigationBehavior.PopUntilContentChange)) {
-        navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        scope.launch {
+            navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        }
     }
 
     ListDetailPaneScaffold(
@@ -199,8 +204,10 @@ private fun FriendsScreenContent(
                     onBack = onBack,
                     onChat = onChat,
                     onFriendClick = {
-                        onFriendClick(it.id)
-                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        scope.launch {
+                            onFriendClick(it.id)
+                            navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        }
                     },
                     onHeaderAction = onHeaderAction,
                     onLogout = onLogout,

@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +33,7 @@ import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryDetailPane
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryListPane
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,10 +75,13 @@ private fun LibraryScreenContent(
     onLogout: () -> Unit,
 ) {
     val navigator = rememberListDetailPaneScaffoldNavigator<Int>()
+    val scope = rememberCoroutineScope()
 
     // Pretty much the same as 'NavigableListDetailPaneScaffold'
     BackHandler(navigator.canNavigateBack(BackNavigationBehavior.PopUntilContentChange)) {
-        navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        scope.launch {
+            navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        }
     }
 
     ListDetailPaneScaffold(
@@ -96,22 +101,26 @@ private fun LibraryScreenContent(
                     onSettings = onSettings,
                     onLogout = onLogout,
                     onNavigate = { item ->
-                        navigator.navigateTo(
-                            pane = ListDetailPaneScaffoldRole.Detail,
-                            content = item,
-                        )
+                        scope.launch {
+                            navigator.navigateTo(
+                                pane = ListDetailPaneScaffoldRole.Detail,
+                                contentKey = item,
+                            )
+                        }
                     },
                 )
             }
         },
         detailPane = {
-            val appId = (navigator.currentDestination?.content ?: SteamService.INVALID_APP_ID)
+            val appId = (navigator.currentDestination?.contentKey ?: SteamService.INVALID_APP_ID)
             AnimatedPane {
                 LibraryDetailPane(
                     appId = appId,
                     onBack = {
                         // We're still in Adaptive navigation.
-                        navigator.navigateBack()
+                        scope.launch {
+                            navigator.navigateBack()
+                        }
                     },
                     onClickPlay = { onClickPlay(appId, it) },
                 )
