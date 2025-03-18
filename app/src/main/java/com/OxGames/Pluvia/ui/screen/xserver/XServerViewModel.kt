@@ -90,8 +90,9 @@ class XServerViewModel @Inject constructor(
                 return null
             }
 
-            return SteamService.getAppInfoOf(_state.value.appId)?.let {
-                _state.update { it.copy(gameName = it.gameName) }
+            // TODO: What?
+            return SteamService.getAppInfoOf(_state.value.appId)?.let { appInfo ->
+                _state.update { it.copy(gameName = appInfo.name) }
                 SteamService.getWindowsLaunchInfos(_state.value.appId).firstOrNull()
             }
         }

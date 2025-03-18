@@ -16,7 +16,6 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,8 +76,10 @@ fun XServerScreen(
         dismissBtnText = R.string.cancel,
         icon = Icons.AutoMirrored.Filled.ExitToApp,
         title = R.string.dialog_title_exit_game,
-        message = context.getString(R.string.dialog_message_exit_game) +
-            xServerState.gameName.ifEmpty { stringResource(R.string.xserver_no_game_name) },
+        message = context.getString(
+            R.string.dialog_message_exit_game,
+            xServerState.gameName.ifEmpty { context.getString(R.string.xserver_no_game_name) },
+        ),
     )
 
     BackHandler {
