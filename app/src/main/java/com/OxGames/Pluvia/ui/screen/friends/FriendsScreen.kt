@@ -244,7 +244,7 @@ private fun FriendsListPane(
         snackbarHost = { SnackbarHost(snackbarHost) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Friends") },
+                title = { Text(text = stringResource(R.string.title_friends)) },
                 actions = {
                     AccountButton(
                         onSettings = onSettings,
@@ -342,7 +342,7 @@ private fun DefaultDetailsScreen() {
     ) {
         Text(
             modifier = Modifier.padding(24.dp),
-            text = "Select a friend to their profile",
+            text = stringResource(R.string.friend_no_selection),
         )
     }
 }
@@ -436,16 +436,21 @@ private fun ProfileDetailsScreen(
             onDismissRequest = {
                 setNickNameDialog = false
             },
-            icon = { Icon(imageVector = Icons.Default.Edit, contentDescription = stringResource(R.string.desc_friend_edit_nickname)) },
-            title = { Text(text = "Set Nickname") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.dialog_title_friend_set_nickname),
+                )
+            },
+            title = { Text(text = stringResource(R.string.dialog_title_friend_set_nickname)) },
             text = {
                 Column {
-                    Text(text = "Set a new nickname for ${state.profileFriend!!.name}")
+                    Text(text = stringResource(R.string.dialog_message_friend_set_nickname, state.profileFriend!!.name))
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = newNickName,
                         onValueChange = { newNickName = it },
-                        label = { Text(text = "Nickname") },
+                        label = { Text(text = stringResource(R.string.nickname)) },
                     )
                 }
             },
@@ -455,15 +460,13 @@ private fun ProfileDetailsScreen(
                         setNickNameDialog = false
                         onNickName(newNickName)
                     },
-                    content = { Text(text = "Confirm") },
+                    content = { Text(text = stringResource(R.string.confirm)) },
                 )
             },
             dismissButton = {
                 TextButton(
-                    onClick = {
-                        setNickNameDialog = false
-                    },
-                    content = { Text(text = "Cancel") },
+                    onClick = { setNickNameDialog = false },
+                    content = { Text(text = stringResource(R.string.cancel)) },
                 )
             },
         )
@@ -475,8 +478,13 @@ private fun ProfileDetailsScreen(
             onDismissRequest = {
                 showPreviousAliasDialog = false
             },
-            icon = { Icon(imageVector = Icons.Default.History, contentDescription = stringResource(R.string.desc_friend_alias_history)) },
-            title = { Text(text = "Past Aliases") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = stringResource(R.string.dialog_title_friend_past_aliases),
+                )
+            },
+            title = { Text(text = stringResource(R.string.dialog_title_friend_past_aliases)) },
             text = {
                 LazyColumn {
                     items(state.profileFriendAlias) { alias ->
@@ -487,7 +495,7 @@ private fun ProfileDetailsScreen(
                     if (state.profileFriendAlias.isEmpty()) {
                         item {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = "No past aliases found")
+                            Text(text = stringResource(R.string.dialog_message_friend_no_past_aliases))
                             Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
@@ -496,7 +504,7 @@ private fun ProfileDetailsScreen(
             confirmButton = {
                 TextButton(
                     onClick = { showPreviousAliasDialog = false },
-                    content = { Text(text = "Close") },
+                    content = { Text(text = stringResource(R.string.close)) },
                 )
             },
         )
@@ -518,7 +526,7 @@ private fun ProfileDetailsScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "Profile",
+                            text = stringResource(R.string.title_profile),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -586,13 +594,13 @@ private fun ProfileDetailsScreen(
             ) {
                 ProfileButton(
                     icon = Icons.AutoMirrored.Outlined.Chat,
-                    text = "Chat",
+                    text = stringResource(R.string.chat),
                     onClick = { onChat(state.profileFriend.id) },
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 ProfileButton(
                     icon = Icons.Outlined.Person,
-                    text = "Profile",
+                    text = stringResource(R.string.profile),
                     onClick = {
                         if (PrefManager.openWebLinksExternally) {
                             uriHandler.openUri(SteamUtils.getProfileUrl(state.profileFriend.id))
@@ -604,16 +612,14 @@ private fun ProfileDetailsScreen(
                 Spacer(modifier = Modifier.width(16.dp))
                 ProfileButton(
                     icon = Icons.Outlined.Games,
-                    text = "Games",
+                    text = stringResource(R.string.games),
                     onClick = onShowGames,
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 ProfileButton(
                     icon = Icons.Outlined.MoreVert,
-                    text = "More",
-                    onClick = {
-                        moreExpanded = !moreExpanded
-                    },
+                    text = stringResource(R.string.more),
+                    onClick = { moreExpanded = !moreExpanded },
                 )
             }
 
@@ -634,7 +640,7 @@ private fun ProfileDetailsScreen(
                     ) {
                         ProfileButton(
                             icon = Icons.Outlined.History,
-                            text = "View Aliases",
+                            text = stringResource(R.string.friend_view_aliases),
                             onClick = {
                                 onAlias()
                                 showPreviousAliasDialog = true
@@ -643,7 +649,7 @@ private fun ProfileDetailsScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.Edit,
-                            text = "Set Nickname",
+                            text = stringResource(R.string.friend_set_nickname),
                             onClick = {
                                 setNickNameDialog = true
                             },
@@ -651,23 +657,22 @@ private fun ProfileDetailsScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.PersonOff,
-                            text = "Block Friend",
+                            text = stringResource(R.string.friend_block),
                             onClick = {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.FRIEND_BLOCK,
                                     confirmBtnText = R.string.block,
                                     dismissBtnText = R.string.cancel,
-                                    title = R.string.friend_block,
-                                    message = "Are you sure you want to block ${state.profileFriend.nameOrNickname}?\n" +
-                                        "This will block them on all steam clients.",
+                                    title = R.string.dialog_title_friend_block,
+                                    message = context.getString(R.string.dialog_message_friend_block, state.profileFriend.nameOrNickname),
                                 )
                             },
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.PersonRemove,
-                            text = "Remove Friend",
+                            text = stringResource(R.string.dialog_title_friend_remove),
                             onClick = {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
@@ -675,8 +680,7 @@ private fun ProfileDetailsScreen(
                                     confirmBtnText = R.string.remove,
                                     dismissBtnText = R.string.cancel,
                                     title = R.string.friend_remove,
-                                    message = "Are you sure you want to remove ${state.profileFriend.nameOrNickname}?\n" +
-                                        "This will remove them on all steam clients.",
+                                    message = context.getString(R.string.dialog_message_friend_remove, state.profileFriend.nameOrNickname),
                                 )
                             },
                         )
@@ -698,16 +702,18 @@ private fun ProfileDetailsScreen(
                                     type = DialogType.FRIEND_FAVORITE,
                                     confirmBtnText = R.string.favorite,
                                     dismissBtnText = R.string.cancel,
-                                    title = R.string.friend_favorite,
-                                    message = "Are you sure you want to favorite ${state.profileFriend.nameOrNickname}?\n" +
-                                        "This will favorite them on all steam clients.",
+                                    title = R.string.dialog_title_friend_favorite,
+                                    message = context.getString(
+                                        R.string.dialog_message_friend_favorite,
+                                        state.profileFriend.nameOrNickname,
+                                    ),
                                 )
                             },
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.Notifications,
-                            text = "Set Alerts",
+                            text = stringResource(R.string.friend_set_alerts),
                             onClick = {
                                 Toast.makeText(context, "Notifications TODO", Toast.LENGTH_SHORT).show()
                             },
@@ -739,16 +745,24 @@ private fun ProfileDetailsScreen(
                                 // Steam launch: Sept 12, 2003
                                 val isValid = timeCreated.after(Date(1063267200000L))
                                 if (isValid) {
-                                    if (realName.isNotEmpty()) Text(text = "Name: $realName")
-                                    if (cityName.isNotEmpty()) Text(text = "City: $cityName")
-                                    if (stateName.isNotEmpty()) Text(text = "State: $stateName")
-                                    if (stateName.isNotEmpty()) Text(text = "Country: $countryName")
-                                    Text(text = "Created: $timeCreated")
+                                    if (realName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_name, realName))
+                                    }
+                                    if (cityName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_city, cityName))
+                                    }
+                                    if (stateName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_state, stateName))
+                                    }
+                                    if (stateName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_country, countryName))
+                                    }
+                                    Text(text = stringResource(R.string.friend_profile_created, timeCreated))
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text(text = "Summary:")
+                                    Text(text = stringResource(R.string.friend_profile_summary))
                                     BBCodeText(text = summary)
                                 } else {
-                                    Text("Profile most likely private.\nUnable to retrieve info")
+                                    Text(stringResource(R.string.friend_profile_private))
                                 }
                             }
                         }

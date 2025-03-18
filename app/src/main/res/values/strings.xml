@@ -39,6 +39,8 @@
     <string name="title_web_view">Pluvia Web View</string>
     <string name="title_settings">Settings</string>
     <string name="title_downloads">Downloads</string>
+    <string name="title_friends">Friends</string>
+    <string name="title_profile">Profile</string>
 
     <!-- Two Factor Responses -->
     <string name="steam_2fa_confirmation">Use the Steam Mobile App to confirm your sign in…</string>
@@ -51,6 +53,7 @@
     <string name="block">Block</string>
     <string name="box64">Box64</string>
     <string name="cancel">Cancel</string>
+    <string name="chat">Chat</string>
     <string name="close">Close</string>
     <string name="confirm">Confirm</string>
     <string name="copy">Copy</string>
@@ -70,13 +73,16 @@
     <string name="loading">Loading…</string>
     <string name="login">Login</string>
     <string name="logout">Log Out</string>
+    <string name="more">More</string>
     <string name="name">Name</string>
+    <string name="nickname">Nickname</string>
     <string name="no">No</string>
     <string name="ok">OK</string>
     <string name="options">Options</string>
     <string name="password">Password</string>
     <string name="play">Play</string>
     <string name="proceed">Proceed</string>
+    <string name="profile">Profile</string>
     <string name="remove">Remove</string>
     <string name="retry">Retry</string>
     <string name="send">Send</string>
@@ -145,9 +151,7 @@
     <string name="desc_fg_notification">Allows to display Pluvia foreground notifications</string>
     <string name="desc_fg_notification_title">Pluvia Foreground Service</string>
     <string name="desc_filters">Filters button</string>
-    <string name="desc_friend_alias_history">Show previous aliases</string>
     <string name="desc_friend_avatar">%1$s profile avatar</string>
-    <string name="desc_friend_edit_nickname">Edit friend\'s nickname</string>
     <string name="desc_friend_header_action">Collapse or Expand header</string>
     <string name="desc_library_icon">%1$s client icon</string>
     <string name="desc_library_search_clear">Clear search query</string>
@@ -164,6 +168,11 @@
     <string name="dialog_message_download_app">The app being installed has the following space requirements. Would you like to proceed? Download Size: %1$s Size on Disk: %2$s Available Space: %3$s</string>
     <string name="dialog_message_download_install_fs">The Ubuntu image needs to be downloaded and installed before being able to edit the configuration. This operation might take a few minutes. Would you like to continue?</string>
     <string name="dialog_message_exit_game">"Are you sure you want to close "</string>
+    <string name="dialog_message_friend_block">Are you sure you want to block %1$s?</string>
+    <string name="dialog_message_friend_favorite">Are you sure you want to favorite %1$s?</string>
+    <string name="dialog_message_friend_no_past_aliases">No past aliases found</string>
+    <string name="dialog_message_friend_remove">Are you sure you want to remove %1$s?</string>
+    <string name="dialog_message_friend_set_nickname">Set a new nickname for %1$s</string>
     <string name="dialog_message_install_fs">The Ubuntu image needs to be installed before being able to edit the configuration. This operation might take a few minutes. Would you like to continue?</string>
     <string name="dialog_message_no_space">The app being installed needs %1$s of space but there is only %2$s left on this device</string>
     <string name="dialog_message_sync_error">Failed to sync save files: %1$s</string>
@@ -218,6 +227,11 @@
     <string name="dialog_title_download_app">Install App</string>
     <string name="dialog_title_download_install_fs">Download &amp; Install ImageFS</string>
     <string name="dialog_title_exit_game">Exit Game</string>
+    <string name="dialog_title_friend_block">Block Friend</string>
+    <string name="dialog_title_friend_favorite">Favorite Friend</string>
+    <string name="dialog_title_friend_past_aliases">Past Aliases</string>
+    <string name="dialog_title_friend_remove">Remove Friend</string>
+    <string name="dialog_title_friend_set_nickname">Set Nickname</string>
     <string name="dialog_title_install_fs">Install ImageFS</string>
     <string name="dialog_title_libraries">Libraries Used</string>
     <string name="dialog_title_new_env_variable">New Environment Variable</string>
@@ -372,11 +386,21 @@
     <!-- Friend -->
     <string name="friend_add_favorite">Add to Favorites</string>
     <string name="friend_block">Block Friend</string>
-    <string name="friend_favorite">Favorite Friend</string>
     <string name="friend_playing_game">Playing: %1$s</string>
     <string name="friend_playing_game_id">Playing: %1$d</string>
     <string name="friend_remove">Remove Friend</string>
     <string name="friend_shared_game">Family Shared Game</string>
+    <string name="friend_no_selection">Select a friend to their profile</string>
+    <string name="friend_profile_city">City: %1$s</string>
+    <string name="friend_profile_country">Country: %1$s</string>
+    <string name="friend_profile_created">Created: %1$s</string>
+    <string name="friend_profile_name">Name: %1$s</string>
+    <string name="friend_profile_private">Profile most likely private.\nUnable to retrieve info</string>
+    <string name="friend_profile_state">State: %1$s</string>
+    <string name="friend_profile_summary">Summary:</string>
+    <string name="friend_set_alerts">Set Alerts</string>
+    <string name="friend_set_nickname">Set Nickname</string>
+    <string name="friend_view_aliases">View Aliases</string>
 
     <!-- Status -->
     <string name="status_away">Away</string>

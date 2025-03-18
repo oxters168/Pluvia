@@ -140,7 +140,7 @@ fun SettingsGroupDebug() {
             ),
             colors = settingsTileColorsDebug(),
             title = { Text(text = stringResource(R.string.settings_clear_db_title)) },
-            subtitle = { Text(stringResource(R.string.settings_clear_db_subtitle)) },
+            subtitle = { Text(text = stringResource(R.string.settings_clear_db_subtitle)) },
             onClick = {},
         )
 
@@ -177,7 +177,7 @@ fun SettingsGroupDebug() {
             ),
             colors = settingsTileColorsDebug(),
             title = { Text(text = stringResource(R.string.settings_reset_containers_title)) },
-            subtitle = { Text(stringResource(R.string.settings_reset_containers_subtitle)) },
+            subtitle = { Text(text = stringResource(R.string.settings_reset_containers_subtitle)) },
             onClick = {},
         )
 
