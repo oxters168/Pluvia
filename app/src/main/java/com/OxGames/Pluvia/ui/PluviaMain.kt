@@ -96,12 +96,10 @@ fun PluviaMain(
                 }
 
                 MainViewModel.MainUiEvent.OnLoggedOut -> {
-                    // Pop stack and go back to login.
-                    navController.popBackStack(
-                        route = PluviaScreen.LoginUser.route,
-                        inclusive = false,
-                        saveState = false,
-                    )
+                    navController.navigate(PluviaScreen.LoginUser.route) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
 
                 is MainViewModel.MainUiEvent.OnLogonEnded -> {
