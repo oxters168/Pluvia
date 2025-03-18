@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.data.GameProcessInfo
-import com.OxGames.Pluvia.di.IAppTheme
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.enums.LoginResult
 import com.OxGames.Pluvia.enums.PathType
@@ -15,6 +14,7 @@ import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.events.SteamEvent
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.screen.PluviaScreen
+import com.OxGames.Pluvia.utils.application.IAppTheme
 import com.materialkolor.PaletteStyle
 import com.winlator.xserver.Window
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -94,14 +94,15 @@ class MainViewModel @Inject constructor(
         PluviaApp.events.on<SteamEvent.LoggedOut, Unit>(onLoggedOut)
 
         viewModelScope.launch {
-            appTheme.themeFlow.collect { value ->
-                _state.update { it.copy(appTheme = value) }
+            launch {
+                appTheme.themeFlow.collect { value ->
+                    _state.update { it.copy(appTheme = value) }
+                }
             }
-        }
-
-        viewModelScope.launch {
-            appTheme.paletteFlow.collect { value ->
-                _state.update { it.copy(paletteStyle = value) }
+            launch {
+                appTheme.paletteFlow.collect { value ->
+                    _state.update { it.copy(paletteStyle = value) }
+                }
             }
         }
     }
