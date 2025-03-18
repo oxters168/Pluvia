@@ -12,17 +12,6 @@
     <string name="vcrun2010">Visual C++ 2010</string>
     <string name="wmdecoder">Windows Media Decoder</string>
 
-    <!-- Placeholder Text || Don't Translate -->
-    <string name="lorem">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-        do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        Ut enim ad minim veniam, quis nostrud exercitation ullamco
-        laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-        irure dolor in reprehenderit in voluptate velit esse cillum
-        dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-        cupidatat non proident, sunt in culpa qui officia deserunt
-        mollit anim id est laborum.</string>
-
     <!-- Navigation Titles -->
     <string name="destination_downloads">Downloads</string>
     <string name="destination_friends">Venner</string>
@@ -39,6 +28,8 @@
     <string name="title_web_view">Pluvia Webvisning</string>
     <string name="title_settings">Indstillinger</string>
     <string name="title_downloads">Downloads</string>
+    <string name="title_friends">Venner</string>
+    <string name="title_profile">Profil</string>
 
     <!-- Two Factor Responses -->
     <string name="steam_2fa_confirmation">Brug Steam-mobilappen til at bekræfte dit login...</string>
@@ -51,6 +42,7 @@
     <string name="block">Blok</string>
     <string name="box64">Box64</string>
     <string name="cancel">Afslut</string>
+    <string name="chat">Chat</string>
     <string name="close">Luk</string>
     <string name="confirm">Bekræft</string>
     <string name="copy">Kopier</string>
@@ -70,13 +62,16 @@
     <string name="loading">Indlæser…</string>
     <string name="login">Log ind</string>
     <string name="logout">Log Ud</string>
+    <string name="more">Mere</string>
     <string name="name">Navn</string>
+    <string name="nickname">Kaldenavn</string>
     <string name="no">Nej</string>
     <string name="ok">OK</string>
     <string name="options">Valgmuligheder</string>
     <string name="password">Adgangskode</string>
     <string name="play">Spil</string>
     <string name="proceed">Fortsæt</string>
+    <string name="profile">Profil</string>
     <string name="remove">Slet</string>
     <string name="retry">Prøv Igen</string>
     <string name="send">Send</string>
@@ -145,9 +140,7 @@
     <string name="desc_fg_notification">Giver mulighed for at vise Pluvia-forgrundsmeddelelser</string>
     <string name="desc_fg_notification_title">Pluvia Forgrundstjeneste</string>
     <string name="desc_filters">Filtre knap</string>
-    <string name="desc_friend_alias_history">Vis tidligere aliaser</string>
     <string name="desc_friend_avatar">%1$s profil avatar</string>
-    <string name="desc_friend_edit_nickname">Rediger vens kaldenavn</string>
     <string name="desc_friend_header_action">Skjul eller udvid overskrift</string>
     <string name="desc_library_icon">%1$s klient ikon</string>
     <string name="desc_library_search_clear">Ryd søgning</string>
@@ -164,6 +157,11 @@
     <string name="dialog_message_download_app">Den app, der installeres, har følgende pladskrav. Vil du fortsætte? Downloadstørrelse: %1$s Størrelse på disk: %2$s Tilgængelig plads: %3$s</string>
     <string name="dialog_message_download_install_fs">Ubuntu Isoen skal downloades og installeres, før du kan redigere konfigurationen. Denne handling kan tage et par minutter. Vil du fortsætte?</string>
     <string name="dialog_message_exit_game">"Er du sikker på, at du vil lukke spillet "</string>
+    <string name="dialog_message_friend_block">Er du sikker på, at du vil blokere %1$s?</string>
+    <string name="dialog_message_friend_favorite">Er du sikker på, at du vil sætte %1$s som favorit?</string>
+    <string name="dialog_message_friend_no_past_aliases">Ingen tidligere aliaser fundet</string>
+    <string name="dialog_message_friend_remove">Er du sikker på, at du vil fjerne %1$s?</string>
+    <string name="dialog_message_friend_set_nickname">Indstil et nyt kaldenavn til %1$s</string>
     <string name="dialog_message_install_fs">Ubuntu-billedet skal installeres, før du kan redigere konfigurationen. Denne handling kan tage et par minutter. Vil du fortsætte?</string>
     <string name="dialog_message_no_space">Den app, der installeres, kræver %1$s plads, men der er kun %2$s tilbage på denne enhed</string>
     <string name="dialog_message_sync_error">Kunne ikke synkronisere gemte filer: %1$s</string>
@@ -219,6 +217,11 @@
     <string name="dialog_title_download_app">Installer App</string>
     <string name="dialog_title_download_install_fs">Download &amp; Installer ImageFS</string>
     <string name="dialog_title_exit_game">Forlad Spillet</string>
+    <string name="dialog_title_friend_block">Bloker ven</string>
+    <string name="dialog_title_friend_favorite">Sæt ven som favorit</string>
+    <string name="dialog_title_friend_past_aliases">Tidligere aliaser</string>
+    <string name="dialog_title_friend_remove">Fjern ven</string>
+    <string name="dialog_title_friend_set_nickname">Indstil kaldenavn</string>
     <string name="dialog_title_install_fs">Installer ImageFS</string>
     <string name="dialog_title_libraries">Brugte biblioteker</string>
     <string name="dialog_title_new_env_variable">Ny miljøvariabel</string>
@@ -373,11 +376,21 @@
     <!-- Friend -->
     <string name="friend_add_favorite">Føj til favoritter</string>
     <string name="friend_block">Bloker ven</string>
-    <string name="friend_favorite">Yndlingsven</string>
+    <string name="friend_no_selection">Vælg en ven til deres profil</string>
     <string name="friend_playing_game">Spiller: %1$s</string>
     <string name="friend_playing_game_id">Spiller: %1$d</string>
+    <string name="friend_profile_city">By: %1$s</string>
+    <string name="friend_profile_country">Land: %1$s</string>
+    <string name="friend_profile_created">Oprettet: %1$s</string>
+    <string name="friend_profile_name">Navn: %1$s</string>
+    <string name="friend_profile_private">Profil højst sandsynligt privat.\nKan ikke hente oplysninger</string>
+    <string name="friend_profile_state">Stat: %1$s</string>
+    <string name="friend_profile_summary">Oversigt:</string>
     <string name="friend_remove">Fjern ven</string>
+    <string name="friend_set_alerts">Indstil advarsler</string>
+    <string name="friend_set_nickname">Indstil kaldenavn</string>
     <string name="friend_shared_game">Familie Delt Spil</string>
+    <string name="friend_view_aliases">Se aliaser</string>
 
     <!-- Status -->
     <string name="status_away">Væk</string>
@@ -397,6 +410,7 @@
     <!-- Login -->
     <string name="login_fab_credential">Log ind med legitimationsoplysninger</string>
     <string name="login_fab_qr">QR Log ind</string>
+    <string name="login_footer">Pluvia er en uofficiel Steam™-klient.\n</string>
     <string name="login_privacy_policy">Privatlivspolitik</string>
     <string name="login_remember_session">Husk Mig</string>
 
