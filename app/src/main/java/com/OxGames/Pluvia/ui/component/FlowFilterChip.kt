@@ -25,7 +25,7 @@ fun FlowFilterChip(
 ) {
     FilterChip(
         modifier = Modifier
-            .padding(end = 8.dp)
+            .padding(horizontal = 4.dp)
             .then(modifier),
         onClick = onClick,
         label = label,
