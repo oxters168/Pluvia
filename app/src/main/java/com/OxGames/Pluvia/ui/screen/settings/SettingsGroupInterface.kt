@@ -15,8 +15,8 @@ import androidx.compose.ui.res.stringResource
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
+import com.OxGames.Pluvia.enums.HomeDestination
 import com.OxGames.Pluvia.ui.component.dialog.SingleChoiceDialog
-import com.OxGames.Pluvia.ui.enums.HomeDestination
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsAlt
 import com.alorma.compose.settings.ui.SettingsGroup

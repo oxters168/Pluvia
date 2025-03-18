@@ -29,7 +29,9 @@ import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
+import com.OxGames.Pluvia.enums.DialogType
 import com.OxGames.Pluvia.enums.LoginResult
+import com.OxGames.Pluvia.enums.Orientation
 import com.OxGames.Pluvia.enums.PathType
 import com.OxGames.Pluvia.enums.SaveLocation
 import com.OxGames.Pluvia.enums.SyncResult
@@ -38,9 +40,6 @@ import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.component.dialog.LoadingDialog
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
-import com.OxGames.Pluvia.ui.enums.DialogType
-import com.OxGames.Pluvia.ui.enums.Orientation
-import com.OxGames.Pluvia.ui.model.MainViewModel
 import com.OxGames.Pluvia.ui.screen.HomeScreen
 import com.OxGames.Pluvia.ui.screen.PluviaScreen
 import com.OxGames.Pluvia.ui.screen.chat.ChatScreen

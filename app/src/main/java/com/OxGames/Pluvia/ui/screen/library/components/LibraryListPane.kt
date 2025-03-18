@@ -40,9 +40,9 @@ import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
-import com.OxGames.Pluvia.ui.data.LibraryState
-import com.OxGames.Pluvia.ui.enums.AppFilter
-import com.OxGames.Pluvia.ui.internal.fakeAppInfo
+import com.OxGames.Pluvia.enums.AppFilter
+import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
+import com.OxGames.Pluvia.ui.screen.library.LibraryState
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -12,11 +12,11 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.OxGames.Pluvia.enums.AppFilter
 import com.OxGames.Pluvia.enums.AppTheme
+import com.OxGames.Pluvia.enums.HomeDestination
+import com.OxGames.Pluvia.enums.Orientation
 import com.OxGames.Pluvia.service.SteamService
-import com.OxGames.Pluvia.ui.enums.AppFilter
-import com.OxGames.Pluvia.ui.enums.HomeDestination
-import com.OxGames.Pluvia.ui.enums.Orientation
 import com.OxGames.Pluvia.utils.application.Crypto
 import com.materialkolor.PaletteStyle
 import com.winlator.box86_64.Box86_64Preset

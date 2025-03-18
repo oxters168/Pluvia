@@ -26,11 +26,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.data.LibraryItem
+import com.OxGames.Pluvia.enums.AppFilter
 import com.OxGames.Pluvia.service.SteamService
-import com.OxGames.Pluvia.ui.data.LibraryState
-import com.OxGames.Pluvia.ui.enums.AppFilter
-import com.OxGames.Pluvia.ui.internal.fakeAppInfo
-import com.OxGames.Pluvia.ui.model.LibraryViewModel
+import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryDetailPane
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryListPane
 import com.OxGames.Pluvia.ui.theme.PluviaTheme

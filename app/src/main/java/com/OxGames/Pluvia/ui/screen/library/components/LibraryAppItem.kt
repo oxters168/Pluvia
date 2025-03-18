@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
 import com.OxGames.Pluvia.ui.component.ListItemImage
-import com.OxGames.Pluvia.ui.internal.fakeAppInfo
+import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @Composable

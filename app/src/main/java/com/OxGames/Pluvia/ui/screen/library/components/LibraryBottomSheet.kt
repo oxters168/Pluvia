@@ -18,8 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.enums.AppFilter
 import com.OxGames.Pluvia.ui.component.FlowFilterChip
-import com.OxGames.Pluvia.ui.enums.AppFilter
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import java.util.EnumSet
 

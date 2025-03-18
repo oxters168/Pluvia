@@ -3,7 +3,7 @@ package com.OxGames.Pluvia.ui.component.dialog.state
 import androidx.annotation.StringRes
 import androidx.compose.runtime.saveable.mapSaver
 import com.OxGames.Pluvia.R
-import com.OxGames.Pluvia.ui.enums.DialogType
+import com.OxGames.Pluvia.enums.DialogType
 
 data class MessageDialogState(
     val visible: Boolean,

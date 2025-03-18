@@ -66,8 +66,8 @@ import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.LoginResult
 import com.OxGames.Pluvia.enums.LoginScreen
 import com.OxGames.Pluvia.ui.component.LoadingScreen
-import com.OxGames.Pluvia.ui.data.UserLoginState
-import com.OxGames.Pluvia.ui.model.UserLoginViewModel
+import com.OxGames.Pluvia.ui.screen.login.components.QrCodeImage
+import com.OxGames.Pluvia.ui.screen.login.components.TwoFactorAuthScreenContent
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @Composable

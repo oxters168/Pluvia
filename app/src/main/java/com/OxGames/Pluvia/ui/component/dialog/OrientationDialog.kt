@@ -21,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
-import com.OxGames.Pluvia.ui.enums.Orientation
+import com.OxGames.Pluvia.enums.Orientation
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import java.util.EnumSet
 

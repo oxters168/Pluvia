@@ -1,6 +1,6 @@
 package com.OxGames.Pluvia.events
 
-import com.OxGames.Pluvia.ui.enums.Orientation
+import com.OxGames.Pluvia.enums.Orientation
 import java.util.EnumSet
 
 interface AndroidEvent<T> : Event<T> {

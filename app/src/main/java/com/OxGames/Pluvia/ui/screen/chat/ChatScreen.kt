@@ -75,10 +75,10 @@ import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.FriendMessage
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.ui.component.ListItemImage
+import com.OxGames.Pluvia.ui.component.data.fakeSteamFriends
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
-import com.OxGames.Pluvia.ui.data.ChatState
-import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
-import com.OxGames.Pluvia.ui.model.ChatViewModel
+import com.OxGames.Pluvia.ui.screen.chat.components.ChatBubble
+import com.OxGames.Pluvia.ui.screen.chat.components.ChatInput
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.utils.SteamUtils
 import kotlinx.coroutines.launch

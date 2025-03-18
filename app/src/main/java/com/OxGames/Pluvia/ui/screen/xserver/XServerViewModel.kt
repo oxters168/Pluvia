@@ -13,7 +13,6 @@ import com.OxGames.Pluvia.data.LaunchInfo
 import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.events.SteamEvent
 import com.OxGames.Pluvia.service.SteamService
-import com.OxGames.Pluvia.ui.data.XServerState
 import com.OxGames.Pluvia.utils.ContainerUtils
 import com.winlator.container.Container
 import com.winlator.container.ContainerManager
