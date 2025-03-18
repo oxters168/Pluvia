@@ -420,6 +420,7 @@
     <!-- Login -->
     <string name="login_fab_credential">Credential Sign In</string>
     <string name="login_fab_qr">QR Sign In</string>
+    <string name="login_footer">Pluvia is an unofficial Steam™ client.\n</string>
     <string name="login_privacy_policy">Privacy policy</string>
     <string name="login_remember_session">Remember session</string>
 

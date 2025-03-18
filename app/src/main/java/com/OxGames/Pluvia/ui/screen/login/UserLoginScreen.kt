@@ -23,7 +23,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -35,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -52,9 +52,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -114,21 +120,7 @@ private fun UserLoginScreenContent(
     Scaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = stringResource(R.string.app_name)) },
-                actions = {
-                    val uriHandler = LocalUriHandler.current
-                    IconButton(
-                        onClick = { uriHandler.openUri(Constants.Misc.PRIVACY_LINK) },
-                        content = {
-                            Icon(
-                                imageVector = Icons.Filled.PrivacyTip,
-                                contentDescription = stringResource(R.string.login_privacy_policy),
-                            )
-                        },
-                    )
-                },
-            )
+            CenterAlignedTopAppBar(title = { Text(text = stringResource(R.string.app_name)) })
         },
         floatingActionButton = {
             // Scaffold seems not to calculate 'end' padding when using 3-Button Nav Bar in landscape.
@@ -262,6 +254,7 @@ private fun UsernamePassword(
     onRememberSession: (Boolean) -> Unit,
     onLoginBtnClick: () -> Unit,
 ) {
+    val uriHandler = LocalUriHandler.current
     var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
@@ -313,6 +306,22 @@ private fun UsernamePassword(
                 content = { Text(text = stringResource(R.string.login)) },
             )
         }
+
+        /* Footer + Privacy Policy */
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            textAlign = TextAlign.Center,
+            text = buildAnnotatedString {
+                append(text = stringResource(R.string.login_footer))
+                withLink(
+                    LinkAnnotation.Url(
+                        Constants.Misc.PRIVACY_LINK,
+                        TextLinkStyles(style = SpanStyle(color = MaterialTheme.colorScheme.primary)),
+                    ),
+                    block = { append(text = stringResource(R.string.login_privacy_policy)) },
+                )
+            },
+        )
     }
 }
 
