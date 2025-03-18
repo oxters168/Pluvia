@@ -13,9 +13,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -67,30 +64,11 @@ fun HomeScreen(
         onDismissClick = { viewModel.onConfirmExit(false) },
     )
 
-    HomeScreenContent(
+    HomeNavigationWrapperUI(
         destination = homeState.currentDestination,
         onDestination = viewModel::onDestination,
-        onChat = onChat,
-        onClickPlay = onClickPlay,
-        onLogout = onLogout,
-        onSettings = onSettings,
-    )
-}
-
-@Composable
-private fun HomeScreenContent(
-    destination: HomeDestination,
-    onDestination: (HomeDestination) -> Unit,
-    onChat: (Long) -> Unit,
-    onClickPlay: (Int, Boolean) -> Unit,
-    onLogout: () -> Unit,
-    onSettings: () -> Unit,
-) {
-    HomeNavigationWrapperUI(
-        destination = destination,
-        onDestination = onDestination,
     ) {
-        when (destination) {
+        when (homeState.currentDestination) {
             HomeDestination.Library -> HomeLibraryScreen(
                 onClickPlay = onClickPlay,
                 onSettings = onSettings,
@@ -112,7 +90,7 @@ private fun HomeScreenContent(
 }
 
 @Composable
-internal fun HomeNavigationWrapperUI(
+private fun HomeNavigationWrapperUI(
     destination: HomeDestination,
     onDestination: (HomeDestination) -> Unit,
     content: @Composable () -> Unit = {},
@@ -152,16 +130,10 @@ internal fun HomeNavigationWrapperUI(
 @Composable
 private fun Preview_HomeScreenContent() {
     PluviaTheme {
-        var destination: HomeDestination by remember {
-            mutableStateOf(HomeDestination.Library)
-        }
-        HomeScreenContent(
-            destination = destination,
-            onDestination = { destination = it },
-            onChat = {},
-            onClickPlay = { _, _ -> },
-            onLogout = {},
-            onSettings = {},
+        HomeNavigationWrapperUI(
+            destination = HomeDestination.Downloads,
+            onDestination = {},
+            content = {},
         )
     }
 }
