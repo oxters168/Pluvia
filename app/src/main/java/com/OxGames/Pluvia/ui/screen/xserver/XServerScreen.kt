@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.xserver
 
+import android.view.MotionEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -86,14 +88,19 @@ fun XServerScreen(
         exitDialogVisible = true
     }
 
+    // Verify
+    val touchHandler = remember {
+        { event: MotionEvent ->
+            viewModel.touchMouse?.onTouchEvent(event)
+            true
+        }
+    }
+
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
             .pointerHoverIcon(PointerIcon(0))
-            .pointerInteropFilter {
-                viewModel.touchMouse?.onTouchEvent(it)
-                true
-            },
+            .pointerInteropFilter(onTouchEvent = touchHandler),
         factory = {
             Timber.i("Creating XServerView and XServer")
 
