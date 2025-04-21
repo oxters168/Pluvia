@@ -234,17 +234,43 @@ class SteamService : Service(), IChallengeUrlChanged {
         var isWaitingForQRAuth: Boolean = false
             private set
 
+        // 'cached' variables are a hack to fix 'DiskReadViolation'
+
+        private var cachedServerListPath: String? = null
         private val serverListPath: String
-            get() = Paths.get(instance!!.cacheDir.path, "server_list.bin").pathString
+            get() {
+                cachedServerListPath?.let { return it }
+                val value = Paths.get(instance!!.cacheDir.path, "server_list.bin").pathString
+                cachedServerListPath = value
+                return value
+            }
 
+        private var cachedDepotManifestsPath: String? = null
         private val depotManifestsPath: String
-            get() = Paths.get(instance!!.dataDir.path, "Steam", "depot_manifests.zip").pathString
+            get() {
+                cachedDepotManifestsPath?.let { return it }
+                val value = Paths.get(instance!!.dataDir.path, "Steam", "depot_manifests.zip").pathString
+                cachedDepotManifestsPath = value
+                return value
+            }
 
+        private var cachedDefaultAppInstallPath: String? = null
         val defaultAppInstallPath: String
-            get() = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "common").pathString
+            get() {
+                cachedDefaultAppInstallPath?.let { return it }
+                val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "common").pathString
+                cachedDefaultAppInstallPath = value
+                return value
+            }
 
+        private var cachedDefaultAppStagingPath: String? = null
         val defaultAppStagingPath: String
-            get() = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "staging").pathString
+            get() {
+                cachedDefaultAppStagingPath?.let { return it }
+                val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "staging").pathString
+                cachedDefaultAppStagingPath = value
+                return value
+            }
 
         val userSteamId: SteamID?
             get() = instance?.steamClient?.steamID
