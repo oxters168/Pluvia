@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
@@ -173,7 +174,10 @@ class XServerViewModel @Inject constructor(
         PluviaApp.events.on<AndroidEvent.MotionEvent, Boolean>(onMotionEvent)
         PluviaApp.events.on<AndroidEvent.GuestProgramTerminated, Unit>(onGuestProgramTerminated)
         PluviaApp.events.on<SteamEvent.ForceCloseApp, Unit>(onForceCloseApp)
-        ProcessHelper.addDebugCallback(debugCallback)
+
+        if (BuildConfig.DEBUG) {
+            ProcessHelper.addDebugCallback(debugCallback)
+        }
 
         if (ContainerUtils.hasContainer(context, _state.value.appId)) {
             val container = ContainerUtils.getContainer(context, _state.value.appId)
@@ -198,7 +202,10 @@ class XServerViewModel @Inject constructor(
         PluviaApp.events.off<AndroidEvent.MotionEvent, Boolean>(onMotionEvent)
         PluviaApp.events.off<AndroidEvent.GuestProgramTerminated, Unit>(onGuestProgramTerminated)
         PluviaApp.events.off<SteamEvent.ForceCloseApp, Unit>(onForceCloseApp)
-        ProcessHelper.removeDebugCallback(debugCallback)
+
+        if (BuildConfig.DEBUG) {
+            ProcessHelper.removeDebugCallback(debugCallback)
+        }
 
         xServerView = null
     }
