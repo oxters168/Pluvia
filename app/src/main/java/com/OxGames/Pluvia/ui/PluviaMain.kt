@@ -383,96 +383,97 @@ fun PluviaMain(
         NavHost(
             navController = navController,
             startDestination = PluviaScreen.LoginUser.route,
-        ) {
-            /** Login **/
-            composable(route = PluviaScreen.LoginUser.route) {
-                UserLoginScreen()
-            }
-            /** Library, Downloads, Friends **/
-            composable(
-                route = PluviaScreen.Home.route,
-                deepLinks = listOf(navDeepLink { uriPattern = "pluvia://home" }),
-            ) {
-                HomeScreen(
-                    onClickPlay = { launchAppId, asContainer ->
-                        Timber.i("onClickPlay: $launchAppId, $asContainer")
+            builder = {
+                /** Login **/
+                composable(route = PluviaScreen.LoginUser.route) {
+                    UserLoginScreen()
+                }
+                /** Library, Downloads, Friends **/
+                composable(
+                    route = PluviaScreen.Home.route,
+                    deepLinks = listOf(navDeepLink { uriPattern = "pluvia://home" }),
+                ) {
+                    HomeScreen(
+                        onClickPlay = { launchAppId, asContainer ->
+                            Timber.i("onClickPlay: $launchAppId, $asContainer")
 
-                        viewModel.setLaunchAppInfo(launchAppId, asContainer)
+                            viewModel.setLaunchAppInfo(launchAppId, asContainer)
 
-                        preLaunchApp(
-                            context = context,
-                            appId = launchAppId,
-                            setLoadingDialogVisible = viewModel::setLoadingDialogVisible,
-                            setLoadingProgress = viewModel::setLoadingDialogProgress,
-                            setMessageDialogState = { msgDialogState = it },
-                            onSuccess = viewModel::launchApp,
-                        )
-                    },
-                    onClickExit = {
-                        PluviaApp.events.emit(AndroidEvent.EndProcess)
-                    },
-                    onChat = {
-                        navController.navigate(PluviaScreen.Chat.route(it))
-                    },
-                    onSettings = {
-                        navController.navigate(PluviaScreen.Settings.route)
-                    },
-                    onLogout = {
-                        SteamService.logOut()
-                    },
-                )
-            }
+                            preLaunchApp(
+                                context = context,
+                                appId = launchAppId,
+                                setLoadingDialogVisible = viewModel::setLoadingDialogVisible,
+                                setLoadingProgress = viewModel::setLoadingDialogProgress,
+                                setMessageDialogState = { msgDialogState = it },
+                                onSuccess = viewModel::launchApp,
+                            )
+                        },
+                        onClickExit = {
+                            PluviaApp.events.emit(AndroidEvent.EndProcess)
+                        },
+                        onChat = {
+                            navController.navigate(PluviaScreen.Chat.route(it))
+                        },
+                        onSettings = {
+                            navController.navigate(PluviaScreen.Settings.route)
+                        },
+                        onLogout = {
+                            SteamService.logOut()
+                        },
+                    )
+                }
 
-            /** Full Screen Chat **/
-            composable(
-                route = "chat/{id}",
-                arguments = listOf(
-                    navArgument(PluviaScreen.Chat.ARG_ID) {
-                        type = NavType.LongType
-                    },
-                ),
-            ) {
-                val id = it.arguments?.getLong(PluviaScreen.Chat.ARG_ID) ?: throw RuntimeException("Unable to get ID to chat")
-                ChatScreen(
-                    friendId = id,
-                    onBack = {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            navController.popBackStack()
-                        }
-                    },
-                )
-            }
+                /** Full Screen Chat **/
+                composable(
+                    route = "chat/{id}",
+                    arguments = listOf(
+                        navArgument(PluviaScreen.Chat.ARG_ID) {
+                            type = NavType.LongType
+                        },
+                    ),
+                ) {
+                    val id = it.arguments?.getLong(PluviaScreen.Chat.ARG_ID) ?: throw RuntimeException("Unable to get ID to chat")
+                    ChatScreen(
+                        friendId = id,
+                        onBack = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                navController.popBackStack()
+                            }
+                        },
+                    )
+                }
 
-            /** Game Screen **/
-            composable(route = PluviaScreen.XServer.route) {
-                XServerScreen(
-                    appId = state.launchedAppId,
-                    bootToContainer = state.bootToContainer,
-                    navigateBack = {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            navController.popBackStack()
-                        }
-                    },
-                    onWindowMapped = { window ->
-                        viewModel.onWindowMapped(window, state.launchedAppId)
-                    },
-                    onExit = {
-                        viewModel.exitSteamApp(context, state.launchedAppId)
-                    },
-                )
-            }
+                /** Game Screen **/
+                composable(route = PluviaScreen.XServer.route) {
+                    XServerScreen(
+                        appId = state.launchedAppId,
+                        bootToContainer = state.bootToContainer,
+                        navigateBack = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                navController.popBackStack()
+                            }
+                        },
+                        onWindowMapped = { window ->
+                            viewModel.onWindowMapped(window, state.launchedAppId)
+                        },
+                        onExit = {
+                            viewModel.exitSteamApp(context, state.launchedAppId)
+                        },
+                    )
+                }
 
-            /** Settings **/
-            composable(route = PluviaScreen.Settings.route) {
-                SettingsScreen(
-                    appTheme = state.appTheme,
-                    paletteStyle = state.paletteStyle,
-                    onAppTheme = viewModel::setTheme,
-                    onPaletteStyle = viewModel::setPalette,
-                    onBack = { navController.navigateUp() },
-                )
-            }
-        }
+                /** Settings **/
+                composable(route = PluviaScreen.Settings.route) {
+                    SettingsScreen(
+                        appTheme = state.appTheme,
+                        paletteStyle = state.paletteStyle,
+                        onAppTheme = viewModel::setTheme,
+                        onPaletteStyle = viewModel::setPalette,
+                        onBack = { navController.navigateUp() },
+                    )
+                }
+            },
+        )
     }
 }
 

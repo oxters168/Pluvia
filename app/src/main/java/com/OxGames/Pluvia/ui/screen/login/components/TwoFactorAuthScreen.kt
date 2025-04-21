@@ -36,12 +36,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.LoginResult
-import com.OxGames.Pluvia.ui.screen.login.UserLoginState
+import com.OxGames.Pluvia.ui.screen.login.LoginState
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @Composable
 fun TwoFactorAuthScreenContent(
-    userLoginState: UserLoginState,
+    loginState: LoginState,
     message: String,
     onSetTwoFactor: (String) -> Unit,
     onLogin: () -> Unit,
@@ -57,20 +57,20 @@ fun TwoFactorAuthScreenContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (userLoginState.loginResult == LoginResult.DeviceConfirm) {
+        if (loginState.loginResult == LoginResult.DeviceConfirm) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        } else if (userLoginState.loginResult == LoginResult.EmailAuth ||
-            userLoginState.loginResult == LoginResult.DeviceAuth
+        } else if (loginState.loginResult == LoginResult.EmailAuth ||
+            loginState.loginResult == LoginResult.DeviceAuth
         ) {
             TwoFactorTextField(
-                twoFactorText = userLoginState.twoFactorCode,
+                twoFactorText = loginState.twoFactorCode,
                 onTwoFactorTextChange = onSetTwoFactor,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             ElevatedButton(
-                enabled = userLoginState.twoFactorCode.length == 5,
+                enabled = loginState.twoFactorCode.length == 5,
                 onClick = onLogin,
                 content = { Text(text = stringResource(R.string.login)) },
             )
@@ -105,11 +105,11 @@ private fun TwoFactorTextField(
     )
 }
 
-internal class TwoFactorPreview : PreviewParameterProvider<UserLoginState> {
+internal class TwoFactorPreview : PreviewParameterProvider<LoginState> {
     override val values = sequenceOf(
-        UserLoginState(loginResult = LoginResult.DeviceConfirm),
-        UserLoginState(loginResult = LoginResult.DeviceAuth),
-        UserLoginState(loginResult = LoginResult.EmailAuth),
+        LoginState(loginResult = LoginResult.DeviceConfirm),
+        LoginState(loginResult = LoginResult.DeviceAuth),
+        LoginState(loginResult = LoginResult.EmailAuth),
     )
 }
 
@@ -118,7 +118,7 @@ internal class TwoFactorPreview : PreviewParameterProvider<UserLoginState> {
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun Preview_TwoFactorAuthScreen(
-    @PreviewParameter(TwoFactorPreview::class) state: UserLoginState,
+    @PreviewParameter(TwoFactorPreview::class) state: LoginState,
 ) {
     var currentState by remember { mutableStateOf(state) }
     PluviaTheme {
@@ -128,7 +128,7 @@ private fun Preview_TwoFactorAuthScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 TwoFactorAuthScreenContent(
-                    userLoginState = currentState,
+                    loginState = currentState,
                     message = when (state.loginResult) {
                         LoginResult.DeviceAuth -> stringResource(R.string.steam_2fa_device)
                         LoginResult.DeviceConfirm -> stringResource(R.string.steam_2fa_confirmation)

@@ -50,7 +50,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -78,10 +77,10 @@ import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @Composable
 fun UserLoginScreen(
-    viewModel: UserLoginViewModel = viewModel(),
+    viewModel: LoginViewModel = viewModel(),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
-    val userLoginState by viewModel.loginState.collectAsState()
+    val state by viewModel.loginState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.snackEvents.collect { message ->
@@ -91,7 +90,7 @@ fun UserLoginScreen(
 
     UserLoginScreenContent(
         snackBarHostState = snackBarHostState,
-        userLoginState = userLoginState,
+        state = state,
         onUsername = viewModel::setUsername,
         onPassword = viewModel::setPassword,
         onShowLoginScreen = viewModel::onShowLoginScreen,
@@ -107,7 +106,7 @@ fun UserLoginScreen(
 @Composable
 private fun UserLoginScreenContent(
     snackBarHostState: SnackbarHostState,
-    userLoginState: UserLoginState,
+    state: LoginState,
     onUsername: (String) -> Unit,
     onPassword: (String) -> Unit,
     onShowLoginScreen: (LoginScreen) -> Unit,
@@ -124,12 +123,12 @@ private fun UserLoginScreenContent(
         },
         floatingActionButton = {
             // Scaffold seems not to calculate 'end' padding when using 3-Button Nav Bar in landscape.
-            if (userLoginState.loginResult == LoginResult.Failed) {
+            if (state.loginResult == LoginResult.Failed) {
                 val systemBarPadding = WindowInsets.systemBars
                     .only(WindowInsetsSides.End)
                     .asPaddingValues()
 
-                val fabString = if (userLoginState.loginScreen == LoginScreen.QR) {
+                val fabString = if (state.loginScreen == LoginScreen.QR) {
                     R.string.login_fab_credential
                 } else {
                     R.string.login_fab_qr
@@ -140,7 +139,7 @@ private fun UserLoginScreenContent(
                         .padding(end = systemBarPadding.calculateEndPadding(LayoutDirection.Ltr))
                         .displayCutoutPadding(),
                     onClick = {
-                        when (userLoginState.loginScreen) {
+                        when (state.loginScreen) {
                             LoginScreen.QR -> onShowLoginScreen(LoginScreen.CREDENTIAL)
                             LoginScreen.CREDENTIAL -> onShowLoginScreen(LoginScreen.QR)
                             else -> onShowLoginScreen(LoginScreen.CREDENTIAL)
@@ -150,7 +149,7 @@ private fun UserLoginScreenContent(
                         Text(text = stringResource(fabString))
                     },
                     icon = {
-                        val icon = if (userLoginState.loginScreen == LoginScreen.QR) {
+                        val icon = if (state.loginScreen == LoginScreen.QR) {
                             Icons.Filled.Keyboard
                         } else {
                             Icons.Filled.QrCode2
@@ -172,22 +171,22 @@ private fun UserLoginScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (
-                userLoginState.isLoggingIn.not() &&
-                userLoginState.loginResult != LoginResult.Success
+                state.isLoggingIn.not() &&
+                state.loginResult != LoginResult.Success
             ) {
                 Crossfade(
                     modifier = Modifier.fillMaxSize(),
-                    targetState = userLoginState.loginScreen,
+                    targetState = state.loginScreen,
                 ) { screen ->
                     when (screen) {
                         LoginScreen.CREDENTIAL -> {
                             UsernamePassword(
-                                isSteamConnected = userLoginState.isSteamConnected,
-                                username = userLoginState.username,
+                                isSteamConnected = state.isSteamConnected,
+                                username = state.username,
                                 onUsername = onUsername,
-                                password = userLoginState.password,
+                                password = state.password,
                                 onPassword = onPassword,
-                                rememberSession = userLoginState.rememberSession,
+                                rememberSession = state.rememberSession,
                                 onRememberSession = onRememberSession,
                                 onLoginBtnClick = onCredentialLogin,
                             )
@@ -195,21 +194,21 @@ private fun UserLoginScreenContent(
 
                         LoginScreen.TWO_FACTOR -> {
                             TwoFactorAuthScreenContent(
-                                userLoginState = userLoginState,
+                                loginState = state,
                                 message = when {
-                                    userLoginState.previousCodeIncorrect ->
+                                    state.previousCodeIncorrect ->
                                         stringResource(R.string.steam_2fa_incorrect)
 
-                                    userLoginState.loginResult == LoginResult.DeviceAuth ->
+                                    state.loginResult == LoginResult.DeviceAuth ->
                                         stringResource(R.string.steam_2fa_device)
 
-                                    userLoginState.loginResult == LoginResult.DeviceConfirm ->
+                                    state.loginResult == LoginResult.DeviceConfirm ->
                                         stringResource(R.string.steam_2fa_confirmation)
 
-                                    userLoginState.loginResult == LoginResult.EmailAuth ->
+                                    state.loginResult == LoginResult.EmailAuth ->
                                         stringResource(
                                             R.string.steam_2fa_email,
-                                            userLoginState.email ?: "...",
+                                            state.email ?: "...",
                                         )
 
                                     else -> ""
@@ -225,12 +224,12 @@ private fun UserLoginScreenContent(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
                             ) {
-                                if (userLoginState.isQrFailed) {
+                                if (state.isQrFailed) {
                                     ElevatedButton(onClick = onQrRetry) { Text(text = stringResource(R.string.retry)) }
-                                } else if (userLoginState.qrCode.isNullOrEmpty()) {
+                                } else if (state.qrCode.isNullOrEmpty()) {
                                     CircularProgressIndicator()
                                 } else {
-                                    QrCodeImage(content = userLoginState.qrCode, size = 256.dp)
+                                    QrCodeImage(content = state.qrCode, size = 256.dp)
                                 }
                             }
                         }
@@ -254,7 +253,6 @@ private fun UsernamePassword(
     onRememberSession: (Boolean) -> Unit,
     onLoginBtnClick: () -> Unit,
 ) {
-    val uriHandler = LocalUriHandler.current
     var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
@@ -325,30 +323,31 @@ private fun UsernamePassword(
     }
 }
 
-internal class UserLoginPreview : PreviewParameterProvider<UserLoginState> {
+internal class UserLoginPreview : PreviewParameterProvider<LoginState> {
     override val values = sequenceOf(
-        UserLoginState(isSteamConnected = true),
-        UserLoginState(isSteamConnected = true, loginScreen = LoginScreen.QR, qrCode = "Hello World!"),
-        UserLoginState(isSteamConnected = true, loginScreen = LoginScreen.QR, isQrFailed = true),
-        UserLoginState(isSteamConnected = false),
+        LoginState(isSteamConnected = true),
+        LoginState(isSteamConnected = true, loginScreen = LoginScreen.QR, qrCode = "Hello World!"),
+        LoginState(isSteamConnected = true, loginScreen = LoginScreen.QR, isQrFailed = true),
+        LoginState(isSteamConnected = false),
     )
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun Preview_UserLoginScreen(
-    @PreviewParameter(UserLoginPreview::class) state: UserLoginState,
+    @PreviewParameter(UserLoginPreview::class) state: LoginState,
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
+    var innerState by remember { mutableStateOf(state) }
 
     PluviaTheme {
         Surface {
             UserLoginScreenContent(
                 snackBarHostState = snackBarHostState,
-                userLoginState = state,
-                onUsername = { },
-                onPassword = { },
-                onRememberSession = { },
+                state = innerState,
+                onUsername = { innerState = innerState.copy(username = it) },
+                onPassword = { innerState = innerState.copy(password = it) },
+                onRememberSession = { innerState = innerState.copy(rememberSession = it) },
                 onCredentialLogin = { },
                 onTwoFactorLogin = { },
                 onQrRetry = { },
