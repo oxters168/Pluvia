@@ -2,7 +2,6 @@ package com.OxGames.Pluvia.ui.screen.xserver
 
 import android.annotation.SuppressLint
 import android.content.Context
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.OxGames.Pluvia.Constants
@@ -178,17 +177,15 @@ class XServerViewModel @Inject constructor(
 
         if (ContainerUtils.hasContainer(context, _state.value.appId)) {
             val container = ContainerUtils.getContainer(context, _state.value.appId)
-            mutableStateOf(
-                XServerState(
+            _state.update {
+                it.copy(
                     graphicsDriver = container.graphicsDriver,
                     audioDriver = container.audioDriver,
                     dxwrapper = container.dxWrapper,
                     dxwrapperConfig = DXVKHelper.parseConfig(container.dxWrapperConfig),
                     screenSize = container.screenSize,
-                ),
-            )
-        } else {
-            mutableStateOf(XServerState())
+                )
+            }
         }
     }
 
