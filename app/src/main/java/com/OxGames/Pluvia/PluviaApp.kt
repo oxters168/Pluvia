@@ -17,12 +17,18 @@ class PluviaApp : SplitCompatApplication() {
     override fun onCreate() {
         super.onCreate()
 
-        // Allows to find resource streams not closed within Pluvia and JavaSteam
         if (BuildConfig.DEBUG) {
             StrictMode.setVmPolicy(
                 StrictMode.VmPolicy.Builder()
-                    .detectLeakedClosableObjects()
-                    .penaltyLog()
+                    .detectLeakedClosableObjects() // Detect when Closeable objects are not properly closed
+                    .penaltyLog() // Log violations to logcat
+                    .build(),
+            )
+
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll() // Detect all violations (disk reads/writes, network operations, etc.)
+                    .penaltyLog() // Log violations to logcat
                     .build(),
             )
 
