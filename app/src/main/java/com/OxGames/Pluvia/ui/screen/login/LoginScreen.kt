@@ -4,38 +4,27 @@ import android.content.res.Configuration
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.QrCode2
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -51,26 +40,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.LoginResult
 import com.OxGames.Pluvia.enums.LoginScreen
 import com.OxGames.Pluvia.ui.component.LoadingScreen
+import com.OxGames.Pluvia.ui.screen.login.components.LoginTextField
 import com.OxGames.Pluvia.ui.screen.login.components.QrCodeImage
 import com.OxGames.Pluvia.ui.screen.login.components.TwoFactorAuthScreenContent
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
@@ -180,7 +160,7 @@ private fun UserLoginScreenContent(
                 ) { screen ->
                     when (screen) {
                         LoginScreen.CREDENTIAL -> {
-                            UsernamePassword(
+                            LoginTextField(
                                 isSteamConnected = state.isSteamConnected,
                                 username = state.username,
                                 onUsername = onUsername,
@@ -239,87 +219,6 @@ private fun UserLoginScreenContent(
                 LoadingScreen()
             }
         }
-    }
-}
-
-@Composable
-private fun UsernamePassword(
-    isSteamConnected: Boolean,
-    username: String,
-    onUsername: (String) -> Unit,
-    password: String,
-    onPassword: (String) -> Unit,
-    rememberSession: Boolean,
-    onRememberSession: (Boolean) -> Unit,
-    onLoginBtnClick: () -> Unit,
-) {
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        OutlinedTextField(
-            value = username,
-            singleLine = true,
-            onValueChange = onUsername,
-            label = { Text(text = stringResource(R.string.username)) },
-        )
-        OutlinedTextField(
-            value = password,
-            singleLine = true,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            onValueChange = onPassword,
-            label = { Text(text = stringResource(R.string.password)) },
-            trailingIcon = {
-                val image = if (passwordVisible) {
-                    Icons.Filled.Visibility
-                } else {
-                    Icons.Filled.VisibilityOff
-                }
-
-                val description = if (passwordVisible) R.string.desc_login_hide_password else R.string.desc_login_show_password
-
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = image, contentDescription = stringResource(description))
-                }
-            },
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = rememberSession,
-                    onCheckedChange = onRememberSession,
-                )
-                Text(text = stringResource(R.string.login_remember_session))
-            }
-            Spacer(modifier = Modifier.width(24.dp))
-            ElevatedButton(
-                onClick = onLoginBtnClick,
-                enabled = username.isNotEmpty() && password.isNotEmpty() && isSteamConnected,
-                content = { Text(text = stringResource(R.string.login)) },
-            )
-        }
-
-        /* Footer + Privacy Policy */
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            textAlign = TextAlign.Center,
-            text = buildAnnotatedString {
-                append(text = stringResource(R.string.login_footer))
-                withLink(
-                    LinkAnnotation.Url(
-                        Constants.Misc.PRIVACY_LINK,
-                        TextLinkStyles(style = SpanStyle(color = MaterialTheme.colorScheme.primary)),
-                    ),
-                    block = { append(text = stringResource(R.string.login_privacy_policy)) },
-                )
-            },
-        )
     }
 }
 
