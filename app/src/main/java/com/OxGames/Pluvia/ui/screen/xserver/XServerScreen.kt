@@ -104,7 +104,7 @@ fun XServerScreen(
         factory = {
             Timber.i("Creating XServerView and XServer")
 
-            viewModel.updateAppID(appId)
+            viewModel.init(appId)
 
             XServerView(context, XServer(ScreenInfo(xServerState.screenSize))).apply {
                 viewModel.xServerView = this

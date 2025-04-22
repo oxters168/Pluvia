@@ -162,7 +162,10 @@ class XServerViewModel @Inject constructor(
         Timber.i(outputLine ?: "")
     }
 
-    init {
+    // AndroidView inflates quicker than the ViewModel init, so we'll make this a function to be explicitly called.
+    fun init(appId: Int) {
+        _state.update { it.copy(appId = appId) }
+
         Timber.i("Starting up XServerScreen")
 
         // PluviaApp.events.emit(AndroidEvent.SetAppBarVisibility(false))
@@ -179,8 +182,8 @@ class XServerViewModel @Inject constructor(
             ProcessHelper.addDebugCallback(debugCallback)
         }
 
-        if (ContainerUtils.hasContainer(context, _state.value.appId)) {
-            val container = ContainerUtils.getContainer(context, _state.value.appId)
+        if (ContainerUtils.hasContainer(context, appId)) {
+            val container = ContainerUtils.getContainer(context, appId)
             _state.update {
                 it.copy(
                     graphicsDriver = container.graphicsDriver,
@@ -190,6 +193,8 @@ class XServerViewModel @Inject constructor(
                     screenSize = container.screenSize,
                 )
             }
+        } else {
+            Timber.w("Did not find existing container")
         }
     }
 
@@ -558,7 +563,9 @@ class XServerViewModel @Inject constructor(
 
         // val dxwrapper = this.dxwrapper
         if (state.value.dxwrapper == "dxvk") {
-            _state.update { it.copy(dxwrapper = "dxvk-" + state.value.dxwrapperConfig?.get("version")) }
+            val dxvkVersion = state.value.dxwrapperConfig?.get("version")
+            Timber.d("DXVK version: $dxvkVersion")
+            _state.update { it.copy(dxwrapper = "dxvk-$dxvkVersion") }
         }
 
         if (state.value.dxwrapper != container.getExtra("dxwrapper")) {
@@ -953,10 +960,6 @@ class XServerViewModel @Inject constructor(
 
     fun winStarted(value: Boolean) {
         _state.update { it.copy(winStarted = value) }
-    }
-
-    fun updateAppID(value: Int) {
-        _state.update { it.copy(appId = value) }
     }
 
     fun setBootConfig(container: Container, containerManager: ContainerManager, bootToContainer: Boolean) {
