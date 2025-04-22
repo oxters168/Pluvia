@@ -165,7 +165,7 @@
     <!-- Dialog Messages -->
     <string name="dialog_message_cancel_download">Are you sure you want to cancel the download of the app?</string>
     <string name="dialog_message_delete_app">Are you sure you want to delete this app?\n\n\tSize on Disk: %1$s</string>
-    <string name="dialog_message_download_app">The app being installed has the following space requirements. Would you like to proceed? Download Size: %1$s Size on Disk: %2$s Available Space: %3$s</string>
+    <string name="dialog_message_download_app">The app being installed has the following space requirements. Would you like to proceed?\nDownload Size: %1$s\nSize on Disk: %2$s\nAvailable Space: %3$s</string>
     <string name="dialog_message_download_install_fs">The Ubuntu image needs to be downloaded and installed before being able to edit the configuration. This operation might take a few minutes. Would you like to continue?</string>
     <string name="dialog_message_exit_game">Are you sure you want to close %1$s?</string>
     <string name="dialog_message_friend_block">Are you sure you want to block %1$s?</string>
