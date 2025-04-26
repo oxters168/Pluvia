@@ -32,9 +32,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.ui.util.ListItemImage
-import com.OxGames.Pluvia.utils.getAvatarURL
+import com.OxGames.Pluvia.utils.SteamUtils
 import `in`.dragonbra.javasteam.enums.EPersonaState
 
 @Composable
@@ -66,22 +66,27 @@ fun ProfileDialog(
                     leadingContent = {
                         ListItemImage(
                             size = 48.dp,
-                            image = { avatarHash.getAvatarURL() },
+                            image = { SteamUtils.getAvatarURL(avatarHash) },
                         )
                     },
                     headlineContent = {
                         Text(text = name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     },
                     supportingContent = {
-                        Text(text = state.name)
+                        val string = when (state) {
+                            EPersonaState.Online -> R.string.status_online
+                            EPersonaState.Away -> R.string.status_away
+                            else -> R.string.status_invisible
+                        }
+
+                        Text(text = stringResource(string))
                     },
                 )
                 /* Online Status */
                 Spacer(modifier = Modifier.height(16.dp))
 
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    val status =
-                        listOf(EPersonaState.Online, EPersonaState.Away, EPersonaState.Invisible)
+                    val status = listOf(EPersonaState.Online, EPersonaState.Away, EPersonaState.Invisible)
                     status.forEachIndexed { index, state ->
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(
@@ -94,7 +99,12 @@ fun ProfileDialog(
                             },
                             selected = state == selectedItem,
                             label = {
-                                Text(state.name)
+                                val string = when (state) {
+                                    EPersonaState.Online -> R.string.status_online
+                                    EPersonaState.Away -> R.string.status_away
+                                    else -> R.string.status_invisible
+                                }
+                                Text(text = stringResource(string))
                             },
                         )
                     }
@@ -103,21 +113,21 @@ fun ProfileDialog(
                 /* Action Buttons */
                 Spacer(modifier = Modifier.height(16.dp))
                 FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = onSettings) {
-                    Icon(imageVector = Icons.Default.Settings, contentDescription = null)
+                    Icon(imageVector = Icons.Default.Settings, contentDescription = stringResource(R.string.settings))
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Text(text = "Settings")
+                    Text(text = stringResource(R.string.settings))
                 }
 
                 FilledTonalButton(modifier = Modifier.fillMaxWidth(), onClick = onLogout) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                    Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = stringResource(R.string.logout))
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSize))
-                    Text(text = "Log Out")
+                    Text(text = stringResource(R.string.logout))
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "Close")
+                Text(text = stringResource(R.string.close))
             }
         },
     )

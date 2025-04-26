@@ -13,9 +13,6 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,10 +21,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.enums.HomeDestination
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
-import com.OxGames.Pluvia.ui.enums.HomeDestination
-import com.OxGames.Pluvia.ui.model.HomeViewModel
-import com.OxGames.Pluvia.ui.screen.downloads.HomeDownloadsScreen
+import com.OxGames.Pluvia.ui.screen.downloads.DownloadsScreen
 import com.OxGames.Pluvia.ui.screen.friends.FriendsScreen
 import com.OxGames.Pluvia.ui.screen.library.HomeLibraryScreen
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
@@ -57,47 +54,28 @@ fun HomeScreen(
         visible = homeState.confirmExit,
         onDismissRequest = { viewModel.onConfirmExit(false) },
         icon = Icons.AutoMirrored.Filled.ExitToApp,
-        title = "Are you sure you want to close Pluvia?",
-        confirmBtnText = "Close",
+        title = R.string.dialog_title_close_app,
+        confirmBtnText = R.string.close,
         onConfirmClick = {
             viewModel.onConfirmExit(false)
             onClickExit()
         },
-        dismissBtnText = "Cancel",
+        dismissBtnText = R.string.cancel,
         onDismissClick = { viewModel.onConfirmExit(false) },
     )
 
-    HomeScreenContent(
+    HomeNavigationWrapperUI(
         destination = homeState.currentDestination,
         onDestination = viewModel::onDestination,
-        onChat = onChat,
-        onClickPlay = onClickPlay,
-        onLogout = onLogout,
-        onSettings = onSettings,
-    )
-}
-
-@Composable
-private fun HomeScreenContent(
-    destination: HomeDestination,
-    onDestination: (HomeDestination) -> Unit,
-    onChat: (Long) -> Unit,
-    onClickPlay: (Int, Boolean) -> Unit,
-    onLogout: () -> Unit,
-    onSettings: () -> Unit,
-) {
-    HomeNavigationWrapperUI(
-        destination = destination,
-        onDestination = onDestination,
     ) {
-        when (destination) {
+        when (homeState.currentDestination) {
             HomeDestination.Library -> HomeLibraryScreen(
                 onClickPlay = onClickPlay,
                 onSettings = onSettings,
                 onLogout = onLogout,
             )
 
-            HomeDestination.Downloads -> HomeDownloadsScreen(
+            HomeDestination.Downloads -> DownloadsScreen(
                 onSettings = onSettings,
                 onLogout = onLogout,
             )
@@ -112,7 +90,7 @@ private fun HomeScreenContent(
 }
 
 @Composable
-internal fun HomeNavigationWrapperUI(
+private fun HomeNavigationWrapperUI(
     destination: HomeDestination,
     onDestination: (HomeDestination) -> Unit,
     content: @Composable () -> Unit = {},
@@ -132,8 +110,8 @@ internal fun HomeNavigationWrapperUI(
         navigationSuiteItems = {
             HomeDestination.entries.forEach {
                 item(
-                    label = { Text(stringResource(it.title)) },
-                    icon = { Icon(it.icon, stringResource(it.title)) },
+                    label = { Text(text = stringResource(it.string)) },
+                    icon = { Icon(imageVector = it.icon, contentDescription = stringResource(it.string)) },
                     selected = (it == destination),
                     onClick = { onDestination(it) },
                 )
@@ -152,16 +130,10 @@ internal fun HomeNavigationWrapperUI(
 @Composable
 private fun Preview_HomeScreenContent() {
     PluviaTheme {
-        var destination: HomeDestination by remember {
-            mutableStateOf(HomeDestination.Library)
-        }
-        HomeScreenContent(
-            destination = destination,
-            onDestination = { destination = it },
-            onChat = {},
-            onClickPlay = { _, _ -> },
-            onLogout = {},
-            onSettings = {},
+        HomeNavigationWrapperUI(
+            destination = HomeDestination.Downloads,
+            onDestination = {},
+            content = {},
         )
     }
 }

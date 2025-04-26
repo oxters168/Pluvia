@@ -25,7 +25,7 @@ fun FlowFilterChip(
 ) {
     FilterChip(
         modifier = Modifier
-            .padding(end = 8.dp)
+            .padding(horizontal = 4.dp)
             .then(modifier),
         onClick = onClick,
         label = label,
@@ -49,13 +49,13 @@ private fun Preview_FlowFilterChip() {
                     selected = true,
                     onClick = { },
                     label = { Text(text = "Chip 1") },
-                    leadingIcon = { Icon(imageVector = Icons.Default.FilterList, contentDescription = null) },
+                    leadingIcon = { Icon(imageVector = Icons.Default.FilterList, contentDescription = "Preview Chip 1") },
                 )
                 FlowFilterChip(
                     selected = false,
                     onClick = { },
                     label = { Text(text = "Chip 2") },
-                    leadingIcon = { Icon(imageVector = Icons.Default.FilterList, contentDescription = null) },
+                    leadingIcon = { Icon(imageVector = Icons.Default.FilterList, contentDescription = "Preview Chip 1") },
                 )
             }
         }

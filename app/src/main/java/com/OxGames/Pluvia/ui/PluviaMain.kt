@@ -27,8 +27,11 @@ import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
+import com.OxGames.Pluvia.enums.DialogType
 import com.OxGames.Pluvia.enums.LoginResult
+import com.OxGames.Pluvia.enums.Orientation
 import com.OxGames.Pluvia.enums.PathType
 import com.OxGames.Pluvia.enums.SaveLocation
 import com.OxGames.Pluvia.enums.SyncResult
@@ -37,9 +40,6 @@ import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.component.dialog.LoadingDialog
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
-import com.OxGames.Pluvia.ui.enums.DialogType
-import com.OxGames.Pluvia.ui.enums.Orientation
-import com.OxGames.Pluvia.ui.model.MainViewModel
 import com.OxGames.Pluvia.ui.screen.HomeScreen
 import com.OxGames.Pluvia.ui.screen.PluviaScreen
 import com.OxGames.Pluvia.ui.screen.chat.ChatScreen
@@ -79,6 +79,8 @@ fun PluviaMain(
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
+            Timber.i("Received UI event: $event")
+
             when (event) {
                 MainViewModel.MainUiEvent.LaunchApp -> {
                     navController.navigate(PluviaScreen.XServer.route)
@@ -94,19 +96,19 @@ fun PluviaMain(
                 }
 
                 MainViewModel.MainUiEvent.OnLoggedOut -> {
-                    // Pop stack and go back to login.
-                    navController.popBackStack(
-                        route = PluviaScreen.LoginUser.route,
-                        inclusive = false,
-                        saveState = false,
-                    )
+                    navController.navigate(PluviaScreen.LoginUser.route) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
 
                 is MainViewModel.MainUiEvent.OnLogonEnded -> {
                     when (event.result) {
                         LoginResult.Success -> {
                             Timber.i("Navigating to library")
-                            navController.navigate(PluviaScreen.Home.route)
+                            navController.navigate(PluviaScreen.Home.route) {
+                                popUpTo(PluviaScreen.LoginUser.route) { inclusive = true }
+                            }
 
                             // If a crash happen, lets not ask for a tip yet.
                             // Instead, ask the user to contribute their issues to be addressed.
@@ -115,23 +117,18 @@ fun PluviaMain(
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.CRASH,
-                                    title = "Recent Crash",
-                                    message = "Sorry about that!\n" +
-                                        "It would be nice to know about the recent issue you've had.\n" +
-                                        "You can view and export the most recent crash log in the app's settings " +
-                                        "and attach it as a Github issue in the project's repository.\n" +
-                                        "Link to the Github repo is also in settings!",
-                                    confirmBtnText = "OK",
+                                    title = R.string.dialog_title_recent_crash,
+                                    message = context.getString(R.string.dialog_message_crash),
+                                    confirmBtnText = R.string.ok,
                                 )
                             } else if (!(PrefManager.tipped || BuildConfig.GOLD) && !state.annoyingDialogShown) {
                                 viewModel.setAnnoyingDialogShown(true)
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.SUPPORT,
-                                    message = "Thank you for using Pluvia, please consider supporting " +
-                                        "us by tipping whatever amount is comfortable to you",
-                                    confirmBtnText = "Tip",
-                                    dismissBtnText = "Close",
+                                    message = context.getString(R.string.dialog_message_tip),
+                                    confirmBtnText = R.string.tip,
+                                    dismissBtnText = R.string.close,
                                 )
                             }
                         }
@@ -144,7 +141,7 @@ fun PluviaMain(
     }
 
     LaunchedEffect(navController) {
-        Timber.i("navController changed")
+        Timber.i("LaunchedEffect - navController changed")
 
         if (!state.hasLaunched) {
             viewModel.setHasLaunched(true)
@@ -166,6 +163,8 @@ fun PluviaMain(
 
     // TODO merge to VM?
     LaunchedEffect(state.currentScreen) {
+        Timber.i("LaunchedEffect - currentScreen: ${state.currentScreen}")
+
         // do the following each time we navigate to a new screen
         if (state.resettedScreen != state.currentScreen) {
             viewModel.setScreen()
@@ -384,94 +383,97 @@ fun PluviaMain(
         NavHost(
             navController = navController,
             startDestination = PluviaScreen.LoginUser.route,
-        ) {
-            /** Login **/
-            composable(route = PluviaScreen.LoginUser.route) {
-                UserLoginScreen()
-            }
-            /** Library, Downloads, Friends **/
-            composable(
-                route = PluviaScreen.Home.route,
-                deepLinks = listOf(navDeepLink { uriPattern = "pluvia://home" }),
-            ) {
-                HomeScreen(
-                    onClickPlay = { launchAppId, asContainer ->
-                        viewModel.setLaunchedAppId(launchAppId)
-                        viewModel.setBootToContainer(asContainer)
-                        preLaunchApp(
-                            context = context,
-                            appId = launchAppId,
-                            setLoadingDialogVisible = viewModel::setLoadingDialogVisible,
-                            setLoadingProgress = viewModel::setLoadingDialogProgress,
-                            setMessageDialogState = { msgDialogState = it },
-                            onSuccess = viewModel::launchApp,
-                        )
-                    },
-                    onClickExit = {
-                        PluviaApp.events.emit(AndroidEvent.EndProcess)
-                    },
-                    onChat = {
-                        navController.navigate(PluviaScreen.Chat.route(it))
-                    },
-                    onSettings = {
-                        navController.navigate(PluviaScreen.Settings.route)
-                    },
-                    onLogout = {
-                        SteamService.logOut()
-                    },
-                )
-            }
+            builder = {
+                /** Login **/
+                composable(route = PluviaScreen.LoginUser.route) {
+                    UserLoginScreen()
+                }
+                /** Library, Downloads, Friends **/
+                composable(
+                    route = PluviaScreen.Home.route,
+                    deepLinks = listOf(navDeepLink { uriPattern = "pluvia://home" }),
+                ) {
+                    HomeScreen(
+                        onClickPlay = { launchAppId, asContainer ->
+                            Timber.i("onClickPlay: $launchAppId, $asContainer")
 
-            /** Full Screen Chat **/
-            composable(
-                route = "chat/{id}",
-                arguments = listOf(
-                    navArgument(PluviaScreen.Chat.ARG_ID) {
-                        type = NavType.LongType
-                    },
-                ),
-            ) {
-                val id = it.arguments?.getLong(PluviaScreen.Chat.ARG_ID) ?: throw RuntimeException("Unable to get ID to chat")
-                ChatScreen(
-                    friendId = id,
-                    onBack = {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            navController.popBackStack()
-                        }
-                    },
-                )
-            }
+                            viewModel.setLaunchAppInfo(launchAppId, asContainer)
 
-            /** Game Screen **/
-            composable(route = PluviaScreen.XServer.route) {
-                XServerScreen(
-                    appId = state.launchedAppId,
-                    bootToContainer = state.bootToContainer,
-                    navigateBack = {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            navController.popBackStack()
-                        }
-                    },
-                    onWindowMapped = { window ->
-                        viewModel.onWindowMapped(window, state.launchedAppId)
-                    },
-                    onExit = {
-                        viewModel.exitSteamApp(context, state.launchedAppId)
-                    },
-                )
-            }
+                            preLaunchApp(
+                                context = context,
+                                appId = launchAppId,
+                                setLoadingDialogVisible = viewModel::setLoadingDialogVisible,
+                                setLoadingProgress = viewModel::setLoadingDialogProgress,
+                                setMessageDialogState = { msgDialogState = it },
+                                onSuccess = viewModel::launchApp,
+                            )
+                        },
+                        onClickExit = {
+                            PluviaApp.events.emit(AndroidEvent.EndProcess)
+                        },
+                        onChat = {
+                            navController.navigate(PluviaScreen.Chat.route(it))
+                        },
+                        onSettings = {
+                            navController.navigate(PluviaScreen.Settings.route)
+                        },
+                        onLogout = {
+                            SteamService.logOut()
+                        },
+                    )
+                }
 
-            /** Settings **/
-            composable(route = PluviaScreen.Settings.route) {
-                SettingsScreen(
-                    appTheme = state.appTheme,
-                    paletteStyle = state.paletteStyle,
-                    onAppTheme = viewModel::setTheme,
-                    onPaletteStyle = viewModel::setPalette,
-                    onBack = { navController.navigateUp() },
-                )
-            }
-        }
+                /** Full Screen Chat **/
+                composable(
+                    route = "chat/{id}",
+                    arguments = listOf(
+                        navArgument(PluviaScreen.Chat.ARG_ID) {
+                            type = NavType.LongType
+                        },
+                    ),
+                ) {
+                    val id = it.arguments?.getLong(PluviaScreen.Chat.ARG_ID) ?: throw RuntimeException("Unable to get ID to chat")
+                    ChatScreen(
+                        friendId = id,
+                        onBack = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                navController.popBackStack()
+                            }
+                        },
+                    )
+                }
+
+                /** Game Screen **/
+                composable(route = PluviaScreen.XServer.route) {
+                    XServerScreen(
+                        appId = state.launchedAppId,
+                        bootToContainer = state.bootToContainer,
+                        navigateBack = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                navController.popBackStack()
+                            }
+                        },
+                        onWindowMapped = { window ->
+                            viewModel.onWindowMapped(window, state.launchedAppId)
+                        },
+                        onExit = {
+                            viewModel.exitSteamApp(context, state.launchedAppId)
+                        },
+                    )
+                }
+
+                /** Settings **/
+                composable(route = PluviaScreen.Settings.route) {
+                    SettingsScreen(
+                        appTheme = state.appTheme,
+                        paletteStyle = state.paletteStyle,
+                        onAppTheme = viewModel::setTheme,
+                        onPaletteStyle = viewModel::setPalette,
+                        onBack = { navController.navigateUp() },
+                    )
+                }
+            },
+        )
     }
 }
 
@@ -485,25 +487,28 @@ fun preLaunchApp(
     setMessageDialogState: (MessageDialogState) -> Unit,
     onSuccess: () -> Unit,
 ) {
+    Timber.i("Pre launching app: $appId, $ignorePendingOperations, $preferredSave")
+
     setLoadingDialogVisible(true)
     // TODO: add a way to cancel
     // TODO: add fail conditions
     CoroutineScope(Dispatchers.IO).launch {
         // set up Ubuntu file system
         SplitCompat.install(context)
-        val imageFsInstallSuccess =
-            ImageFsInstaller.installIfNeededFuture(context, context.assets) { progress ->
-                // Log.d("XServerScreen", "$progress")
-                setLoadingProgress(progress / 100f)
-            }.get()
+        ImageFsInstaller.installIfNeededFuture(context, context.assets) { progress ->
+            // Log.d("XServerScreen", "$progress")
+            setLoadingProgress(progress / 100f)
+        }.get()
         setLoadingProgress(-1f)
 
         // create container if it does not already exist
         // TODO: combine somehow with container creation in HomeLibraryAppScreen
+        Timber.i("Loading container manager and getting container info")
         val containerManager = ContainerManager(context)
         val container = ContainerUtils.getOrCreateContainer(context, appId)
         // must activate container before downloading save files
         containerManager.activateContainer(container)
+        Timber.i("Got container: ${container.name}")
 
         // sync save files and check no pending remote operations are running
         val prefixToPath: (String) -> String = { prefix ->
@@ -519,18 +524,22 @@ fun preLaunchApp(
 
         setLoadingDialogVisible(false)
 
+        Timber.i("Post Sync Info was: $postSyncInfo")
+
         when (postSyncInfo.syncResult) {
             SyncResult.Conflict -> {
                 setMessageDialogState(
                     MessageDialogState(
                         visible = true,
                         type = DialogType.SYNC_CONFLICT,
-                        title = "Save Conflict",
-                        message = "There is a new remote save and a new local save, which would you " +
-                            "like to keep?\n\nLocal save:\n\t${Date(postSyncInfo.localTimestamp)}" +
-                            "\nRemote save:\n\t${Date(postSyncInfo.remoteTimestamp)}",
-                        dismissBtnText = "Keep local",
-                        confirmBtnText = "Keep remote",
+                        title = R.string.dialog_title_sync_conflict,
+                        message = context.getString(
+                            R.string.dialog_message_sync_conflict,
+                            Date(postSyncInfo.localTimestamp).toString(),
+                            Date(postSyncInfo.remoteTimestamp).toString(),
+                        ),
+                        dismissBtnText = R.string.dialog_action_keep_local,
+                        confirmBtnText = R.string.dialog_action_keep_remote,
                     ),
                 )
             }
@@ -544,9 +553,9 @@ fun preLaunchApp(
                     MessageDialogState(
                         visible = true,
                         type = DialogType.SYNC_FAIL,
-                        title = "Sync Error",
-                        message = "Failed to sync save files: ${postSyncInfo.syncResult}",
-                        dismissBtnText = "Ok",
+                        title = R.string.dialog_title_sync_error,
+                        message = context.getString(R.string.dialog_message_sync_error, postSyncInfo.syncResult),
+                        dismissBtnText = R.string.ok,
                     ),
                 )
             }
@@ -571,12 +580,14 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.PENDING_UPLOAD_IN_PROGRESS,
-                                    title = "Upload in Progress",
-                                    message = "You played ${SteamService.getAppInfoOf(appId)?.name} " +
-                                        "on the device ${pro.machineName} " +
-                                        "(${Date(pro.timeLastUpdated * 1000L)}) and the save of " +
-                                        "that session is still uploading.\nTry again later.",
-                                    dismissBtnText = "Ok",
+                                    title = R.string.dialog_title_sync_upload,
+                                    message = context.getString(
+                                        R.string.dialog_message_sync_upload,
+                                        SteamService.getAppInfoOf(appId)?.name,
+                                        pro.machineName,
+                                        Date(pro.timeLastUpdated * 1000L).toString(),
+                                    ),
+                                    dismissBtnText = R.string.ok,
                                 ),
                             )
                         }
@@ -586,18 +597,15 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.PENDING_UPLOAD,
-                                    title = "Pending Upload",
-                                    message = "You played " +
-                                        "${SteamService.getAppInfoOf(appId)?.name} " +
-                                        "on the device ${pro.machineName} " +
-                                        "(${Date(pro.timeLastUpdated * 1000L)}), " +
-                                        "and that save is not yet in the cloud. " +
-                                        "(upload not started)\nYou can still play " +
-                                        "this game, but that may create a conflict " +
-                                        "when your previous game progress " +
-                                        "successfully uploads.",
-                                    confirmBtnText = "Play anyway",
-                                    dismissBtnText = "Cancel",
+                                    title = R.string.dialog_title_pending_upload,
+                                    message = context.getString(
+                                        R.string.dialog_message_pending_upload,
+                                        SteamService.getAppInfoOf(appId)?.name,
+                                        pro.machineName,
+                                        Date(pro.timeLastUpdated * 1000L).toString(),
+                                    ),
+                                    confirmBtnText = R.string.dialog_action_play_anyway,
+                                    dismissBtnText = R.string.cancel,
                                 ),
                             )
                         }
@@ -607,16 +615,15 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.APP_SESSION_ACTIVE,
-                                    title = "App Running",
-                                    message = "You are logged in on another device (${pro.machineName}) " +
-                                        "already playing ${SteamService.getAppInfoOf(appId)?.name} " +
-                                        "(${Date(pro.timeLastUpdated * 1000L)}), and that save " +
-                                        "is not yet in the cloud. \nYou can still play this game, " +
-                                        "but that will disconnect the other session from Steam " +
-                                        "and may create a save conflict when that session " +
-                                        "progress is synced",
-                                    confirmBtnText = "Play anyway",
-                                    dismissBtnText = "Cancel",
+                                    title = R.string.dialog_title_app_running,
+                                    message = context.getString(
+                                        R.string.dialog_message_app_running,
+                                        pro.machineName,
+                                        SteamService.getAppInfoOf(appId)?.name,
+                                        Date(pro.timeLastUpdated * 1000L).toString(),
+                                    ),
+                                    confirmBtnText = R.string.dialog_action_play_anyway,
+                                    dismissBtnText = R.string.cancel,
                                 ),
                             )
                         }
@@ -627,9 +634,9 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.APP_SESSION_SUSPENDED,
-                                    title = "Sync Error",
-                                    message = "App session suspended",
-                                    dismissBtnText = "Ok",
+                                    title = R.string.dialog_title_sync_error,
+                                    message = context.getString(R.string.dialog_message_sync_terminated),
+                                    dismissBtnText = R.string.ok,
                                 ),
                             )
                         }
@@ -640,9 +647,9 @@ fun preLaunchApp(
                                 MessageDialogState(
                                     visible = true,
                                     type = DialogType.PENDING_OPERATION_NONE,
-                                    title = "Sync Error",
-                                    message = "Received pending remote operations whose operation was 'none'",
-                                    dismissBtnText = "Ok",
+                                    title = R.string.dialog_title_sync_error,
+                                    message = context.getString(R.string.dialog_message_sync_none),
+                                    dismissBtnText = R.string.ok,
                                 ),
                             )
                         }
@@ -653,9 +660,9 @@ fun preLaunchApp(
                         MessageDialogState(
                             visible = true,
                             type = DialogType.MULTIPLE_PENDING_OPERATIONS,
-                            title = "Sync Error",
-                            message = "Multiple pending remote operations, try again later",
-                            dismissBtnText = "Ok",
+                            title = R.string.dialog_title_sync_error,
+                            message = context.getString(R.string.dialog_message_sync_multiple),
+                            dismissBtnText = R.string.ok,
                         ),
                     )
                 }

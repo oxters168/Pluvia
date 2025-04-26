@@ -1,7 +1,7 @@
 package com.OxGames.Pluvia
 
 import android.content.pm.ActivityInfo
-import com.OxGames.Pluvia.ui.enums.Orientation
+import com.OxGames.Pluvia.enums.Orientation
 import java.util.EnumSet
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue

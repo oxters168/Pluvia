@@ -26,12 +26,12 @@ import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.OxGames.Pluvia.enums.Orientation
 import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.PluviaMain
-import com.OxGames.Pluvia.ui.enums.Orientation
-import com.OxGames.Pluvia.utils.AnimatedPngDecoder
-import com.OxGames.Pluvia.utils.IconDecoder
+import com.OxGames.Pluvia.utils.decoders.AnimatedPngDecoder
+import com.OxGames.Pluvia.utils.decoders.IconDecoder
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 import com.winlator.core.AppUtils
 import dagger.hilt.android.AndroidEntryPoint

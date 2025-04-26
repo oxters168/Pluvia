@@ -3,8 +3,9 @@ package com.OxGames.Pluvia
 import android.os.StrictMode
 import androidx.navigation.NavController
 import com.OxGames.Pluvia.events.EventDispatcher
+import com.OxGames.Pluvia.utils.application.CrashHandler
+import com.OxGames.Pluvia.utils.application.ReleaseTree
 import com.google.android.play.core.splitcompat.SplitCompatApplication
-import com.winlator.xenvironment.XEnvironment
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
@@ -16,12 +17,18 @@ class PluviaApp : SplitCompatApplication() {
     override fun onCreate() {
         super.onCreate()
 
-        // Allows to find resource streams not closed within Pluvia and JavaSteam
         if (BuildConfig.DEBUG) {
             StrictMode.setVmPolicy(
                 StrictMode.VmPolicy.Builder()
-                    .detectLeakedClosableObjects()
-                    .penaltyLog()
+                    .detectLeakedClosableObjects() // Detect when Closeable objects are not properly closed
+                    .penaltyLog() // Log violations to logcat
+                    .build(),
+            )
+
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll() // Detect all violations (disk reads/writes, network operations, etc.)
+                    .penaltyLog() // Log violations to logcat
                     .build(),
             )
 
@@ -40,8 +47,5 @@ class PluviaApp : SplitCompatApplication() {
     companion object {
         internal val events: EventDispatcher = EventDispatcher()
         internal var onDestinationChangedListener: NavChangedListener? = null
-
-        // TODO: find a way to make this saveable, this is terrible
-        internal var xEnvironment: XEnvironment? = null
     }
 }

@@ -3,17 +3,15 @@ package com.OxGames.Pluvia.utils
 import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
+import android.text.Html
+import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.service.SteamService
 import `in`.dragonbra.javasteam.util.HardwareUtils
+import java.io.File
 import java.io.FileOutputStream
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
-import kotlin.io.path.name
 
 object SteamUtils {
 
@@ -57,20 +55,21 @@ object SteamUtils {
      */
     fun replaceSteamApi(context: Context, appId: Int) {
         val appDirPath = SteamService.getAppDirPath(appId)
-        FileUtils.walkThroughPath(Paths.get(appDirPath), -1) {
+
+        File(appDirPath).walkTopDown().forEach {
             if (it.name == "steam_api.dll" && it.exists()) {
-                Files.delete(it)
-                Files.createFile(it)
-                FileOutputStream(it.absolutePathString()).use { fos ->
+                it.delete()
+                it.createNewFile()
+                FileOutputStream(it.absolutePath).use { fos ->
                     context.assets.open("steampipe/steam_api.dll").use { fs ->
                         fs.copyTo(fos)
                     }
                 }
             }
             if (it.name == "steam_api64.dll" && it.exists()) {
-                Files.delete(it)
-                Files.createFile(it)
-                FileOutputStream(it.absolutePathString()).use { fos ->
+                it.delete()
+                it.createNewFile()
+                FileOutputStream(it.absolutePath).use { fos ->
                     context.assets.open("steampipe/steam_api64.dll").use { fs ->
                         fs.copyTo(fos)
                     }
@@ -107,4 +106,22 @@ object SteamUtils {
 
         return androidId.hashCode()
     }
+
+    /**
+     * Gets the avatar URL from an avatar hash.
+     */
+    fun getAvatarURL(string: String?): String =
+        string.orEmpty()
+            .ifEmpty { null }
+            ?.takeIf { str -> str.isNotEmpty() && !str.all { it == '0' } }
+            ?.let { "${Constants.Persona.AVATAR_BASE_URL}${it.substring(0, 2)}/${it}_full.jpg" }
+            ?: Constants.Persona.MISSING_AVATAR_URL
+
+    fun fromHtml(string: String): String = Html.fromHtml(string, Html.FROM_HTML_MODE_LEGACY).toString()
+
+    /**
+     * Gets the profile URL from a steam id.
+     * Steam should redirect to a vanity URL if applied.
+     */
+    fun getProfileUrl(id: Long): String = "${Constants.Persona.PROFILE_URL}$id/"
 }

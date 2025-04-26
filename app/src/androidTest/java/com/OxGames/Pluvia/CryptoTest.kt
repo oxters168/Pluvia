@@ -1,6 +1,7 @@
 package com.OxGames.Pluvia
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.OxGames.Pluvia.utils.application.Crypto
 import java.security.SecureRandom
 import org.junit.Assert.*
 import org.junit.Test

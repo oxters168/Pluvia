@@ -22,11 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.OxGames.Pluvia.Constants
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +41,12 @@ fun WebViewDialog(
     onDismissRequest: () -> Unit,
 ) {
     if (isVisible) {
-        var topBarTitle by rememberSaveable { mutableStateOf("Pluvia Web View") }
+        val context = LocalContext.current
+
+        var topBarTitle by rememberSaveable {
+            val string = context.getString(R.string.title_web_view)
+            mutableStateOf(string)
+        }
         val startingUrl by rememberSaveable(url) { mutableStateOf(url) }
         var webView: WebView? = remember { null } // WebView class.
         val webViewState = rememberSaveable { Bundle() } // WebView state for lifecycle events.
@@ -72,7 +81,12 @@ fun WebViewDialog(
                                         webViewState.clear() // Clear the state when we're done.
                                         onDismissRequest()
                                     },
-                                    content = { Icon(imageVector = Icons.Default.Close, null) },
+                                    content = {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.desc_close_dialog),
+                                        )
+                                    },
                                 )
                             },
                         )
@@ -122,7 +136,7 @@ private fun Preview_WebView() {
     PluviaTheme {
         WebViewDialog(
             isVisible = true,
-            url = "https://github.com/oxters168/Pluvia",
+            url = Constants.Misc.GITHUB_LINK,
             onDismissRequest = {
                 println("WE CAN GO BACK!")
             },

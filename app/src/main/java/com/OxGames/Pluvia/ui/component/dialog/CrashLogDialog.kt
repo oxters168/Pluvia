@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.component.dialog
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -22,13 +23,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,13 +68,13 @@ fun CrashLogDialog(
                             navigationIcon = {
                                 IconButton(
                                     onClick = onDismissRequest,
-                                    content = { Icon(Icons.Default.Close, null) },
+                                    content = { Icon(Icons.Default.Close, stringResource(R.string.desc_close_dialog)) },
                                 )
                             },
                             actions = {
                                 IconButton(
                                     onClick = onSave,
-                                    content = { Icon(Icons.Default.Save, null) },
+                                    content = { Icon(Icons.Default.Save, stringResource(R.string.desc_save_crash)) },
                                 )
                             },
                         )
@@ -101,6 +106,27 @@ fun CrashLogDialog(
                     }
                 }
             },
+        )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
+@Composable
+private fun Preview_CrashLogDialog() {
+    PluviaTheme {
+        CrashLogDialog(
+            fileName = "crash_log.txt",
+            fileText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed " +
+                "do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+                "Ut enim ad minim veniam, quis nostrud exercitation ullamco " +
+                "laboris nisi ut aliquip ex ea commodo consequat. Duis aute " +
+                "irure dolor in reprehenderit in voluptate velit esse cillum " +
+                "dolore eu fugiat nulla pariatur. Excepteur sint occaecat " +
+                "cupidatat non proident, sunt in culpa qui officia deserunt " +
+                "mollit anim id est laborum.",
+            onSave = {},
+            onDismissRequest = {},
         )
     }
 }

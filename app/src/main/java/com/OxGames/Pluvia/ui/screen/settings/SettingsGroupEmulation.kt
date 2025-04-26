@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.dialog.Box64PresetsDialog
 import com.OxGames.Pluvia.ui.component.dialog.ContainerConfigDialog
 import com.OxGames.Pluvia.ui.component.dialog.OrientationDialog
@@ -16,7 +18,7 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 
 @Composable
 fun SettingsGroupEmulation() {
-    SettingsGroup(title = { Text(text = "Emulation") }) {
+    SettingsGroup(title = { Text(text = stringResource(R.string.settings_group_emulation)) }) {
         var showConfigDialog by rememberSaveable { mutableStateOf(false) }
         var showOrientationDialog by rememberSaveable { mutableStateOf(false) }
         var showBox64PresetsDialog by rememberSaveable { mutableStateOf(false) }
@@ -28,7 +30,7 @@ fun SettingsGroupEmulation() {
 
         ContainerConfigDialog(
             visible = showConfigDialog,
-            title = "Default Container Config",
+            title = stringResource(R.string.dialog_title_default_container_config),
             initialConfig = ContainerUtils.getDefaultContainerData(),
             onDismissRequest = { showConfigDialog = false },
             onSave = {
@@ -44,20 +46,20 @@ fun SettingsGroupEmulation() {
 
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "Allowed Orientations") },
-            subtitle = { Text(text = "Choose which orientations can be rotated to when in-game") },
+            title = { Text(text = stringResource(R.string.settings_allowed_orientations_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_allowed_orientations_subtitle)) },
             onClick = { showOrientationDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "Modify Default Config") },
-            subtitle = { Text(text = "The initial container settings for each game (does not affect already installed games)") },
+            title = { Text(text = stringResource(R.string.settings_modify_default_config_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_modify_default_config_subtitle)) },
             onClick = { showConfigDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "Box64 Presets") },
-            subtitle = { Text("View, modify, and create Box64 presets") },
+            title = { Text(text = stringResource(R.string.settings_box64_presets_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_box64_presets_subtitle)) },
             onClick = { showBox64PresetsDialog = true },
         )
     }

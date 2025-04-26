@@ -155,7 +155,7 @@ fun KeyValue.generateSteamApp(): SteamApp {
     )
 }
 
-fun List<KeyValue>.generateManifest(): Map<String, ManifestInfo> = associate { manifest ->
+private fun List<KeyValue>.generateManifest(): Map<String, ManifestInfo> = associate { manifest ->
     manifest.name to ManifestInfo(
         name = manifest.name,
         gid = manifest["gid"].asLong(),
@@ -164,7 +164,7 @@ fun List<KeyValue>.generateManifest(): Map<String, ManifestInfo> = associate { m
     )
 }
 
-fun List<KeyValue>.toLangImgMap(): Map<Language, String> = mapNotNull { kv ->
+private fun List<KeyValue>.toLangImgMap(): Map<Language, String> = mapNotNull { kv ->
     Language.from(kv.name)
         .takeIf { it != Language.unknown }
         ?.to(kv.value)

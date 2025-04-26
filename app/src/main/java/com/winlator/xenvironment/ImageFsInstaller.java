@@ -58,7 +58,7 @@ public abstract class ImageFsInstaller {
             final long contentLength = (long)(FileUtils.getSize(assetManager, "imagefs.txz") * (100.0f / compressionRatio));
             AtomicLong totalSizeRef = new AtomicLong();
 
-            boolean success = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, assetManager, "imagefs.txz", rootDir, (file, size) -> {
+            boolean success = TarCompressorUtils.extract(TarCompressorUtils.Type.XZ, context, "imagefs.txz", rootDir, (file, size) -> {
                 if (size > 0) {
                     long totalSize = totalSizeRef.addAndGet(size);
                     if (onProgress != null) {
@@ -137,7 +137,7 @@ public abstract class ImageFsInstaller {
 
             File containerPatternDir = new File(context.getCacheDir(), "container_pattern");
             FileUtils.delete(containerPatternDir);
-            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, assetManager, "container_pattern.tzst", containerPatternDir);
+            TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, context, "container_pattern.tzst", containerPatternDir);
 
             File containerSystem32Dir = new File(containerPatternDir, ".wine/drive_c/windows/system32");
             File containerSysWoW64Dir = new File(containerPatternDir, ".wine/drive_c/windows/syswow64");

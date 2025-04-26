@@ -1,28 +1,28 @@
 [versions]
-activityCompose = "1.10.0" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
-agp = "8.8.0" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
+activityCompose = "1.10.1" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
+agp = "8.9.0" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
 apache-compress = "1.27.1" # https://mvnrepository.com/artifact/org.apache.commons/commons-compress
 apng = "3.0.2" # https://mvnrepository.com/artifact/com.github.penfeizhou.android.animation/apng
-composeBom = "2025.01.01" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
+composeBom = "2025.03.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
 coreKtx = "1.15.0" # https://mvnrepository.com/artifact/androidx.core/core-ktx
 coroutines = "1.10.1" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
 dagger-hilt = "2.55" # https://mvnrepository.com/artifact/com.google.dagger/hilt-android
-dataStore = "1.1.2" # https://mvnrepository.com/artifact/androidx.datastore/datastore-preferences
+dataStore = "1.1.3" # https://mvnrepository.com/artifact/androidx.datastore/datastore-preferences
 espressoCore = "3.6.1" # https://mvnrepository.com/artifact/androidx.test.espresso/espresso-core
 feature-delivery = "2.1.0" # https://mvnrepository.com/artifact/com.google.android.play/feature-delivery
 hiltNavigationCompose = "1.2.0" # https://mvnrepository.com/artifact/androidx.hilt/hilt-navigation-compose
 json = "1.8.0" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
 junit = "4.13.2" # https://mvnrepository.com/artifact/junit/junit
 junitVersion = "1.2.1" # https://mvnrepository.com/artifact/androidx.test.ext/junit
-kotlin = "2.0.21" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
+kotlin = "2.1.10" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
 kotlinter = "5.0.1" # https://plugins.gradle.org/plugin/org.jmailen.kotlinter
-ksp = "2.0.21-1.0.28" # https://mvnrepository.com/artifact/com.google.devtools.ksp/symbol-processing-api
-landscapistCoil = "2.4.6" # https://mvnrepository.com/artifact/com.github.skydoves/landscapist-coil
+ksp = "2.1.10-1.0.31" # https://mvnrepository.com/artifact/com.google.devtools.ksp/symbol-processing-api
+landscapistCoil = "2.4.7" # https://mvnrepository.com/artifact/com.github.skydoves/landscapist-coil
 lifecycleRuntimeKtx = "2.8.7" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-ktx
-material3Adaptive = "1.0.0" # https://mvnrepository.com/artifact/androidx.compose.material3.adaptive/adaptive-layout
+material3Adaptive = "1.1.0" # https://mvnrepository.com/artifact/androidx.compose.material3.adaptive/adaptive-layout
 material3AdaptiveNavSuite = "1.3.1" # https://mvnrepository.com/artifact/androidx.compose.material3/material3-adaptive-navigation-suite
-materialKolor = "2.0.0" # https://mvnrepository.com/artifact/com.materialkolor/material-kolor-android
-navigation-compose = "2.8.6" # https://mvnrepository.com/artifact/androidx.navigation/navigation-compose
+materialKolor = "2.0.2" # https://mvnrepository.com/artifact/com.materialkolor/material-kolor-android
+navigation-compose = "2.8.9" # https://mvnrepository.com/artifact/androidx.navigation/navigation-compose
 protobuf = "4.29.3" # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
 room-runtime = "2.6.1" # https://mvnrepository.com/artifact/androidx.room/room-runtime
 runner = "1.6.2" # https://mvnrepository.com/artifact/androidx.test/runner
@@ -30,7 +30,7 @@ settings = "2.10.0" # https://github.com/alorma/Compose-Settings/releases
 spongycastle = "1.58.0.0" # https://mvnrepository.com/artifact/com.madgag.spongycastle/prov
 steamkit = "1.6.1-SNAPSHOT" # https://mvnrepository.com/artifact/in.dragonbra/javasteam
 timber = "5.0.1" # https://mvnrepository.com/artifact/com.jakewharton.timber/timber
-zstd-jni = "1.5.6-9" # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
+zstd-jni = "1.5.7-1" # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
 zxing = "3.5.3" # https://mvnrepository.com/artifact/com.google.zxing/core
 
 [libraries]
@@ -50,7 +50,7 @@ androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "ro
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room-runtime" }
 # TODO: Remove 'version' once 1.8.0 is rolled into stable BOM, see https://developer.android.com/jetpack/androidx/releases/compose-ui
 #   This fixes `Placement happened before lookahead` crash when animating lists items.
-androidx-ui = { group = "androidx.compose.ui", name = "ui", version = "1.8.0-beta01" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui", version = "1.8.0-rc01" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }

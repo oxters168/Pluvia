@@ -1,6 +1,7 @@
 package com.OxGames.Pluvia.utils
 
 import android.content.res.AssetManager
+import android.os.StatFs
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
@@ -16,6 +17,46 @@ import kotlin.io.path.name
 import timber.log.Timber
 
 object FileUtils {
+
+    fun getAvailableSpace(path: String): Long {
+        val stat = StatFs(path)
+        return stat.blockSizeLong * stat.availableBlocksLong
+    }
+
+    fun getFolderSize(folderPath: String): Long {
+        val folder = File(folderPath)
+        return if (folder.exists()) {
+            folder.walkTopDown()
+                .filter { it.isFile }
+                .map { it.length() }
+                .sum()
+        } else {
+            0L
+        }
+    }
+
+    fun formatBinarySize(bytes: Long, decimalPlaces: Int = 2): String {
+        require(bytes > Long.MIN_VALUE) { "Out of range" }
+        require(decimalPlaces >= 0) { "Negative decimal places unsupported" }
+
+        val isNegative = bytes < 0
+        val absBytes = kotlin.math.abs(bytes)
+
+        if (absBytes < 1024) {
+            return "$bytes B"
+        }
+
+        val units = arrayOf("KiB", "MiB", "GiB", "TiB", "PiB")
+        val digitGroups = (63 - absBytes.countLeadingZeroBits()) / 10
+        val value = absBytes.toDouble() / (1L shl (digitGroups * 10))
+
+        val result = "%.${decimalPlaces}f %s".format(
+            if (isNegative) -value else value,
+            units[digitGroups - 1],
+        )
+
+        return result
+    }
 
     fun makeDir(dirName: String) {
         val homeItemsDir = File(dirName)
@@ -79,26 +120,6 @@ object FileUtils {
         } catch (e: Exception) {
             Timber.e("%s encounted an issue in writeStringToFile()", errorTag)
             Timber.e(errorMsg?.invoke(e) ?: "Error writing to file: $e")
-        }
-    }
-
-    /**
-     * Traverse through a directory and perform an action on each file
-     *
-     * @param rootPath The start path
-     * @param maxDepth How deep to go in the directory tree, a value of -1 keeps going
-     * @param action The action to perform on each file
-     */
-    fun walkThroughPath(rootPath: Path, maxDepth: Int = 0, action: (Path) -> Unit) {
-        Files.list(rootPath).forEach {
-            action(it)
-            if (maxDepth != 0 && it.exists() && it.isDirectory()) {
-                walkThroughPath(
-                    rootPath = it,
-                    maxDepth = if (maxDepth > 0) maxDepth - 1 else maxDepth,
-                    action = action,
-                )
-            }
         }
     }
 

@@ -11,10 +11,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
+import com.OxGames.Pluvia.enums.HomeDestination
 import com.OxGames.Pluvia.ui.component.dialog.SingleChoiceDialog
-import com.OxGames.Pluvia.ui.enums.HomeDestination
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsAlt
 import com.alorma.compose.settings.ui.SettingsGroup
@@ -32,6 +34,7 @@ fun SettingsGroupInterface(
     val context = LocalContext.current
 
     var openWebLinks by rememberSaveable { mutableStateOf(PrefManager.openWebLinksExternally) }
+    var broadcastPlayingGame by rememberSaveable { mutableStateOf(PrefManager.broadcastPlayingGame) }
 
     var openAppThemeDialog by rememberSaveable { mutableStateOf(false) }
     var openAppPaletteDialog by rememberSaveable { mutableStateOf(false) }
@@ -42,8 +45,8 @@ fun SettingsGroupInterface(
     SingleChoiceDialog(
         openDialog = openAppThemeDialog,
         icon = Icons.Default.BrightnessMedium,
-        title = "App Theme",
-        items = AppTheme.entries.map { it.text },
+        title = R.string.dialog_title_app_theme,
+        items = AppTheme.entries.map { stringResource(it.string) },
         onSelected = {
             val entry = AppTheme.entries[it]
             onAppTheme(entry)
@@ -57,7 +60,7 @@ fun SettingsGroupInterface(
     SingleChoiceDialog(
         openDialog = openAppPaletteDialog,
         icon = Icons.Default.ColorLens,
-        title = "Palette Style",
+        title = R.string.dialog_title_palette_style,
         items = PaletteStyle.entries.map { it.name },
         onSelected = {
             val entry = PaletteStyle.entries[it]
@@ -72,8 +75,8 @@ fun SettingsGroupInterface(
     SingleChoiceDialog(
         openDialog = openStartScreenDialog,
         icon = Icons.Default.Map,
-        title = "Start Screen",
-        items = HomeDestination.entries.map { context.getString(it.title) },
+        title = R.string.dialog_title_start_screen,
+        items = HomeDestination.entries.map { context.getString(it.string) },
         onSelected = {
             val entry = HomeDestination.entries[it]
             startScreenOption = entry
@@ -85,39 +88,43 @@ fun SettingsGroupInterface(
         },
     )
 
-    SettingsGroup(title = { Text(text = "Interface") }) {
+    SettingsGroup(title = { Text(text = stringResource(R.string.settings_group_interface)) }) {
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "Start Destination") },
-            subtitle = { Text(text = "Choose between Library, Downloads, or Friends") },
-            onClick = {
-                openStartScreenDialog = true
-            },
+            title = { Text(text = stringResource(R.string.settings_start_destination_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_start_destination_subtitle)) },
+            onClick = { openStartScreenDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "App Theme") },
-            subtitle = { Text(text = "Choose between Day, Night, or Auto") },
-            onClick = {
-                openAppThemeDialog = true
-            },
+            title = { Text(text = stringResource(R.string.settings_app_theme_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_app_theme_subtitle)) },
+            onClick = { openAppThemeDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
-            title = { Text(text = "Palette Style") },
-            subtitle = { Text(text = "Change the Material Design 3 color palette") },
-            onClick = {
-                openAppPaletteDialog = true
-            },
+            title = { Text(text = stringResource(R.string.settings_app_palette_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_app_palette_subtitle)) },
+            onClick = { openAppPaletteDialog = true },
         )
         SettingsSwitch(
             colors = settingsTileColorsAlt(),
-            title = { Text(text = "Open web links externally") },
-            subtitle = { Text(text = "Links open with your main web browser") },
+            title = { Text(text = stringResource(R.string.settings_web_links_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_web_links_subtitle)) },
             state = openWebLinks,
             onCheckedChange = {
                 openWebLinks = it
                 PrefManager.openWebLinksExternally = it
+            },
+        )
+        SettingsSwitch(
+            colors = settingsTileColorsAlt(),
+            title = { Text(text = stringResource(R.string.settings_broadcast_game_title)) },
+            subtitle = { Text(text = stringResource(R.string.settings_broadcast_game_subtitle)) },
+            state = broadcastPlayingGame,
+            onCheckedChange = {
+                broadcastPlayingGame = it
+                PrefManager.broadcastPlayingGame = it
             },
         )
     }

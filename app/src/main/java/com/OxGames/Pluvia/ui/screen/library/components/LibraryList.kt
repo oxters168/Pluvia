@@ -15,7 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
 
 @Composable
@@ -39,7 +41,7 @@ internal fun LibraryList(
             ) {
                 Text(
                     modifier = Modifier.padding(24.dp),
-                    text = "No items listed with selection",
+                    text = stringResource(R.string.library_no_items),
                 )
             }
         }

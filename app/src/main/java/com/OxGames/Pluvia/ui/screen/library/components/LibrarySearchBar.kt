@@ -22,14 +22,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
+import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.component.topbar.AccountButton
-import com.OxGames.Pluvia.ui.data.LibraryState
-import com.OxGames.Pluvia.ui.internal.fakeAppInfo
+import com.OxGames.Pluvia.ui.screen.library.LibraryState
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,8 +77,13 @@ internal fun LibrarySearchBar(
                     onSearch = { keyboardController?.hide() },
                     expanded = state.isSearching,
                     onExpandedChange = onIsSearching,
-                    placeholder = { Text(text = "Search for games") },
-                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
+                    placeholder = { Text(text = stringResource(R.string.search_text_placeholder)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search_text_placeholder),
+                        )
+                    },
                     trailingIcon = {
                         Crossfade(state.isSearching) { cfState ->
                             if (cfState) {
@@ -89,7 +96,10 @@ internal fun LibrarySearchBar(
                                         }
                                     },
                                     content = {
-                                        Icon(Icons.Default.Clear, "Clear search query")
+                                        Icon(
+                                            imageVector = Icons.Default.Clear,
+                                            contentDescription = stringResource(R.string.desc_library_search_clear),
+                                        )
                                     },
                                 )
                             } else {

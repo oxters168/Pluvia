@@ -76,6 +76,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -86,6 +87,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -97,21 +99,21 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.SteamFriend
+import com.OxGames.Pluvia.enums.DialogType
 import com.OxGames.Pluvia.ui.component.BBCodeText
 import com.OxGames.Pluvia.ui.component.LoadingScreen
+import com.OxGames.Pluvia.ui.component.data.fakeSteamFriends
 import com.OxGames.Pluvia.ui.component.dialog.GamesListDialog
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.component.dialog.WebViewDialog
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
 import com.OxGames.Pluvia.ui.component.topbar.AccountButton
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
-import com.OxGames.Pluvia.ui.data.FriendsState
-import com.OxGames.Pluvia.ui.enums.DialogType
-import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
-import com.OxGames.Pluvia.ui.model.FriendsViewModel
+import com.OxGames.Pluvia.ui.screen.friends.components.FriendItem
+import com.OxGames.Pluvia.ui.screen.friends.components.ProfileButton
+import com.OxGames.Pluvia.ui.screen.friends.components.StickyHeaderItem
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.getAvatarURL
-import com.OxGames.Pluvia.utils.getProfileUrl
+import com.OxGames.Pluvia.utils.SteamUtils
 import com.materialkolor.ktx.isLight
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
@@ -119,6 +121,7 @@ import `in`.dragonbra.javasteam.enums.EResult
 import `in`.dragonbra.javasteam.steam.handlers.steamfriends.callback.ProfileInfoCallback
 import `in`.dragonbra.javasteam.types.SteamID
 import java.util.Date
+import kotlinx.coroutines.launch
 
 // TODO pressing back wont make the selected profile go to the initial details screen.
 
@@ -169,6 +172,7 @@ private fun FriendsScreenContent(
 ) {
     val listState = rememberLazyListState() // Hoisted high to preserve state
     val snackbarHost = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     var showGamesDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -182,7 +186,9 @@ private fun FriendsScreenContent(
 
     // Pretty much the same as 'NavigableListDetailPaneScaffold'
     BackHandler(navigator.canNavigateBack(BackNavigationBehavior.PopUntilContentChange)) {
-        navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        scope.launch {
+            navigator.navigateBack(BackNavigationBehavior.PopUntilContentChange)
+        }
     }
 
     ListDetailPaneScaffold(
@@ -198,8 +204,10 @@ private fun FriendsScreenContent(
                     onBack = onBack,
                     onChat = onChat,
                     onFriendClick = {
-                        onFriendClick(it.id)
-                        navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        scope.launch {
+                            onFriendClick(it.id)
+                            navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                        }
                     },
                     onHeaderAction = onHeaderAction,
                     onLogout = onLogout,
@@ -243,7 +251,7 @@ private fun FriendsListPane(
         snackbarHost = { SnackbarHost(snackbarHost) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Friends") },
+                title = { Text(text = stringResource(R.string.title_friends)) },
                 actions = {
                     AccountButton(
                         onSettings = onSettings,
@@ -254,6 +262,8 @@ private fun FriendsListPane(
             )
         },
     ) { paddingValues ->
+        val context = LocalContext.current
+
         LazyColumn(
             modifier = Modifier
                 .padding(
@@ -265,16 +275,17 @@ private fun FriendsListPane(
             contentPadding = PaddingValues(bottom = 72.dp),
         ) {
             state.friendsList.forEach { (key, value) ->
+                val header = context.getString(key)
                 stickyHeader {
                     StickyHeaderItem(
-                        isCollapsed = key in state.collapsedListSections,
-                        header = key,
+                        isCollapsed = header in state.collapsedListSections,
+                        header = header,
                         count = value.size,
-                        onHeaderAction = { onHeaderAction(key) },
+                        onHeaderAction = { onHeaderAction(header) },
                     )
                 }
 
-                if (key !in state.collapsedListSections) {
+                if (header !in state.collapsedListSections) {
                     itemsIndexed(value, key = { _, item -> item.id }) { idx, friend ->
                         FriendItem(
                             modifier = Modifier.animateItem(),
@@ -338,7 +349,7 @@ private fun DefaultDetailsScreen() {
     ) {
         Text(
             modifier = Modifier.padding(24.dp),
-            text = "Select a friend to their profile",
+            text = stringResource(R.string.friend_no_selection),
         )
     }
 }
@@ -432,16 +443,21 @@ private fun ProfileDetailsScreen(
             onDismissRequest = {
                 setNickNameDialog = false
             },
-            icon = { Icon(imageVector = Icons.Default.Edit, contentDescription = null) },
-            title = { Text(text = "Set Nickname") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.dialog_title_friend_set_nickname),
+                )
+            },
+            title = { Text(text = stringResource(R.string.dialog_title_friend_set_nickname)) },
             text = {
                 Column {
-                    Text(text = "Set a new nickname for ${state.profileFriend!!.name}")
+                    Text(text = stringResource(R.string.dialog_message_friend_set_nickname, state.profileFriend!!.name))
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = newNickName,
                         onValueChange = { newNickName = it },
-                        label = { Text(text = "Nickname") },
+                        label = { Text(text = stringResource(R.string.nickname)) },
                     )
                 }
             },
@@ -451,15 +467,13 @@ private fun ProfileDetailsScreen(
                         setNickNameDialog = false
                         onNickName(newNickName)
                     },
-                    content = { Text(text = "Confirm") },
+                    content = { Text(text = stringResource(R.string.confirm)) },
                 )
             },
             dismissButton = {
                 TextButton(
-                    onClick = {
-                        setNickNameDialog = false
-                    },
-                    content = { Text(text = "Cancel") },
+                    onClick = { setNickNameDialog = false },
+                    content = { Text(text = stringResource(R.string.cancel)) },
                 )
             },
         )
@@ -471,8 +485,13 @@ private fun ProfileDetailsScreen(
             onDismissRequest = {
                 showPreviousAliasDialog = false
             },
-            icon = { Icon(imageVector = Icons.Default.History, contentDescription = null) },
-            title = { Text(text = "Past Aliases") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = stringResource(R.string.dialog_title_friend_past_aliases),
+                )
+            },
+            title = { Text(text = stringResource(R.string.dialog_title_friend_past_aliases)) },
             text = {
                 LazyColumn {
                     items(state.profileFriendAlias) { alias ->
@@ -483,7 +502,7 @@ private fun ProfileDetailsScreen(
                     if (state.profileFriendAlias.isEmpty()) {
                         item {
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(text = "No past aliases found")
+                            Text(text = stringResource(R.string.dialog_message_friend_no_past_aliases))
                             Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
@@ -492,7 +511,7 @@ private fun ProfileDetailsScreen(
             confirmButton = {
                 TextButton(
                     onClick = { showPreviousAliasDialog = false },
-                    content = { Text(text = "Close") },
+                    content = { Text(text = stringResource(R.string.close)) },
                 )
             },
         )
@@ -501,7 +520,7 @@ private fun ProfileDetailsScreen(
     var showInternalBrowserDialog by rememberSaveable { mutableStateOf(false) }
     WebViewDialog(
         isVisible = showInternalBrowserDialog,
-        url = state.profileFriend!!.id.getProfileUrl(),
+        url = SteamUtils.getProfileUrl(state.profileFriend!!.id),
         onDismissRequest = {
             showInternalBrowserDialog = false
         },
@@ -514,7 +533,7 @@ private fun ProfileDetailsScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "Profile",
+                            text = stringResource(R.string.title_profile),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -546,7 +565,7 @@ private fun ProfileDetailsScreen(
                     .clip(CircleShape)
                     .background(Color.DarkGray)
                     .size(92.dp),
-                imageModel = { state.profileFriend.avatarHash.getAvatarURL() },
+                imageModel = { SteamUtils.getAvatarURL(state.profileFriend.avatarHash) },
                 imageOptions = ImageOptions(
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
@@ -582,16 +601,16 @@ private fun ProfileDetailsScreen(
             ) {
                 ProfileButton(
                     icon = Icons.AutoMirrored.Outlined.Chat,
-                    text = "Chat",
+                    text = stringResource(R.string.chat),
                     onClick = { onChat(state.profileFriend.id) },
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 ProfileButton(
                     icon = Icons.Outlined.Person,
-                    text = "Profile",
+                    text = stringResource(R.string.profile),
                     onClick = {
                         if (PrefManager.openWebLinksExternally) {
-                            uriHandler.openUri(state.profileFriend.id.getProfileUrl())
+                            uriHandler.openUri(SteamUtils.getProfileUrl(state.profileFriend.id))
                         } else {
                             showInternalBrowserDialog = true
                         }
@@ -600,16 +619,14 @@ private fun ProfileDetailsScreen(
                 Spacer(modifier = Modifier.width(16.dp))
                 ProfileButton(
                     icon = Icons.Outlined.Games,
-                    text = "Games",
+                    text = stringResource(R.string.games),
                     onClick = onShowGames,
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 ProfileButton(
                     icon = Icons.Outlined.MoreVert,
-                    text = "More",
-                    onClick = {
-                        moreExpanded = !moreExpanded
-                    },
+                    text = stringResource(R.string.more),
+                    onClick = { moreExpanded = !moreExpanded },
                 )
             }
 
@@ -630,7 +647,7 @@ private fun ProfileDetailsScreen(
                     ) {
                         ProfileButton(
                             icon = Icons.Outlined.History,
-                            text = "View Aliases",
+                            text = stringResource(R.string.friend_view_aliases),
                             onClick = {
                                 onAlias()
                                 showPreviousAliasDialog = true
@@ -639,7 +656,7 @@ private fun ProfileDetailsScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.Edit,
-                            text = "Set Nickname",
+                            text = stringResource(R.string.friend_set_nickname),
                             onClick = {
                                 setNickNameDialog = true
                             },
@@ -647,32 +664,30 @@ private fun ProfileDetailsScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.PersonOff,
-                            text = "Block Friend",
+                            text = stringResource(R.string.friend_block),
                             onClick = {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.FRIEND_BLOCK,
-                                    confirmBtnText = "Block",
-                                    dismissBtnText = "Cancel",
-                                    title = "Block Friend",
-                                    message = "Are you sure you want to block ${state.profileFriend.nameOrNickname}?\n" +
-                                        "This will block them on all steam clients.",
+                                    confirmBtnText = R.string.block,
+                                    dismissBtnText = R.string.cancel,
+                                    title = R.string.dialog_title_friend_block,
+                                    message = context.getString(R.string.dialog_message_friend_block, state.profileFriend.nameOrNickname),
                                 )
                             },
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.PersonRemove,
-                            text = "Remove Friend",
+                            text = stringResource(R.string.dialog_title_friend_remove),
                             onClick = {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.FRIEND_REMOVE,
-                                    confirmBtnText = "Remove",
-                                    dismissBtnText = "Cancel",
-                                    title = "Remove Friend",
-                                    message = "Are you sure you want to remove ${state.profileFriend.nameOrNickname}?\n" +
-                                        "This will remove them on all steam clients.",
+                                    confirmBtnText = R.string.remove,
+                                    dismissBtnText = R.string.cancel,
+                                    title = R.string.friend_remove,
+                                    message = context.getString(R.string.dialog_message_friend_remove, state.profileFriend.nameOrNickname),
                                 )
                             },
                         )
@@ -687,25 +702,26 @@ private fun ProfileDetailsScreen(
                     ) {
                         ProfileButton(
                             icon = Icons.Outlined.Favorite,
-                            text = "Add to Favorites",
+                            text = stringResource(R.string.friend_add_favorite),
                             onClick = {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.FRIEND_FAVORITE,
-                                    confirmBtnText = "Favorite",
-                                    dismissBtnText = "Cancel",
-                                    title = "Favorite Friend",
-                                    message = "Are you sure you want to favorite ${state.profileFriend.nameOrNickname}?\n" +
-                                        "This will favorite them on all steam clients.",
+                                    confirmBtnText = R.string.favorite,
+                                    dismissBtnText = R.string.cancel,
+                                    title = R.string.dialog_title_friend_favorite,
+                                    message = context.getString(
+                                        R.string.dialog_message_friend_favorite,
+                                        state.profileFriend.nameOrNickname,
+                                    ),
                                 )
                             },
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         ProfileButton(
                             icon = Icons.Outlined.Notifications,
-                            text = "Set Alerts",
+                            text = stringResource(R.string.friend_set_alerts),
                             onClick = {
-                                // TODO
                                 Toast.makeText(context, "Notifications TODO", Toast.LENGTH_SHORT).show()
                             },
                         )
@@ -736,16 +752,24 @@ private fun ProfileDetailsScreen(
                                 // Steam launch: Sept 12, 2003
                                 val isValid = timeCreated.after(Date(1063267200000L))
                                 if (isValid) {
-                                    if (realName.isNotEmpty()) Text(text = "Name: $realName")
-                                    if (cityName.isNotEmpty()) Text(text = "City: $cityName")
-                                    if (stateName.isNotEmpty()) Text(text = "State: $stateName")
-                                    if (stateName.isNotEmpty()) Text(text = "Country: $countryName")
-                                    Text(text = "Created: $timeCreated")
+                                    if (realName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_name, realName))
+                                    }
+                                    if (cityName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_city, cityName))
+                                    }
+                                    if (stateName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_state, stateName))
+                                    }
+                                    if (stateName.isNotEmpty()) {
+                                        Text(text = stringResource(R.string.friend_profile_country, countryName))
+                                    }
+                                    Text(text = stringResource(R.string.friend_profile_created, timeCreated))
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    Text(text = "Summary:")
+                                    Text(text = stringResource(R.string.friend_profile_summary))
                                     BBCodeText(text = summary)
                                 } else {
-                                    Text("Profile most likely private.\nUnable to retrieve info")
+                                    Text(stringResource(R.string.friend_profile_private))
                                 }
                             }
                         }
@@ -787,9 +811,9 @@ private fun Preview_FriendsScreenContent(
                 navigator = navigator,
                 state = FriendsState(
                     friendsList = mapOf(
-                        "In-Game" to fakeSteamFriends(),
-                        "Online" to fakeSteamFriends(id = 5, inGame = false),
-                        "Offline" to fakeSteamFriends(id = 10, online = false, inGame = false),
+                        R.string.friend_sticky_game to fakeSteamFriends(),
+                        R.string.friend_sticky_online to fakeSteamFriends(id = 5, inGame = false),
+                        R.string.friend_sticky_offline to fakeSteamFriends(id = 10, online = false, inGame = false),
                     ),
                     profileFriend = fakeSteamFriends()[1],
                     profileFriendInfo = ProfileInfoCallback(

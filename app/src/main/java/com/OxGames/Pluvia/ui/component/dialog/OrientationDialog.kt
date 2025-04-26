@@ -17,9 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.PrefManager
-import com.OxGames.Pluvia.ui.enums.Orientation
+import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.enums.Orientation
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import java.util.EnumSet
 
@@ -52,11 +54,11 @@ fun OrientationDialog(
         icon = {
             Icon(
                 imageVector = Icons.Default.ScreenRotation,
-                contentDescription = null,
+                contentDescription = stringResource(R.string.dialog_title_orientations),
             )
         },
         title = {
-            Text(text = "Allowed Orientations")
+            Text(text = stringResource(R.string.dialog_title_orientations))
         },
         text = {
             Column {
@@ -72,14 +74,14 @@ fun OrientationDialog(
                                 }
                             },
                         )
-                        Text(text = orientation.name)
+                        Text(text = stringResource(orientation.string))
                     }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onClose, enabled = currentSettings.isNotEmpty()) {
-                Text(text = "Close")
+                Text(text = stringResource(R.string.close))
             }
         },
     )

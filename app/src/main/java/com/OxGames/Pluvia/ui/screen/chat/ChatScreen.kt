@@ -53,6 +53,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.PlatformTextStyle
@@ -69,16 +71,16 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.FriendMessage
 import com.OxGames.Pluvia.data.SteamFriend
+import com.OxGames.Pluvia.ui.component.ListItemImage
+import com.OxGames.Pluvia.ui.component.data.fakeSteamFriends
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
-import com.OxGames.Pluvia.ui.data.ChatState
-import com.OxGames.Pluvia.ui.internal.fakeSteamFriends
-import com.OxGames.Pluvia.ui.model.ChatViewModel
+import com.OxGames.Pluvia.ui.screen.chat.components.ChatBubble
+import com.OxGames.Pluvia.ui.screen.chat.components.ChatInput
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.ui.util.ListItemImage
 import com.OxGames.Pluvia.utils.SteamUtils
-import com.OxGames.Pluvia.utils.getAvatarURL
 import kotlinx.coroutines.launch
 
 @Composable
@@ -112,14 +114,15 @@ private fun ChatScreenContent(
 ) {
     val snackbarHost = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val content = LocalContext.current
 
     // NOTE: This should be removed once chat is considered stable.
     LaunchedEffect(Unit) {
         if (!PrefManager.ackChatPreview) {
             scope.launch {
                 val result = snackbarHost.showSnackbar(
-                    message = "Chatting is still an early feature.\nPlease report any issues in the project repo.",
-                    actionLabel = "OK",
+                    message = content.getString(R.string.chat_preview_message),
+                    actionLabel = content.getString(R.string.ok),
                 )
 
                 if (result == SnackbarResult.ActionPerformed) {
@@ -235,7 +238,10 @@ private fun ChatMessages(
                     }
                 },
                 content = {
-                    Icon(imageVector = Icons.Default.KeyboardDoubleArrowDown, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Default.KeyboardDoubleArrowDown,
+                        contentDescription = stringResource(R.string.desc_chat_scroll_down),
+                    )
                 },
             )
         }
@@ -261,7 +267,7 @@ private fun NoChatHistoryBox() {
         ) {
             Text(
                 modifier = Modifier.padding(24.dp),
-                text = "No chat history",
+                text = stringResource(R.string.chat_no_history),
                 textAlign = TextAlign.Center,
             )
         }
@@ -282,7 +288,7 @@ private fun ChatTopBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 ListItemImage(
-                    image = { steamFriend.avatarHash.getAvatarURL() },
+                    image = { SteamUtils.getAvatarURL(steamFriend.avatarHash) },
                     size = 40.dp,
                 )
 

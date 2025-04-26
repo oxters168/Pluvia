@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.component.dialog
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,10 +35,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.settings.SettingsEnvVars
+import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.winlator.box86_64.Box86_64Preset
 import com.winlator.box86_64.Box86_64PresetManager
@@ -67,12 +72,15 @@ fun Box64PresetsDialog(
                 Scaffold(
                     topBar = {
                         CenterAlignedTopAppBar(
-                            title = { Text(text = "Box64 Presets") },
+                            title = { Text(text = stringResource(R.string.title_box64_presets)) },
                             actions = {
                                 IconButton(
                                     onClick = onDismissRequest,
                                     content = {
-                                        Icon(Icons.Default.Done, "Close Box64 Presets")
+                                        Icon(
+                                            imageVector = Icons.Default.Done,
+                                            contentDescription = stringResource(R.string.desc_box64_close),
+                                        )
                                     },
                                 )
                             },
@@ -97,14 +105,16 @@ fun Box64PresetsDialog(
                             .padding(paddingValues),
                     ) {
                         OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             value = presetName,
                             enabled = isCustom(),
                             onValueChange = {
                                 presetName = it.replace("|", "")
                                 Box86_64PresetManager.editPreset(prefix, context, presetId, presetName, EnvVars(envVars))
                             },
-                            label = { Text("Preset name") },
+                            label = { Text(text = stringResource(R.string.box64_name_label)) },
                             trailingIcon = {
                                 IconButton(
                                     colors = IconButtonDefaults.iconButtonColors()
@@ -113,7 +123,7 @@ fun Box64PresetsDialog(
                                     content = {
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Outlined.ViewList,
-                                            contentDescription = "Preset list",
+                                            contentDescription = stringResource(R.string.desc_box64_list_preset),
                                         )
                                     },
                                 )
@@ -127,11 +137,9 @@ fun Box64PresetsDialog(
                                                 onClick = {
                                                     presetId = preset.id
                                                     presetName = getPreset(presetId).name
-                                                    envVars = Box86_64PresetManager.getEnvVars(
-                                                        prefix,
-                                                        context,
-                                                        getPreset(presetId).id,
-                                                    ).toString()
+                                                    envVars = Box86_64PresetManager
+                                                        .getEnvVars(prefix, context, getPreset(presetId).id)
+                                                        .toString()
                                                     showPresets = false
                                                 },
                                             )
@@ -141,11 +149,13 @@ fun Box64PresetsDialog(
                             },
                         )
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("Environment Variables")
+                            Text(text = stringResource(R.string.box64_env_variables))
                             Row {
                                 IconButton(
                                     onClick = {
@@ -156,7 +166,7 @@ fun Box64PresetsDialog(
                                     content = {
                                         Icon(
                                             imageVector = Icons.Filled.ContentCopy,
-                                            contentDescription = "Duplicate preset",
+                                            contentDescription = stringResource(R.string.desc_box64_copy_preset),
                                         )
                                     },
                                 )
@@ -165,15 +175,20 @@ fun Box64PresetsDialog(
                                         val defaultEnvVars = EnvVarInfo.KNOWN_BOX64_VARS.values.joinToString(" ") {
                                             "${it.identifier}=${it.possibleValues.first()}"
                                         }
-                                        presetId = Box86_64PresetManager
-                                            .editPreset(prefix, context, null, "Unnamed", EnvVars(defaultEnvVars))
+                                        presetId = Box86_64PresetManager.editPreset(
+                                            prefix,
+                                            context,
+                                            null,
+                                            context.getString(R.string.unnamed),
+                                            EnvVars(defaultEnvVars),
+                                        )
                                         presetName = getPreset(presetId).name
                                         envVars = Box86_64PresetManager.getEnvVars(prefix, context, getPreset(presetId).id).toString()
                                     },
                                     content = {
                                         Icon(
                                             imageVector = Icons.Outlined.AddCircle,
-                                            contentDescription = "Create preset",
+                                            contentDescription = stringResource(R.string.desc_box64_create_preset),
                                         )
                                     },
                                 )
@@ -189,7 +204,7 @@ fun Box64PresetsDialog(
                                     content = {
                                         Icon(
                                             imageVector = Icons.Filled.Delete,
-                                            contentDescription = "Delete preset",
+                                            contentDescription = stringResource(R.string.desc_box64_delete_preset),
                                         )
                                     },
                                 )
@@ -221,7 +236,10 @@ fun Box64PresetsDialog(
                                                 ?: Timber.w("Could not find string resource of $resName")
                                         },
                                         content = {
-                                            Icon(Icons.Outlined.Info, contentDescription = "Variable info")
+                                            Icon(
+                                                imageVector = Icons.Outlined.Info,
+                                                contentDescription = stringResource(R.string.desc_box64_variable_info),
+                                            )
                                         },
                                     )
                                 },
@@ -231,5 +249,14 @@ fun Box64PresetsDialog(
                 }
             },
         )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
+@Composable
+private fun Preview_Box64PresetsDialog() {
+    PluviaTheme {
+        Box64PresetsDialog(visible = true, onDismissRequest = {})
     }
 }

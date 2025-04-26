@@ -56,22 +56,22 @@ import androidx.core.net.toUri
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.data.AppMenuOption
 import com.OxGames.Pluvia.data.SteamApp
+import com.OxGames.Pluvia.enums.AppOptionMenuType
+import com.OxGames.Pluvia.enums.DialogType
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.component.LoadingScreen
+import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.component.dialog.ContainerConfigDialog
 import com.OxGames.Pluvia.ui.component.dialog.LoadingDialog
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
-import com.OxGames.Pluvia.ui.data.AppMenuOption
-import com.OxGames.Pluvia.ui.enums.AppOptionMenuType
-import com.OxGames.Pluvia.ui.enums.DialogType
-import com.OxGames.Pluvia.ui.internal.fakeAppInfo
 import com.OxGames.Pluvia.ui.screen.library.components.GameInfoRow
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.utils.ContainerUtils
-import com.OxGames.Pluvia.utils.StorageUtils
+import com.OxGames.Pluvia.utils.FileUtils
 import com.google.android.play.core.splitcompat.SplitCompat
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
@@ -244,7 +244,7 @@ fun AppScreen(
 
     ContainerConfigDialog(
         visible = showConfigDialog,
-        title = "${appInfo.name} Config",
+        title = stringResource(R.string.dialog_title_container_config, appInfo.name),
         initialConfig = containerData,
         onDismissRequest = { showConfigDialog = false },
         onSave = {
@@ -288,46 +288,42 @@ fun AppScreen(
                     msgDialogState = MessageDialogState(
                         visible = true,
                         type = DialogType.CANCEL_APP_DOWNLOAD,
-                        title = context.getString(R.string.cancel_download_prompt_title),
-                        message = "Are you sure you want to cancel the download of the app?",
-                        confirmBtnText = context.getString(R.string.yes),
-                        dismissBtnText = context.getString(R.string.no),
+                        title = R.string.dialog_title_cancel_download,
+                        message = context.getString(R.string.dialog_message_cancel_download),
+                        confirmBtnText = R.string.yes,
+                        dismissBtnText = R.string.no,
                     )
                 } else if (!isInstalled) {
                     val depots = SteamService.getDownloadableDepots(appId)
                     Timber.d("There are ${depots.size} depots belonging to $appId")
                     // TODO: get space available based on where user wants to install
                     val availableBytes =
-                        StorageUtils.getAvailableSpace(context.filesDir.absolutePath)
-                    val availableSpace = StorageUtils.formatBinarySize(availableBytes)
+                        FileUtils.getAvailableSpace(context.filesDir.absolutePath)
+                    val availableSpace = FileUtils.formatBinarySize(availableBytes)
                     // TODO: un-hardcode "public" branch
-                    val downloadSize = StorageUtils.formatBinarySize(
+                    val downloadSize = FileUtils.formatBinarySize(
                         depots.values.sumOf {
                             it.manifests["public"]?.download ?: 0
                         },
                     )
                     val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
-                    val installSize = StorageUtils.formatBinarySize(installBytes)
+                    val installSize = FileUtils.formatBinarySize(installBytes)
                     if (availableBytes < installBytes) {
                         msgDialogState = MessageDialogState(
                             visible = true,
                             type = DialogType.NOT_ENOUGH_SPACE,
-                            title = context.getString(R.string.not_enough_space),
-                            message = "The app being installed needs $installSize of space but " +
-                                "there is only $availableSpace left on this device",
-                            confirmBtnText = context.getString(R.string.acknowledge),
+                            title = R.string.dialog_title_no_space,
+                            message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
+                            confirmBtnText = R.string.ok,
                         )
                     } else {
                         msgDialogState = MessageDialogState(
                             visible = true,
                             type = DialogType.INSTALL_APP,
-                            title = context.getString(R.string.download_prompt_title),
-                            message = "The app being installed has the following space requirements. Would you like to proceed?" +
-                                "\n\n\tDownload Size: $downloadSize" +
-                                "\n\tSize on Disk: $installSize" +
-                                "\n\tAvailable Space: $availableSpace",
-                            confirmBtnText = context.getString(R.string.proceed),
-                            dismissBtnText = context.getString(R.string.cancel),
+                            title = R.string.dialog_title_download_app,
+                            message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
+                            confirmBtnText = R.string.proceed,
+                            dismissBtnText = R.string.cancel,
                         )
                     }
                 } else {
@@ -354,23 +350,19 @@ fun AppScreen(
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.INSTALL_IMAGEFS,
-                                    title = "Download & Install ImageFS",
-                                    message = "The Ubuntu image needs to be downloaded and installed before " +
-                                        "being able to edit the configuration. This operation might take " +
-                                        "a few minutes. Would you like to continue?",
-                                    confirmBtnText = "Proceed",
-                                    dismissBtnText = "Cancel",
+                                    title = R.string.dialog_title_download_install_fs,
+                                    message = context.getString(R.string.dialog_message_download_install_fs),
+                                    confirmBtnText = R.string.proceed,
+                                    dismissBtnText = R.string.cancel,
                                 )
                             } else {
                                 msgDialogState = MessageDialogState(
                                     visible = true,
                                     type = DialogType.INSTALL_IMAGEFS,
-                                    title = "Install ImageFS",
-                                    message = "The Ubuntu image needs to be installed before being able to edit " +
-                                        "the configuration. This operation might take a few minutes. " +
-                                        "Would you like to continue?",
-                                    confirmBtnText = "Proceed",
-                                    dismissBtnText = "Cancel",
+                                    title = R.string.dialog_title_install_fs,
+                                    message = context.getString(R.string.dialog_message_install_fs),
+                                    confirmBtnText = R.string.proceed,
+                                    dismissBtnText = R.string.cancel,
                                 )
                             }
                         } else {
@@ -390,17 +382,17 @@ fun AppScreen(
                             AppMenuOption(
                                 AppOptionMenuType.Uninstall,
                                 onClick = {
-                                    val sizeOnDisk = StorageUtils.formatBinarySize(
-                                        StorageUtils.getFolderSize(SteamService.getAppDirPath(appId)),
+                                    val sizeOnDisk = FileUtils.formatBinarySize(
+                                        FileUtils.getFolderSize(SteamService.getAppDirPath(appId)),
                                     )
                                     // TODO: show loading screen of delete progress
                                     msgDialogState = MessageDialogState(
                                         visible = true,
                                         type = DialogType.DELETE_APP,
-                                        title = context.getString(R.string.delete_prompt_title),
-                                        message = "Are you sure you want to delete this app?\n\n\tSize on Disk: $sizeOnDisk",
-                                        confirmBtnText = context.getString(R.string.delete_app),
-                                        dismissBtnText = context.getString(R.string.cancel),
+                                        title = R.string.dialog_title_delete_app,
+                                        message = context.getString(R.string.dialog_message_delete_app, sizeOnDisk),
+                                        confirmBtnText = R.string.delete,
+                                        dismissBtnText = R.string.cancel,
                                     )
                                 },
                             ),
@@ -462,7 +454,7 @@ private fun AppScreenContent(
                         )
                         Text(
                             modifier = Modifier.align(Alignment.BottomEnd),
-                            text = "[Image not found]",
+                            text = stringResource(R.string.desc_failed_image_alt),
                         )
                     }
                 },
@@ -501,11 +493,11 @@ private fun AppScreenContent(
                 onClick = onDownloadBtnClick,
                 content = {
                     val text = if (isInstalled) {
-                        stringResource(R.string.run_app)
+                        stringResource(R.string.play)
                     } else if (isDownloading) {
                         stringResource(R.string.cancel)
                     } else {
-                        stringResource(R.string.install_app)
+                        stringResource(R.string.install)
                     }
                     Text(text = text)
                 },
@@ -535,7 +527,7 @@ private fun AppScreenContent(
             Box {
                 IconButton(
                     onClick = { optionsMenuVisible = !optionsMenuVisible },
-                    content = { Icon(Icons.Filled.MoreVert, "Options") },
+                    content = { Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.options)) },
                 )
                 DropdownMenu(
                     expanded = optionsMenuVisible,
@@ -543,7 +535,7 @@ private fun AppScreenContent(
                 ) {
                     optionsMenu.forEach { menuOption ->
                         DropdownMenuItem(
-                            text = { Text(menuOption.optionType.text) },
+                            text = { Text(text = stringResource(menuOption.optionType.string)) },
                             onClick = {
                                 menuOption.onClick()
                                 optionsMenuVisible = false
@@ -561,10 +553,10 @@ private fun AppScreenContent(
                     SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(date)
                 }
 
-                GameInfoRow(key = "Controller Support:", value = appInfo.controllerSupport.name)
-                GameInfoRow(key = "Developer:", value = appInfo.developer)
-                GameInfoRow(key = "Publisher:", value = appInfo.publisher)
-                GameInfoRow(key = "Release date:", value = date)
+                GameInfoRow(key = R.string.game_info_controller, value = stringResource(appInfo.controllerSupport.string))
+                GameInfoRow(key = R.string.game_info_developer, value = appInfo.developer)
+                GameInfoRow(key = R.string.game_info_publisher, value = appInfo.publisher)
+                GameInfoRow(key = R.string.game_info_release, value = date)
             }
         }
     }

@@ -13,13 +13,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
-import com.OxGames.Pluvia.ui.internal.fakeAppInfo
+import com.OxGames.Pluvia.ui.component.ListItemImage
+import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.ui.util.ListItemImage
 
 @Composable
 internal fun AppItem(
@@ -34,12 +36,15 @@ internal fun AppItem(
         ),
         headlineContent = { Text(text = appInfo.name) },
         supportingContent = if (appInfo.isShared) {
-            { Text(text = "Family Shared Game", fontStyle = FontStyle.Italic, fontSize = 12.sp) }
+            { Text(text = stringResource(R.string.friend_shared_game), fontStyle = FontStyle.Italic, fontSize = 12.sp) }
         } else {
             null
         },
         leadingContent = {
-            ListItemImage { appInfo.clientIconUrl }
+            ListItemImage(
+                image = { appInfo.clientIconUrl },
+                contentDescription = stringResource(R.string.desc_library_icon, appInfo.name),
+            )
         },
     )
 }
