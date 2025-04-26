@@ -2,6 +2,9 @@ package com.OxGames.Pluvia.ui.component.dialog
 
 import android.content.res.Configuration
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material3.AlertDialog
@@ -9,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -40,23 +44,25 @@ fun MessageDialog(
             AlertDialog(
                 icon = icon?.let { { Icon(imageVector = icon, contentDescription = title?.let { stringResource(it) }) } },
                 title = title?.let { { Text(text = stringResource(it)) } },
-                text = message?.let {
-                    {
-                        if (useHtmlInMsg) {
-                            Text(
-                                text = AnnotatedString.fromHtml(
-                                    htmlString = it,
-                                    linkStyles = TextLinkStyles(
-                                        style = SpanStyle(
-                                            textDecoration = TextDecoration.Underline,
-                                            fontStyle = FontStyle.Italic,
-                                            color = Color.Blue,
+                text = {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        message?.let {
+                            if (useHtmlInMsg) {
+                                Text(
+                                    text = AnnotatedString.fromHtml(
+                                        htmlString = it,
+                                        linkStyles = TextLinkStyles(
+                                            style = SpanStyle(
+                                                textDecoration = TextDecoration.Underline,
+                                                fontStyle = FontStyle.Italic,
+                                                color = Color.Blue,
+                                            ),
                                         ),
                                     ),
-                                ),
-                            )
-                        } else {
-                            Text(text = it)
+                                )
+                            } else {
+                                Text(text = it)
+                            }
                         }
                     }
                 },
