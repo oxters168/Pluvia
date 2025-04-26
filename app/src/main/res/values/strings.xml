@@ -318,7 +318,7 @@
     <string name="settings_show_privacy_title">Privacy Policy</string>
     <string name="settings_show_source_subtitle">View the source code of this project</string>
     <string name="settings_show_source_title">Source code</string>
-    <string name="settings_show_tip_subtitle">Stops the tip message from appearing</string>
+    <string name="settings_show_tip_subtitle">Disable to stop the tip message from appearing</string>
     <string name="settings_show_tip_title">Ask for tip on startup</string>
     <string name="settings_start_destination_subtitle">Choose between Library, Downloads, or Friends</string>
     <string name="settings_start_destination_title">Start Destination</string>
