@@ -1,0 +1,432 @@
+<resources>
+    <string name="app_name">Pluvia</string>
+    <string name="title_ubuntufs">Ubuntu FS</string>
+
+    <!-- Winlator || Win Components -->
+    <string name="direct3d">Direct3D</string>
+    <string name="directsound">DirectSound</string>
+    <string name="directmusic">DirectMusic</string>
+    <string name="directplay">DirectPlay</string>
+    <string name="directshow">DirectShow</string>
+    <string name="directx">DirectX</string>
+    <string name="vcrun2010">Visual C++ 2010</string>
+    <string name="wmdecoder">Windows Media Decoder</string>
+
+    <!-- Placeholder Text || Don't Translate -->
+    <string name="lorem" translatable="false">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+        do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud exercitation ullamco
+        laboris nisi ut aliquip ex ea commodo consequat. Duis aute
+        irure dolor in reprehenderit in voluptate velit esse cillum
+        dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+        cupidatat non proident, sunt in culpa qui officia deserunt
+        mollit anim id est laborum.</string>
+
+    <!-- Navigation Titles -->
+    <string name="destination_downloads">Scaricati</string>
+    <string name="destination_friends">Amici</string>
+    <string name="destination_library">Libreria</string>
+
+    <!-- App Theme Settings -->
+    <string name="theme_auto">Predefinito dal sistema</string>
+    <string name="theme_day">Chiaro</string>
+    <string name="theme_night">Scuro</string>
+    <string name="theme_amoled">Scuro + AMOLED</string>
+
+    <!-- Top Bar Titles -->
+    <string name="title_box64_presets">Box64 Presets</string>
+    <string name="title_web_view">Pluvia Web View</string>
+    <string name="title_settings">Impostazioni</string>
+    <string name="title_downloads">Scaricati</string>
+    <string name="title_friends">Amici</string>
+    <string name="title_profile">Profilo</string>
+
+    <!-- Two Factor Responses -->
+    <string name="steam_2fa_confirmation">Usa l'app mobile di Steam per confermare il tuo accesso…</string>
+    <string name="steam_2fa_device">Per favore inserisci il tuo codice di autenticazione a due fattori dall'app di autenticazione.</string>
+    <string name="steam_2fa_email">Per favore inserisci il codice di autenticazione inviato all'email a %s</string>
+    <string name="steam_2fa_incorrect">Il codice inserito è errato, per favore riprova.</string>
+
+    <!-- Single Words -->
+    <string name="advanced">Avanzate</string>
+    <string name="block">Block</string>
+    <string name="box64">Box64</string>
+    <string name="cancel">Annulla</string>
+    <string name="chat">Chat</string>
+    <string name="close">Chiudi</string>
+    <string name="confirm">Conferma</string>
+    <string name="copy">Copia</string>
+    <string name="delete">Elimina</string>
+    <string name="discard">Scarta</string>
+    <string name="dismiss">Ignora</string>
+    <string name="downloads">Download</string>
+    <string name="exit">Esci</string>
+    <string name="favorite">Preferito</string>
+    <string name="filters">Filtri</string>
+    <string name="games">Giochi</string>
+    <string name="general">Generale</string>
+    <string name="height">Height</string>
+    <string name="home">Home</string>
+    <string name="install">Installa</string>
+    <string name="library">Libreria</string>
+    <string name="loading">Caricamento...</string>
+    <string name="login">Accedi</string>
+    <string name="logout">Esci</string>
+    <string name="more">Altro</string>
+    <string name="name">Nome</string>
+    <string name="nickname">Soprannome</string>
+    <string name="no">No</string>
+    <string name="ok">OK</string>
+    <string name="options">Opzioni</string>
+    <string name="password">Password</string>
+    <string name="play">Gioca</string>
+    <string name="proceed">Procedi</string>
+    <string name="profile">Profilo</string>
+    <string name="remove">Rimuovi</string>
+    <string name="retry">Riprova</string>
+    <string name="send">Invia</string>
+    <string name="settings">Impostazioni</string>
+    <string name="system">Sistema</string>
+    <string name="tip">Dona</string>
+    <string name="unnamed">Unnamed</string>
+    <string name="username">Username</string>
+    <string name="value">Valore</string>
+    <string name="width">Width</string>
+    <string name="yes">Yes</string>
+
+    <!-- Box 86 || Box 64 -->
+    <string name="box64_name_label">Nome del Preset</string>
+    <string name="box64_env_variables">Variabili d'Ambiente</string>
+    <string name="box64_stability">Stabilità</string>
+    <string name="box64_compatibility">Compatibilità</string>
+    <string name="box64_intermediate">Intermedio</string>
+    <string name="box64_performance">Prestazioni</string>
+    <string name="box86_64_env_var_help__dynarec_safeflags"><![CDATA[
+        Handling of flags on CALL/RET opcodes<br /><br />
+        <b>0</b> : Treats CALL/RET as if it never needed flags (faster, unstable)<br />
+        <b>1</b> : Most RET will need flags, most CALLS will not<br />
+        <b>2</b> : All CALL/RET will need flags (slower)
+    ]]></string>
+    <string name="box86_64_env_var_help__dynarec_fastnan">Generation of -NAN like on x86</string>
+    <string name="box86_64_env_var_help__dynarec_fastround">Generation of precise x86 rounding</string>
+    <string name="box86_64_env_var_help__dynarec_x87double">Use of Float/Double for x87 emulation</string>
+    <string name="box86_64_env_var_help__dynarec_bigblock"><![CDATA[
+        Dynarec building BigBlock<br /><br />
+        <b>0</b> : Don\'t try to build block as big as possible<br />
+        <b>1</b> : Build Dynarec block as big as possible<br />
+        <b>2</b> : Build Dynarec block bigger (continue when block overlaps, but only for blocks in elf memory)<br />
+        <b>3</b> : Build Dynarec block bigger (continue when block overlaps, for all types of memory)
+    ]]></string>
+    <string name="box86_64_env_var_help__dynarec_strongmem"><![CDATA[
+        Simulation of Strong Memory model<br /><br />
+        <b>0</b> : Don\'t try anything special<br />
+        <b>1</b> : Enable some Memory Barrier when writing to memory (on some MOV opcode)<br />
+        <b>2</b> : All 1 plus a Memory Barrier on every write to memory using MOV<br />
+        <b>3</b> : All 2 plus Memory Barrier when reading from memory and on some SSE/SSE2 opcodes
+    ]]></string>
+    <string name="box86_64_env_var_help__dynarec_forward">Defines the max allowed forward value when building Block</string>
+    <string name="box86_64_env_var_help__dynarec_callret">Optimization of CALL/RET opcodes</string>
+    <string name="box86_64_env_var_help__dynarec_wait">Defines whether or not Dynarec will wait for the FillBlock to be ready</string>
+
+    <!-- Descriptions || Content Descriptions -->
+    <string name="desc_account_button">Profilo utente dell\'account connesso</string>
+    <string name="desc_add_env_variable">Aggiungi variabile d\'ambiente</string>
+    <string name="desc_box64_close">Close Box64 Presets</string>
+    <string name="desc_box64_copy_preset">Duplica preset</string>
+    <string name="desc_box64_create_preset">Crea un preset</string>
+    <string name="desc_box64_delete_preset">Elimina un preset</string>
+    <string name="desc_box64_list_preset">Elenco dei Preset</string>
+    <string name="desc_box64_variable_info">Informazioni della variabile</string>
+    <string name="desc_chat_emoticon">Emoticon %1$s</string>
+    <string name="desc_chat_scroll_down">Scorri sotto per tornare all'ultimo messaggio di chat</string>
+    <string name="desc_chat_sticker">Sticker %1$s</string>
+    <string name="desc_chip_item">Chip Item %1$s</string>
+    <string name="desc_close_dialog">Chiudi Dialog</string>
+    <string name="desc_container_known_variable_name">List known variable names</string>
+    <string name="desc_delete_variable">Elimina variabile</string>
+    <string name="desc_dropdown_arrow">Dropdown arrow</string>
+    <string name="desc_failed_image">Failed to load Image</string>
+    <string name="desc_failed_image_alt">[Image not found]</string>
+    <string name="desc_fg_notification">Consente di visualizzare le notifiche in primo piano di Pluvia</string>
+    <string name="desc_fg_notification_title">Pluvia Foreground Service</string>
+    <string name="desc_filters">Pulsante filtri</string>
+    <string name="desc_friend_avatar">Avatar del profilo di %1$s</string>
+    <string name="desc_friend_header_action">Comprimi o espandi header</string>
+    <string name="desc_library_icon">Icona del client di %1$s</string>
+    <string name="desc_library_search_clear">Cancella la query di ricerca</string>
+    <string name="desc_login_hide_password">Nascondi la password</string>
+    <string name="desc_login_show_password">Mostra la password</string>
+    <string name="desc_nav_back">Torna indietro</string>
+    <string name="desc_qr_image">Immagine QR</string>
+    <string name="desc_save_crash">Salva il log dell'errore</string>
+    <string name="desc_show_emojis">Mostra o nascondi le emoticon e gli sticker</string>
+
+    <!-- Dialog Messages -->
+    <string name="dialog_message_cancel_download">Sei sicuro di voler annullare il download dell'app?</string>
+    <string name="dialog_message_delete_app">Sei sicuro di voler eliminare questa app?\n\n\tDimensione sul disco: %1$s</string>
+    <string name="dialog_message_download_app">L'app da installare richiede il seguente spazio. Vuoi procedere?\nDimensione download: %1$s\nDimensione sul disco: %2$s\nSpazio disponibile: %3$s</string>
+    <string name="dialog_message_download_install_fs">L'immagine di Ubuntu deve essere scaricata e installata prima di poter modificare la configurazione. Questa operazione potrebbe richiedere qualche minuto. Vuoi continuare?</string>
+    <string name="dialog_message_exit_game">Sei sicuro di voler chiudere %1$s?</string>
+    <string name="dialog_message_friend_block">Sei sicuro di voler bloccare %1$s?</string>
+    <string name="dialog_message_friend_favorite">Sei sicuro di voler aggiungere %1$s ai preferiti?</string>
+    <string name="dialog_message_friend_no_past_aliases">Nessun alias precedente trovato</string>
+    <string name="dialog_message_friend_remove">Sei sicuro di voler rimuovere %1$s?</string>
+    <string name="dialog_message_friend_set_nickname">Imposta un nuovo soprannome per %1$s</string>
+    <string name="dialog_message_install_fs">L'immagine di Ubuntu deve essere installata prima di poter modificare la configurazione. Questa operazione potrebbe richiedere qualche minuto. Vuoi continuare?</string>
+    <string name="dialog_message_no_space">L'app da installare necessita di %1$s di spazio, ma su questo dispositivo ne sono rimasti solo %2$s</string>
+    <string name="dialog_message_sync_error">Impossibile sincronizzare i file di salvataggio: %1$s</string>
+    <string name="dialog_message_sync_multiple">Sono presenti più operazioni remote in sospeso, riprova più tardi</string>
+    <string name="dialog_message_sync_none">Sono state ricevute operazioni remote in sospeso la cui azione era 'none'</string>
+    <string name="dialog_message_sync_terminated">Sessione dell'app sospesa</string>
+    <string name="dialog_message_tip">Grazie per aver utilizzato Pluvia, considera di sostenerci con una mancia dell'importo che ti è più comodo.</string>
+    <string name="dialog_message_unsaved_changes">Sei sicuro di voler scartare le modifiche apportate?</string>
+
+    <string name="dialog_message_libraries">
+        JavaSteam - github.com/Longi94/JavaSteam\n
+        Winlator - github.com/brunodev85/winlator\n
+        Ubuntu RootFs - releases.ubuntu.com/focal\n
+        Wine - winehq.org\n
+        Box86/Box64 - box86.org\n
+        PRoot - proot-me.github.io\n
+        Mesa (Turnip/Zink/VirGL) - mesa3d.org\n
+        DXVK - github.com/doitsujin/dxvk\n
+        VKD3D - gitlab.winehq.org/wine/vkd3d\n
+        D8VK - github.com/AlpyneDreams/d8vk\n
+        CNC DDraw - github.com/FunkyFr3sh/cnc-ddraw</string>
+    <string name="dialog_message_crash">
+        Ci dispiace per l'inconveniente!\n\n
+        Sarebbe utile sapere del problema recente che hai riscontrato.\n\n
+        Puoi visualizzare ed esportare il registro dei crash più recente nelle impostazioni dell'app\n\n
+        e allegarlo come un problema su Github nel repository del progetto.\n\n
+        Il link al repository Github è anche nelle impostazioni!</string>
+    <string name="dialog_message_sync_conflict">
+        C'è un nuovo salvataggio remoto e un nuovo salvataggio locale,
+        quale vuoi mantenere?\n\n
+        Salvataggio locale:\n\t %1$s \n
+        Salvataggio remoto:\n\t%2$s</string>
+    <string name="dialog_message_app_running">
+        Sei connesso su un dispositivo diverso (%1$s) e stai giocando a %2$s (%3$s),
+        e il salvataggio di quella sessione non è ancora nel cloud.\n
+        Puoi comunque giocare a questo gioco, ma questo disconnetterà l'altra sessione da Steam
+        e potrebbe creare un conflitto di salvataggio quando il progresso di quella sessione sarà sincronizzato</string>
+    <string name="dialog_message_pending_upload">
+        Hai giocato a %1$s sul dispositivo %2$s (%3$s), e quel salvataggio non è ancora nel cloud.
+        (caricamento non avviato)\nPuoi comunque giocare a questo gioco, ma ciò potrebbe creare un conflitto
+        quando i progressi del tuo gioco precedente verranno caricati con successo.</string>
+    <string name="dialog_message_sync_upload">
+        Hai giocato a %1$s sul dispositivo %2$s (%3$s) e il salvataggio di quella sessione è ancora in caricamento.\nRiprova più tardi.</string>
+
+    <!-- Dialog Titles -->
+    <string name="dialog_title_app_running">App in esecuzione</string>
+    <string name="dialog_title_app_theme">Tema dell'app</string>
+    <string name="dialog_title_cancel_download">Annulla download</string>
+    <string name="dialog_title_close_app">Sei sicuro di voler chiudere Pluvia?</string>
+    <string name="dialog_title_container_config">Configurazione %1$s</string>
+    <string name="dialog_title_default_container_config">Configurazione predefinita del container</string>
+    <string name="dialog_title_delete_app">Elimina app</string>
+    <string name="dialog_title_download_app">Installa app</string>
+    <string name="dialog_title_download_install_fs">Scarica &amp; Installa ImmagineFS</string>
+    <string name="dialog_title_exit_game">Esci dal gioco</string>
+    <string name="dialog_title_friend_block">Blocca amico</string>
+    <string name="dialog_title_friend_favorite">Aggiungi ai preferiti l'amico</string>
+    <string name="dialog_title_friend_past_aliases">Alias precedenti</string>
+    <string name="dialog_title_friend_remove">Rimuovi amico</string>
+    <string name="dialog_title_friend_set_nickname">Imposta soprannome</string>
+    <string name="dialog_title_install_fs">Installa ImmagineFS</string>
+    <string name="dialog_title_libraries">Librerie utilizzate</string>
+    <string name="dialog_title_new_env_variable">Nuova Variabile di Ambiente</string>
+    <string name="dialog_title_no_space">Spazio insufficiente</string>
+    <string name="dialog_title_orientations">Orientamenti Consentiti</string>
+    <string name="dialog_title_palette_style">Stile della Palette</string>
+    <string name="dialog_title_pending_upload">Caricamento in Corso</string>
+    <string name="dialog_title_recent_crash">Crash Recente</string>
+    <string name="dialog_title_start_screen">Schermata di Avvio</string>
+    <string name="dialog_title_sync_conflict">Conflitto di Salvataggio</string>
+    <string name="dialog_title_sync_error">Errore di Sincronizzazione</string>
+    <string name="dialog_title_sync_upload">Caricamento in Corso</string>
+    <string name="dialog_title_unsaved_changes">Modifiche non Salvate</string>
+
+    <!-- Dialog Actions -->
+    <string name="dialog_action_keep_local">Mantieni la versione locale</string>
+    <string name="dialog_action_keep_remote">Mantieni la versione remota</string>
+    <string name="dialog_action_play_anyway">Gioca comunque</string>
+
+    <!-- Library Filter Titles -->
+    <string name="filter_app_status">Stato App</string>
+    <string name="filter_app_type">Tipo App</string>
+
+    <!-- Library Filter Items -->
+    <string name="app_filter_application">Applicazione</string>
+    <string name="app_filter_demo">Demo</string>
+    <string name="app_filter_game">Gioco</string>
+    <string name="app_filter_installed">Installato</string>
+    <string name="app_filter_shared">Condiviso</string>
+    <string name="app_filter_tool">Strumento</string>
+
+    <!-- Library App Launch Options -->
+    <string name="app_option_menu_edit">Modifica container</string>
+    <string name="app_option_menu_open">Apri container</string>
+    <string name="app_option_menu_remove">Disinstalla</string>
+    <string name="app_option_menu_store">Apri pagina del negozio</string>
+
+    <!-- Orientation -->
+    <string name="orientation_landscape">Orizzontale</string>
+    <string name="orientation_portrait">Verticale</string>
+    <string name="orientation_rev_landscape">Orizzontale Inverito</string>
+    <string name="orientation_rev_portrait">Verticale Invertito</string>
+    <string name="orientation_unspecified">Non Specificato</string>
+
+    <!-- Toast -->
+    <string name="toast_container_reset_verify">Sei sicuro? Tieni premuto per confermare</string>
+    <string name="toast_containers_reset">Contenitori resettati</string>
+    <string name="toast_failed_crash_save">Impossibile salvare il log degli errori nella destinazione</string>
+    <string name="toast_failed_log_save">Impossibile salvare il logcat nella destinazione</string>
+    <string name="toast_settings_activate">Tieni premuto per attivare</string>
+
+    <!-- Settings -->
+    <string name="settings_allowed_orientations_subtitle">Scegli quali orientazioni possono essere ruotate durante il gioco</string>
+    <string name="settings_allowed_orientations_title">Orientamenti consentiti</string>
+    <string name="settings_app_palette_subtitle">Cambia la palette di colori di Material Design 3</string>
+    <string name="settings_app_palette_title">Stile della Palette</string>
+    <string name="settings_app_theme_subtitle">Scegli tra Chiaro, Scuro o Automatico</string>
+    <string name="settings_app_theme_title">Tema dell\'App</string>
+    <string name="settings_box64_presets_subtitle">Visualizza, modifica e crea preset di Box64</string>
+    <string name="settings_box64_presets_title">Preset di Box64</string>
+    <string name="settings_broadcast_game_subtitle">Notifica a Steam che stai giocando un gioco. Ciò ti renderà visibile sul tuo profilo Steam</string>
+    <string name="settings_clear_db_title">Cancella Database Locale</string>
+    <string name="settings_broadcast_game_title">Mostra il gioco in corso</string>
+    <string name="settings_clear_db_subtitle">[Chiude l\'app] Potrebbe aiutare a risolvere problemi con gli elementi della libreria o i messaggi.</string>
+    <string name="settings_clear_pref_subtitle">[Chiude l\'app] Disconnette il client e cancella i dati delle preferenze locali.</string>
+    <string name="settings_clear_pref_title">Cancella Preferenza</string>
+    <string name="settings_default_crash_filename">Nessun Nome File</string>
+    <string name="settings_default_crash_message">Impossibile leggere il log degli errori.</string>
+    <string name="settings_group_debug">Debug</string>
+    <string name="settings_group_emulation">Emulazione</string>
+    <string name="settings_group_info">Informazioni</string>
+    <string name="settings_group_interface">Interfaccia</string>
+    <string name="settings_modify_default_config_subtitle">Le impostazioni iniziali del container per ogni gioco (non influisce sui giochi già installati)</string>
+    <string name="settings_modify_default_config_title">Modifica Configurazione Predefinita</string>
+    <string name="settings_reset_containers_subtitle">Questo cancellerà il container, le impostazioni del container predefinite e tutte le impostazioni del contenitore per ogni gioco.</string>
+    <string name="settings_reset_containers_title">Cancella e reimposta TUTTI i container</string>
+    <string name="settings_reset_image_cache_subtitle">Rimuove tutte le immagini caricate.</string>
+    <string name="settings_reset_image_cache_title">Cancella Cache Immagini</string>
+    <string name="settings_save_logcat_subtitle">Salva uno snapshot del logcat solo per il PID di questa app</string>
+    <string name="settings_save_logcat_title">Save logcat</string>
+    <string name="settings_show_libraries_subtitle">Vedi quali tecnologie rendono possibile Pluvia</string>
+    <string name="settings_show_libraries_title">Librerie Utilizzate</string>
+    <string name="settings_show_privacy_subtitle">Apre un link alla politica sulla privacy di Pluvia</string>
+    <string name="settings_show_privacy_title">Informativa sulla privacy</string>
+    <string name="settings_show_source_subtitle">Visualizza il codice sorgente di questo progetto</string>
+    <string name="settings_show_source_title">Codice sorgente</string>
+    <string name="settings_show_tip_subtitle">Disattiva per nascondere il messaggio di donazione all\'avvio dell'app</string>
+    <string name="settings_show_tip_title">Chiedi donazione all'avvio</string>
+    <string name="settings_start_destination_subtitle">Scegli tra Libreria, Download, o Amici</string>
+    <string name="settings_start_destination_title">Destinazione di Avvio</string>
+    <string name="settings_tip_subtitle">Contribuisci allo sviluppo in corso</string>
+    <string name="settings_tip_title">Invia una donazione</string>
+    <string name="settings_view_logcat_subtitle">Visualizza l\'ultimo log di crash</string>
+    <string name="settings_view_logcat_subtitle_alt">Nessun log di crash recente trovato</string>
+    <string name="settings_view_logcat_title">Visualizza ultimo crash</string>
+    <string name="settings_web_links_subtitle">I link si aprono con il tuo browser web principale</string>
+    <string name="settings_web_links_title">Apri i link esternamente</string>
+
+    <!-- Container -->
+    <string name="container_audio_driver">Audio Driver</string>
+    <string name="container_box64_version">Box64 Version</string>
+    <string name="container_direct_input">DirectInput</string>
+    <string name="container_dxvk_wrapper">DX Wrapper</string>
+    <string name="container_enable_csmt">Enable CSMT (Command Stream Multi-Thread)</string>
+    <string name="container_enable_strict_shader">Enable Strict Shader Math</string>
+    <string name="container_gpu_driver">Graphics Driver</string>
+    <string name="container_gpu_name">GPU Name</string>
+    <string name="container_group_drives">Drives</string>
+    <string name="container_group_env_vars">Environment Variables</string>
+    <string name="container_group_launch_options">Launch Options</string>
+    <string name="container_group_win_components">Win Components</string>
+    <string name="container_group_wine_config">Wine Configuration</string>
+    <string name="container_mouse_warp">Mouse Warp Override</string>
+    <string name="container_no_drives">No drives</string>
+    <string name="container_no_env_variables">No environment variables</string>
+    <string name="container_no_more_variables">No more known variables</string>
+    <string name="container_offscreen_rendering_mode">Offscreen Rendering Mode</string>
+    <string name="container_proc_affinity">Processor Affinity</string>
+    <string name="container_proc_affinity_32">Processor Affinity (32-bit apps)</string>
+    <string name="container_screen_size">Screen Size</string>
+    <string name="container_show_fps">Show FPS</string>
+    <string name="container_startup_selection">Startup Selection</string>
+    <string name="container_video_memory_size">Video Memory Size</string>
+    <string name="container_wined3d">WineD3D</string>
+    <string name="container_cpu_item">CPU%1$d</string>
+
+    <!-- Friends List Sticky Item Headers -->
+    <string name="friend_sticky_game">In gioco</string>
+    <string name="friend_sticky_offline">Offline</string>
+    <string name="friend_sticky_online">Online</string>
+    <string name="friend_sticky_request">Richiesta di amicizia</string>
+
+    <!-- Library Selected App Game Info -->
+    <string name="game_info_controller">Supporto controller:</string>
+    <string name="game_info_developer">Sviluppatore:</string>
+    <string name="game_info_publisher">Editore:</string>
+    <string name="game_info_release">Data di uscita:</string>
+
+    <!-- Library Selected App Controller Support -->
+    <string name="controller_none">Nessuno</string>
+    <string name="controller_partial">Parziale</string>
+    <string name="controller_full">Completo</string>
+
+    <!-- Chat -->
+    <string name="chat_input_placeholder">Invia un messaggio</string>
+    <string name="chat_no_history">Nessuna cronologia chat</string>
+    <string name="chat_preview_message">La chat è ancora una funzionalità in fase iniziale.\nSegnala eventuali problemi nel repository del progetto.</string>
+    <string name="chat_text_quoted">Inizialmente postato da %1$s:\n</string>
+    <string name="chat_emoticons">Emoticon</string>
+    <string name="chat_stickers">Sticker</string>
+
+    <!-- Friend -->
+    <string name="friend_add_favorite">Aggiungi ai preferiti</string>
+    <string name="friend_block">Blocca amico</string>
+    <string name="friend_playing_game">Sta giocando: %1$s</string>
+    <string name="friend_playing_game_id">Sta giocando: %1$d</string>
+    <string name="friend_remove">Rimuovi amico</string>
+    <string name="friend_shared_game">Gioco condiviso dalla famiglia di Steam</string>
+    <string name="friend_no_selection">Seleziona un amico per visualizzare il suo profilo</string>
+    <string name="friend_profile_city">Città: %1$s</string>
+    <string name="friend_profile_country">Paese: %1$s</string>
+    <string name="friend_profile_created">Creato: %1$s</string>
+    <string name="friend_profile_name">Nome: %1$s</string>
+    <string name="friend_profile_private">Profilo probabilmente privato.\nImpossibile recuperarne le informazioni</string>
+    <string name="friend_profile_state">Stato: %1$s</string>
+    <string name="friend_profile_summary">Riepilogo:</string>
+    <string name="friend_set_alerts">Imposta Avvisi</string>
+    <string name="friend_set_nickname">Imposta Soprannome</string>
+    <string name="friend_view_aliases">Visualizza Soprannomi</string>
+
+    <!-- Status -->
+    <string name="status_away">Assente</string>
+    <string name="status_invisible">Invisibile</string>
+    <string name="status_online">Online</string>
+
+    <!-- Search -->
+    <string name="search_text_placeholder">Cerca giochi</string>
+
+    <!-- Game Item -->
+    <string name="games_played_forever">Tempo di gioco totale: %1$s ore</string>
+    <string name="games_played_two_weeks">Tempo di gioco delle ultime 2 settimane: %1$s ore</string>
+
+    <!-- XServer -->
+    <string name="xserver_no_game_name">il tuo gioco</string>
+
+    <!-- Login -->
+    <string name="login_fab_credential">Accedi con le credenziali</string>
+    <string name="login_fab_qr">Accedi con QR</string>
+    <string name="login_footer">Pluvia è un client non ufficiale di Steam™.\n</string>
+    <string name="login_privacy_policy">Informativa sulla privacy</string>
+    <string name="login_remember_session">Ricorda la sessione</string>
+
+    <!-- Library -->
+    <string name="library_no_items">Nessun elemento elencato con selezione</string>
+    <string name="library_no_selection">Seleziona un elemento nell\'elenco per visualizzare le informazioni del gioco</string>
+
+</resources>
