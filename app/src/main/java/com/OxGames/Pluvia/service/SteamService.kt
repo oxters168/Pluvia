@@ -345,9 +345,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                 return isNowInstalled
             }
 
-            val app = runBlocking(Dispatchers.IO) { instance?.appDao?.findApp(appId) }
-            val appName = app?.config?.installDir?.takeIf { it.isNotEmpty() } ?: app?.name.orEmpty()
-            val path = Paths.get(PrefManager.appInstallPath, appName).pathString
+            val path = getAppDirPath(appId)
 
             val isInstalled = runBlocking(Dispatchers.IO) {
                 Files.exists(Paths.get(path))
