@@ -43,9 +43,9 @@
     <string name="title_profile">Profilo</string>
 
     <!-- Two Factor Responses -->
-    <string name="steam_2fa_confirmation">Usa l'app mobile di Steam per confermare il tuo accesso…</string>
-    <string name="steam_2fa_device">Per favore inserisci il tuo codice di autenticazione a due fattori dall'app di autenticazione.</string>
-    <string name="steam_2fa_email">Per favore inserisci il codice di autenticazione inviato all'email a %s</string>
+    <string name="steam_2fa_confirmation">Usa l\'app mobile di Steam per confermare il tuo accesso…</string>
+    <string name="steam_2fa_device">Per favore inserisci il tuo codice di autenticazione a due fattori dall\'app di autenticazione.</string>
+    <string name="steam_2fa_email">Per favore inserisci il codice di autenticazione inviato all\'email a %s</string>
     <string name="steam_2fa_incorrect">Il codice inserito è errato, per favore riprova.</string>
 
     <!-- Single Words -->
@@ -70,7 +70,7 @@
     <string name="home">Home</string>
     <string name="install">Installa</string>
     <string name="library">Libreria</string>
-    <string name="loading">Caricamento...</string>
+    <string name="loading">Caricamento…</string>
     <string name="login">Accedi</string>
     <string name="logout">Esci</string>
     <string name="more">Altro</string>
@@ -97,7 +97,7 @@
 
     <!-- Box 86 || Box 64 -->
     <string name="box64_name_label">Nome del Preset</string>
-    <string name="box64_env_variables">Variabili d'Ambiente</string>
+    <string name="box64_env_variables">Variabili d\'Ambiente</string>
     <string name="box64_stability">Stabilità</string>
     <string name="box64_compatibility">Compatibilità</string>
     <string name="box64_intermediate">Intermedio</string>
@@ -139,7 +139,7 @@
     <string name="desc_box64_list_preset">Elenco dei Preset</string>
     <string name="desc_box64_variable_info">Informazioni della variabile</string>
     <string name="desc_chat_emoticon">Emoticon %1$s</string>
-    <string name="desc_chat_scroll_down">Scorri sotto per tornare all'ultimo messaggio di chat</string>
+    <string name="desc_chat_scroll_down">Scorri sotto per tornare all\'ultimo messaggio di chat</string>
     <string name="desc_chat_sticker">Sticker %1$s</string>
     <string name="desc_chip_item">Chip Item %1$s</string>
     <string name="desc_close_dialog">Chiudi Dialog</string>
@@ -159,27 +159,27 @@
     <string name="desc_login_show_password">Mostra la password</string>
     <string name="desc_nav_back">Torna indietro</string>
     <string name="desc_qr_image">Immagine QR</string>
-    <string name="desc_save_crash">Salva il log dell'errore</string>
+    <string name="desc_save_crash">Salva il log dell\'errore</string>
     <string name="desc_show_emojis">Mostra o nascondi le emoticon e gli sticker</string>
 
     <!-- Dialog Messages -->
-    <string name="dialog_message_cancel_download">Sei sicuro di voler annullare il download dell'app?</string>
+    <string name="dialog_message_cancel_download">Sei sicuro di voler annullare il download dell\'app?</string>
     <string name="dialog_message_delete_app">Sei sicuro di voler eliminare questa app?\n\n\tDimensione sul disco: %1$s</string>
-    <string name="dialog_message_download_app">L'app da installare richiede il seguente spazio. Vuoi procedere?\nDimensione download: %1$s\nDimensione sul disco: %2$s\nSpazio disponibile: %3$s</string>
-    <string name="dialog_message_download_install_fs">L'immagine di Ubuntu deve essere scaricata e installata prima di poter modificare la configurazione. Questa operazione potrebbe richiedere qualche minuto. Vuoi continuare?</string>
+    <string name="dialog_message_download_app">L\'app da installare richiede il seguente spazio. Vuoi procedere?\nDimensione download: %1$s\nDimensione sul disco: %2$s\nSpazio disponibile: %3$s</string>
+    <string name="dialog_message_download_install_fs">L\'immagine di Ubuntu deve essere scaricata e installata prima di poter modificare la configurazione. Questa operazione potrebbe richiedere qualche minuto. Vuoi continuare?</string>
     <string name="dialog_message_exit_game">Sei sicuro di voler chiudere %1$s?</string>
     <string name="dialog_message_friend_block">Sei sicuro di voler bloccare %1$s?</string>
     <string name="dialog_message_friend_favorite">Sei sicuro di voler aggiungere %1$s ai preferiti?</string>
     <string name="dialog_message_friend_no_past_aliases">Nessun alias precedente trovato</string>
     <string name="dialog_message_friend_remove">Sei sicuro di voler rimuovere %1$s?</string>
     <string name="dialog_message_friend_set_nickname">Imposta un nuovo soprannome per %1$s</string>
-    <string name="dialog_message_install_fs">L'immagine di Ubuntu deve essere installata prima di poter modificare la configurazione. Questa operazione potrebbe richiedere qualche minuto. Vuoi continuare?</string>
-    <string name="dialog_message_no_space">L'app da installare necessita di %1$s di spazio, ma su questo dispositivo ne sono rimasti solo %2$s</string>
+    <string name="dialog_message_install_fs">L\'immagine di Ubuntu deve essere installata prima di poter modificare la configurazione. Questa operazione potrebbe richiedere qualche minuto. Vuoi continuare?</string>
+    <string name="dialog_message_no_space">L\'app da installare necessita di %1$s di spazio, ma su questo dispositivo ne sono rimasti solo %2$s</string>
     <string name="dialog_message_sync_error">Impossibile sincronizzare i file di salvataggio: %1$s</string>
     <string name="dialog_message_sync_multiple">Sono presenti più operazioni remote in sospeso, riprova più tardi</string>
-    <string name="dialog_message_sync_none">Sono state ricevute operazioni remote in sospeso la cui azione era 'none'</string>
-    <string name="dialog_message_sync_terminated">Sessione dell'app sospesa</string>
-    <string name="dialog_message_tip">Grazie per aver utilizzato Pluvia, considera di sostenerci con una mancia dell'importo che ti è più comodo.</string>
+    <string name="dialog_message_sync_none">Sono state ricevute operazioni remote in sospeso la cui azione era \'none\'</string>
+    <string name="dialog_message_sync_terminated">Sessione dell\'app sospesa</string>
+    <string name="dialog_message_tip">Grazie per aver utilizzato Pluvia, considera di sostenerci con una mancia dell\'importo che ti è più comodo.</string>
     <string name="dialog_message_unsaved_changes">Sei sicuro di voler scartare le modifiche apportate?</string>
 
     <string name="dialog_message_libraries">
@@ -195,20 +195,20 @@
         D8VK - github.com/AlpyneDreams/d8vk\n
         CNC DDraw - github.com/FunkyFr3sh/cnc-ddraw</string>
     <string name="dialog_message_crash">
-        Ci dispiace per l'inconveniente!\n\n
+        Ci dispiace per l\'inconveniente!\n\n
         Sarebbe utile sapere del problema recente che hai riscontrato.\n\n
-        Puoi visualizzare ed esportare il registro dei crash più recente nelle impostazioni dell'app\n\n
+        Puoi visualizzare ed esportare il registro dei crash più recente nelle impostazioni dell\'app\n\n
         e allegarlo come un problema su Github nel repository del progetto.\n\n
         Il link al repository Github è anche nelle impostazioni!</string>
     <string name="dialog_message_sync_conflict">
-        C'è un nuovo salvataggio remoto e un nuovo salvataggio locale,
+        C\'è un nuovo salvataggio remoto e un nuovo salvataggio locale,
         quale vuoi mantenere?\n\n
         Salvataggio locale:\n\t %1$s \n
         Salvataggio remoto:\n\t%2$s</string>
     <string name="dialog_message_app_running">
         Sei connesso su un dispositivo diverso (%1$s) e stai giocando a %2$s (%3$s),
         e il salvataggio di quella sessione non è ancora nel cloud.\n
-        Puoi comunque giocare a questo gioco, ma questo disconnetterà l'altra sessione da Steam
+        Puoi comunque giocare a questo gioco, ma questo disconnetterà l\'altra sessione da Steam
         e potrebbe creare un conflitto di salvataggio quando il progresso di quella sessione sarà sincronizzato</string>
     <string name="dialog_message_pending_upload">
         Hai giocato a %1$s sul dispositivo %2$s (%3$s), e quel salvataggio non è ancora nel cloud.
@@ -219,7 +219,7 @@
 
     <!-- Dialog Titles -->
     <string name="dialog_title_app_running">App in esecuzione</string>
-    <string name="dialog_title_app_theme">Tema dell'app</string>
+    <string name="dialog_title_app_theme">Tema dell\'app</string>
     <string name="dialog_title_cancel_download">Annulla download</string>
     <string name="dialog_title_close_app">Sei sicuro di voler chiudere Pluvia?</string>
     <string name="dialog_title_container_config">Configurazione %1$s</string>
@@ -229,7 +229,7 @@
     <string name="dialog_title_download_install_fs">Scarica &amp; Installa ImmagineFS</string>
     <string name="dialog_title_exit_game">Esci dal gioco</string>
     <string name="dialog_title_friend_block">Blocca amico</string>
-    <string name="dialog_title_friend_favorite">Aggiungi ai preferiti l'amico</string>
+    <string name="dialog_title_friend_favorite">Aggiungi ai preferiti l\'amico</string>
     <string name="dialog_title_friend_past_aliases">Alias precedenti</string>
     <string name="dialog_title_friend_remove">Rimuovi amico</string>
     <string name="dialog_title_friend_set_nickname">Imposta soprannome</string>
@@ -319,8 +319,8 @@
     <string name="settings_show_privacy_title">Informativa sulla privacy</string>
     <string name="settings_show_source_subtitle">Visualizza il codice sorgente di questo progetto</string>
     <string name="settings_show_source_title">Codice sorgente</string>
-    <string name="settings_show_tip_subtitle">Disattiva per nascondere il messaggio di donazione all\'avvio dell'app</string>
-    <string name="settings_show_tip_title">Chiedi donazione all'avvio</string>
+    <string name="settings_show_tip_subtitle">Disattiva per nascondere il messaggio di donazione all\'avvio dell\'app</string>
+    <string name="settings_show_tip_title">Chiedi donazione all\'avvio</string>
     <string name="settings_start_destination_subtitle">Scegli tra Libreria, Download, o Amici</string>
     <string name="settings_start_destination_title">Destinazione di Avvio</string>
     <string name="settings_tip_subtitle">Contribuisci allo sviluppo in corso</string>
