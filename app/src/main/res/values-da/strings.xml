@@ -32,7 +32,7 @@
     <string name="title_profile">Profil</string>
 
     <!-- Two Factor Responses -->
-    <string name="steam_2fa_confirmation">Brug Steam-mobilappen til at bekræfte dit login...</string>
+    <string name="steam_2fa_confirmation">Brug Steam-mobilappen til at bekræfte dit login…</string>
     <string name="steam_2fa_device">Indtast venligst din 2-faktor godkendelseskode fra din godkendelsesapp.</string>
     <string name="steam_2fa_email">Indtast venligst godkendelseskoden sendt til e-mailen på %s</string>
     <string name="steam_2fa_incorrect">Den tidligere kode var forkert, prøv venligst igen.</string>
