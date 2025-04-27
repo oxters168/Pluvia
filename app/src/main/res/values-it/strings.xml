@@ -208,7 +208,7 @@
     <string name="dialog_message_app_running">
         Sei connesso su un dispositivo diverso (%1$s) e stai giocando a %2$s (%3$s),
         e il salvataggio di quella sessione non è ancora nel cloud.\n
-        Puoi comunque giocare a questo gioco, ma questo disconnetterà l'altra sessione da Steam
+        Puoi comunque giocare a questo gioco, ma questo disconnetterà l\'altra sessione da Steam
         e potrebbe creare un conflitto di salvataggio quando il progresso di quella sessione sarà sincronizzato</string>
     <string name="dialog_message_pending_upload">
         Hai giocato a %1$s sul dispositivo %2$s (%3$s), e quel salvataggio non è ancora nel cloud.
@@ -319,7 +319,7 @@
     <string name="settings_show_privacy_title">Informativa sulla privacy</string>
     <string name="settings_show_source_subtitle">Visualizza il codice sorgente di questo progetto</string>
     <string name="settings_show_source_title">Codice sorgente</string>
-    <string name="settings_show_tip_subtitle">Disattiva per nascondere il messaggio di donazione all\'avvio dell'app</string>
+    <string name="settings_show_tip_subtitle">Disattiva per nascondere il messaggio di donazione all\'avvio dell\'app</string>
     <string name="settings_show_tip_title">Chiedi donazione all\'avvio</string>
     <string name="settings_start_destination_subtitle">Scegli tra Libreria, Download, o Amici</string>
     <string name="settings_start_destination_title">Destinazione di Avvio</string>
