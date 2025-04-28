@@ -39,20 +39,18 @@ android {
     defaultConfig {
         applicationId = "com.OxGames.Pluvia"
 
-        minSdk = 29
-        targetSdk = 34
+        minSdk = 28
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk = 28
 
-        versionCode = 7
-        versionName = "1.3.2"
+        versionCode = 8
+        versionName = "2.0.0-alpha"
 
         buildConfigField("boolean", "GOLD", "false")
         val iconValue = "@mipmap/ic_launcher"
         val iconRoundValue = "@mipmap/ic_launcher_round"
         manifestPlaceholders.putAll(
-            mapOf(
-                "icon" to iconValue,
-                "roundIcon" to iconRoundValue,
-            ),
+            mapOf("icon" to iconValue, "roundIcon" to iconRoundValue),
         )
 
         ndk {
@@ -60,9 +58,6 @@ android {
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
 
         proguardFiles(
             // getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -103,15 +98,16 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     buildFeatures {
+        aidl = true
         compose = true
         buildConfig = true
     }
@@ -133,13 +129,12 @@ android {
             useLegacyPackaging = true
         }
     }
-    dynamicFeatures += setOf(":ubuntufs")
 
     kotlinter {
         ignoreFormatFailures  = false
     }
 
-    // cmake on release builds a proot that fails to process ld-2.31.so
+    // Lossy can't build lorie on Windows. No BISON dependency.
     // externalNativeBuild {
     //     cmake {
     //         path = file("src/main/cpp/CMakeLists.txt")
@@ -167,13 +162,10 @@ dependencies {
         }
     }
     implementation(libs.spongycastle)
+    implementation(libs.protobuf.java)
 
-    // Split Modules
-    implementation(libs.bundles.google)
-
-    // Winlator
-    implementation(libs.bundles.winlator)
-    implementation(libs.zstd.jni) { artifact { type = "aar" } }
+    // MiceWine
+    implementation("net.lingala.zip4j:zip4j:2.11.5") // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -191,17 +183,14 @@ dependencies {
     implementation(libs.timber)
     implementation(libs.zxing)
 
-    // Google Protobufs
-    implementation(libs.protobuf.java)
-
     // Hilt
     implementation(libs.bundles.hilt)
 
-    // KSP (Hilt, Room)
-    ksp(libs.bundles.ksp)
-
     // Room Database
     implementation(libs.bundles.room)
+
+    // KSP (Hilt, Room)
+    ksp(libs.bundles.ksp)
 
     // Memory Leak Detection
     // debugImplementation("com.squareup.leakcanary:leakcanary-android:3.0-alpha-8")

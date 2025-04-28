@@ -33,7 +33,6 @@ import com.OxGames.Pluvia.ui.PluviaMain
 import com.OxGames.Pluvia.utils.decoders.AnimatedPngDecoder
 import com.OxGames.Pluvia.utils.decoders.IconDecoder
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
-import com.winlator.core.AppUtils
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.EnumSet
 import kotlin.math.abs
@@ -51,7 +50,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val onSetSystemUi: (AndroidEvent.SetSystemUIVisibility) -> Unit = {
-        AppUtils.hideSystemUI(this, !it.visible)
+        // AppUtils.hideSystemUI(this, !it.visible)
     }
 
     private val onSetAllowedOrientation: (AndroidEvent.SetAllowedOrientation) -> Unit = {

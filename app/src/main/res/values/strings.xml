@@ -428,4 +428,9 @@
     <string name="library_no_items">No items listed with selection</string>
     <string name="library_no_selection">Select an item in the list to view game info</string>
 
+    <!-- MiceWine -->
+    <string name="installing_wine">Installing Wine…</string>
+    <string name="installing_drivers">Installing Drivers…</string>
+    <string name="installing_box64">Installing Box64…</string>
+
 </resources>
