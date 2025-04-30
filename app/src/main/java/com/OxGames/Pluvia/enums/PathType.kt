@@ -2,7 +2,6 @@ package com.OxGames.Pluvia.enums
 
 import android.content.Context
 import com.OxGames.Pluvia.service.SteamService
-import com.winlator.xenvironment.ImageFs
 import java.nio.file.Paths
 import timber.log.Timber
 
@@ -28,49 +27,50 @@ enum class PathType {
      * [com.winlator.container.Container] beforehand.
      */
     fun toAbsPath(context: Context, appId: Int): String {
-        val path = when (this) {
-            GameInstall -> SteamService.getAppDirPath(appId)
-            WinMyDocuments -> Paths.get(
-                ImageFs.find(context).rootDir.absolutePath,
-                ImageFs.WINEPREFIX,
-                "/drive_c/users/",
-                ImageFs.USER,
-                "Documents/",
-            ).toString()
-            WinAppDataLocal -> Paths.get(
-                ImageFs.find(context).rootDir.absolutePath,
-                ImageFs.WINEPREFIX,
-                "/drive_c/users/",
-                ImageFs.USER,
-                "AppData/Local/",
-            ).toString()
-            WinAppDataLocalLow -> Paths.get(
-                ImageFs.find(context).rootDir.absolutePath,
-                ImageFs.WINEPREFIX,
-                "/drive_c/users/",
-                ImageFs.USER,
-                "AppData/LocalLow/",
-            ).toString()
-            WinAppDataRoaming -> Paths.get(
-                ImageFs.find(context).rootDir.absolutePath,
-                ImageFs.WINEPREFIX,
-                "/drive_c/users/",
-                ImageFs.USER,
-                "AppData/Roaming/",
-            ).toString()
-            WinSavedGames -> Paths.get(
-                ImageFs.find(context).rootDir.absolutePath,
-                ImageFs.WINEPREFIX,
-                "/drive_c/users/",
-                ImageFs.USER,
-                "Saved Games/",
-            ).toString()
-            else -> {
-                Timber.e("Did not recognize or unsupported path type $this")
-                SteamService.getAppDirPath(appId)
-            }
-        }
-        return if (!path.endsWith("/")) "$path/" else path
+//        val path = when (this) {
+//            GameInstall -> SteamService.getAppDirPath(appId)
+//            WinMyDocuments -> Paths.get(
+//                ImageFs.find(context).rootDir.absolutePath,
+//                ImageFs.WINEPREFIX,
+//                "/drive_c/users/",
+//                ImageFs.USER,
+//                "Documents/",
+//            ).toString()
+//            WinAppDataLocal -> Paths.get(
+//                ImageFs.find(context).rootDir.absolutePath,
+//                ImageFs.WINEPREFIX,
+//                "/drive_c/users/",
+//                ImageFs.USER,
+//                "AppData/Local/",
+//            ).toString()
+//            WinAppDataLocalLow -> Paths.get(
+//                ImageFs.find(context).rootDir.absolutePath,
+//                ImageFs.WINEPREFIX,
+//                "/drive_c/users/",
+//                ImageFs.USER,
+//                "AppData/LocalLow/",
+//            ).toString()
+//            WinAppDataRoaming -> Paths.get(
+//                ImageFs.find(context).rootDir.absolutePath,
+//                ImageFs.WINEPREFIX,
+//                "/drive_c/users/",
+//                ImageFs.USER,
+//                "AppData/Roaming/",
+//            ).toString()
+//            WinSavedGames -> Paths.get(
+//                ImageFs.find(context).rootDir.absolutePath,
+//                ImageFs.WINEPREFIX,
+//                "/drive_c/users/",
+//                ImageFs.USER,
+//                "Saved Games/",
+//            ).toString()
+//            else -> {
+//                Timber.e("Did not recognize or unsupported path type $this")
+//                SteamService.getAppDirPath(appId)
+//            }
+//        }
+//        return if (!path.endsWith("/")) "$path/" else path
+        return "" // TODO
     }
 
     val isWindows: Boolean

@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.deviceArch
 import com.micewine.emu.adapters.AdapterSettings
 import com.micewine.emu.adapters.AdapterSettings.SettingsList

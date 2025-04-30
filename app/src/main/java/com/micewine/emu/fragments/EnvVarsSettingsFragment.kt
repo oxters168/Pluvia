@@ -1,6 +1,6 @@
 package com.micewine.emu.fragments
 
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater

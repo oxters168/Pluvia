@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.GeneralSettingsActivity
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.ACTION_PREFERENCE_SELECT
 import com.micewine.emu.activities.PresetManagerActivity

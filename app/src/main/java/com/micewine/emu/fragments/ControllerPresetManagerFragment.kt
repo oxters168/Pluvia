@@ -14,7 +14,7 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.DEAD_ZONE
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.MOUSE_SENSIBILITY
 import com.micewine.emu.activities.PresetManagerActivity.Companion.AXIS_HAT_X_MINUS_KEY
@@ -289,7 +289,7 @@ class ControllerPresetManagerFragment(private val editShortcut: Boolean) : Fragm
 
         private fun saveControllerPresets() {
             preferences?.edit {
-                putString("controllerPresetList", gson.toJson(presetList))  
+                putString("controllerPresetList", gson.toJson(presetList))
                 apply()
             }
         }

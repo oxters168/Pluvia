@@ -3,7 +3,7 @@ package com.micewine.emu.adapters
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.fragments.WelcomeFragment
 
 class AdapterWelcomeFragments(activity: FragmentActivity?) : FragmentStateAdapter(activity!!) {

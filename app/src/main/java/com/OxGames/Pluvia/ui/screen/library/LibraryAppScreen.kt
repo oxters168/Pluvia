@@ -64,19 +64,16 @@ import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.component.dialog.ContainerConfigDialog
+import com.OxGames.Pluvia.ui.component.dialog.ContainerData
 import com.OxGames.Pluvia.ui.component.dialog.LoadingDialog
 import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.screen.library.components.GameInfoRow
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.ContainerUtils
 import com.OxGames.Pluvia.utils.FileUtils
-import com.google.android.play.core.splitcompat.SplitCompat
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
-import com.winlator.container.ContainerData
-import com.winlator.xenvironment.ImageFsInstaller
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -125,9 +122,10 @@ fun AppScreen(
     }
 
     val showEditConfigDialog: () -> Unit = {
-        val container = ContainerUtils.getOrCreateContainer(context, appId)
-        containerData = ContainerUtils.toContainerData(container)
-        showConfigDialog = true
+        TODO()
+        // val container = ContainerUtils.getOrCreateContainer(context, appId)
+        // containerData = ContainerUtils.toContainerData(container)
+        // showConfigDialog = true
     }
 
     DisposableEffect(downloadInfo) {
@@ -211,11 +209,11 @@ fun AppScreen(
                         ).await()
                     }
                     if (!SteamService.isImageFsInstalled(context)) {
-                        SplitCompat.install(context)
-                        ImageFsInstaller.installIfNeededFuture(context, context.assets) {
-                            // Log.d("XServerScreen", "$progress")
-                            loadingProgress = it / 100f
-                        }.get()
+                        // SplitCompat.install(context)
+                        // ImageFsInstaller.installIfNeededFuture(context, context.assets) {
+                        //     // Log.d("XServerScreen", "$progress")
+                        //     loadingProgress = it / 100f
+                        // }.get()
                     }
                     loadingDialogVisible = false
                     showEditConfigDialog()
@@ -249,7 +247,8 @@ fun AppScreen(
         onDismissRequest = { showConfigDialog = false },
         onSave = {
             showConfigDialog = false
-            ContainerUtils.applyToContainer(context, appId, it)
+            TODO()
+           //  ContainerUtils.applyToContainer(context, appId, it)
         },
     )
 

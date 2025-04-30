@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.CHECKBOX
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.ENABLE_DRI3
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.ENABLE_DRI3_DEFAULT_VALUE

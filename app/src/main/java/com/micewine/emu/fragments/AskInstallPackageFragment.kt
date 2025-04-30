@@ -10,7 +10,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import androidx.preference.PreferenceManager
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.ACTION_INSTALL_ADTOOLS_DRIVER
 import com.micewine.emu.activities.MainActivity.Companion.ACTION_INSTALL_RAT
 import com.micewine.emu.adapters.AdapterPreset.Companion.PHYSICAL_CONTROLLER

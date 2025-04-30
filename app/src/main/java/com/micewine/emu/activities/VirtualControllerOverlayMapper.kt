@@ -17,9 +17,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.controller.XKeyCodes.getXKeyScanCodes
-import com.micewine.emu.databinding.ActivityVirtualControllerMapperBinding
+import com.OxGames.Pluvia.databinding.ActivityVirtualControllerMapperBinding
 import com.micewine.emu.fragments.EditVirtualButtonFragment
 import com.micewine.emu.views.OverlayView
 import com.micewine.emu.views.OverlayView.Companion.SHAPE_CIRCLE

@@ -9,7 +9,7 @@ import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.Spinner
 import androidx.recyclerview.widget.RecyclerView
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.adapters.AdapterPreset.Companion.clickedPresetName
 import com.micewine.emu.controller.XKeyCodes
 import com.micewine.emu.fragments.ControllerPresetManagerFragment.Companion.editControllerPreset
@@ -30,7 +30,7 @@ class AdapterSettingsController(private val settingsControllerList: List<Setting
         val sList = settingsControllerList[position]
 
         holder.image.setImageResource(sList.image)
-        
+
         val mapping = getMapping(clickedPresetName, sList.key)
 
         when (sList.image) {

@@ -11,7 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.deviceArch
 import com.micewine.emu.activities.MainActivity.Companion.tmpDir
 import com.micewine.emu.adapters.AdapterRatPackage

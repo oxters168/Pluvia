@@ -11,9 +11,9 @@ import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.databinding.ActivityGeneralSettingsBinding
 import com.micewine.emu.activities.MainActivity.Companion.setSharedVars
-import com.micewine.emu.databinding.ActivityGeneralSettingsBinding
 import com.micewine.emu.fragments.Box64SettingsFragment
 import com.micewine.emu.fragments.DebugSettingsFragment
 import com.micewine.emu.fragments.DriverInfoFragment

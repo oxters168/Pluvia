@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.button.MaterialButton
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 
 class InfoDialogFragment(private val titleText: String, private val descriptionText: String) : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {

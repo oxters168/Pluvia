@@ -40,15 +40,6 @@ import com.OxGames.Pluvia.utils.FileUtils
 import com.OxGames.Pluvia.utils.SteamUtils
 import com.OxGames.Pluvia.utils.generateSteamApp
 import com.OxGames.Pluvia.utils.timeChunked
-import com.google.android.play.core.ktx.bytesDownloaded
-import com.google.android.play.core.ktx.requestCancelInstall
-import com.google.android.play.core.ktx.requestInstall
-import com.google.android.play.core.ktx.requestSessionState
-import com.google.android.play.core.ktx.status
-import com.google.android.play.core.ktx.totalBytesToDownload
-import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
-import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
-import com.winlator.xenvironment.ImageFs
 import dagger.hilt.android.AndroidEntryPoint
 import `in`.dragonbra.javasteam.enums.EFriendRelationship
 import `in`.dragonbra.javasteam.enums.ELicenseFlags
@@ -414,125 +405,129 @@ class SteamService : Service(), IChallengeUrlChanged {
         }
 
         fun isImageFsInstalled(context: Context): Boolean {
-            return ImageFs.find(context).rootDir.exists()
+            TODO()
+            // return ImageFs.find(context).rootDir.exists()
         }
 
         fun isImageFsInstallable(context: Context): Boolean {
-            val splitManager = SplitInstallManagerFactory.create(context)
-            return splitManager.installedModules.contains("ubuntufs") // || FileUtils.assetExists(context.assets, "imagefs.txz")
+            TODO()
+//            val splitManager = SplitInstallManagerFactory.create(context)
+//            return splitManager.installedModules.contains("ubuntufs") // || FileUtils.assetExists(context.assets, "imagefs.txz")
         }
 
         fun downloadImageFs(
             onDownloadProgress: (Float) -> Unit,
             parentScope: CoroutineScope = CoroutineScope(Dispatchers.IO),
         ) = parentScope.async {
-            if (!isImageFsInstalled(instance!!) && !isImageFsInstallable(instance!!)) {
-                Timber.i("imagefs.txz will be downloaded")
-                val splitManager = SplitInstallManagerFactory.create(instance!!)
-                // if (!splitManager.installedModules.contains("ubuntufs")) {
-                val moduleInstallSessionId = splitManager.requestInstall(listOf("ubuntufs"))
-                var isInstalling = true
-                // try {
-                do {
-                    val sessionState = splitManager.requestSessionState(moduleInstallSessionId)
-                    // logD("imagefs.txz session state status: ${sessionState.status}")
-                    when (sessionState.status) {
-                        SplitInstallSessionStatus.INSTALLED -> isInstalling = false
-                        SplitInstallSessionStatus.PENDING,
-                        SplitInstallSessionStatus.INSTALLING,
-                        SplitInstallSessionStatus.DOWNLOADED,
-                        SplitInstallSessionStatus.DOWNLOADING,
-                        -> {
-                            if (!isActive) {
-                                Timber.i("ubuntufs module download cancelling due to scope becoming inactive")
-                                splitManager.requestCancelInstall(moduleInstallSessionId)
-                                break
-                            }
-                            val downloadPercent =
-                                sessionState.bytesDownloaded.toFloat() / sessionState.totalBytesToDownload
-                            // logD("imagefs.txz download percent: $downloadPercent")
-                            // downloadInfo.setProgress(downloadPercent, 0)
-                            onDownloadProgress(downloadPercent)
-                            delay(100)
-                        }
-
-                        else -> {
-                            cancel("Failed to install ubuntufs module: ${sessionState.status}")
-                        }
-                    }
-                } while (isInstalling)
-                // } catch (e: Exception) {
-                //     if (moduleInstallSessionId != -1) {
-                //         val splitManager = SplitInstallManagerFactory.create(instance!!)
-                //         val sessionState = splitManager.requestSessionState(moduleInstallSessionId)
-                //         if (sessionState.status == SplitInstallSessionStatus.DOWNLOADING ||
-                //             sessionState.status == SplitInstallSessionStatus.DOWNLOADED ||
-                //             sessionState.status == SplitInstallSessionStatus.INSTALLING
-                //         ) {
-                //             splitManager.requestCancelInstall(moduleInstallSessionId)
-                //         }
-                //     }
-                // }
-                val installedProperly = splitManager.installedModules.contains("ubuntufs")
-                Timber.i("imagefs.txz module installed properly: $installedProperly")
-                // }
-            } else {
-                Timber.i("ubuntufs module already installed, skipping download")
-            }
+            TODO()
+//            if (!isImageFsInstalled(instance!!) && !isImageFsInstallable(instance!!)) {
+//                Timber.i("imagefs.txz will be downloaded")
+//                val splitManager = SplitInstallManagerFactory.create(instance!!)
+//                // if (!splitManager.installedModules.contains("ubuntufs")) {
+//                val moduleInstallSessionId = splitManager.requestInstall(listOf("ubuntufs"))
+//                var isInstalling = true
+//                // try {
+//                do {
+//                    val sessionState = splitManager.requestSessionState(moduleInstallSessionId)
+//                    // logD("imagefs.txz session state status: ${sessionState.status}")
+//                    when (sessionState.status) {
+//                        SplitInstallSessionStatus.INSTALLED -> isInstalling = false
+//                        SplitInstallSessionStatus.PENDING,
+//                        SplitInstallSessionStatus.INSTALLING,
+//                        SplitInstallSessionStatus.DOWNLOADED,
+//                        SplitInstallSessionStatus.DOWNLOADING,
+//                        -> {
+//                            if (!isActive) {
+//                                Timber.i("ubuntufs module download cancelling due to scope becoming inactive")
+//                                splitManager.requestCancelInstall(moduleInstallSessionId)
+//                                break
+//                            }
+//                            val downloadPercent =
+//                                sessionState.bytesDownloaded.toFloat() / sessionState.totalBytesToDownload
+//                            // logD("imagefs.txz download percent: $downloadPercent")
+//                            // downloadInfo.setProgress(downloadPercent, 0)
+//                            onDownloadProgress(downloadPercent)
+//                            delay(100)
+//                        }
+//
+//                        else -> {
+//                            cancel("Failed to install ubuntufs module: ${sessionState.status}")
+//                        }
+//                    }
+//                } while (isInstalling)
+//                // } catch (e: Exception) {
+//                //     if (moduleInstallSessionId != -1) {
+//                //         val splitManager = SplitInstallManagerFactory.create(instance!!)
+//                //         val sessionState = splitManager.requestSessionState(moduleInstallSessionId)
+//                //         if (sessionState.status == SplitInstallSessionStatus.DOWNLOADING ||
+//                //             sessionState.status == SplitInstallSessionStatus.DOWNLOADED ||
+//                //             sessionState.status == SplitInstallSessionStatus.INSTALLING
+//                //         ) {
+//                //             splitManager.requestCancelInstall(moduleInstallSessionId)
+//                //         }
+//                //     }
+//                // }
+//                val installedProperly = splitManager.installedModules.contains("ubuntufs")
+//                Timber.i("imagefs.txz module installed properly: $installedProperly")
+//                // }
+//            } else {
+//                Timber.i("ubuntufs module already installed, skipping download")
+//            }
         }
 
         fun downloadApp(appId: Int, depotIds: List<Int>, branch: String): DownloadInfo? {
-            if (downloadJobs.contains(appId)) {
-                Timber.w("Could not start new download job for $appId since one already exists")
-                return getAppDownloadInfo(appId)
-            }
-
-            if (depotIds.isEmpty()) {
-                Timber.w("No depots to download for $appId")
-                return null
-            }
-
-            Timber.i("Found ${depotIds.size} depot(s) to download: $depotIds")
-
-            val needsImageFsDownload = !ImageFs.find(instance!!).rootDir.exists() &&
-                !FileUtils.assetExists(instance!!.assets, "imagefs.txz")
-            val indexOffset = if (needsImageFsDownload) 1 else 0
-
-            val downloadInfo = DownloadInfo(depotIds.size + indexOffset).also { downloadInfo ->
-                downloadInfo.setDownloadJob(
-                    CoroutineScope(Dispatchers.IO).launch {
-                        // TODO: change downloads to be one item/depot per job and connect them to the game requesting to download them
-                        try {
-                            downloadImageFs(
-                                onDownloadProgress = { downloadInfo.setProgress(it, 0) },
-                                parentScope = this,
-                            ).await()
-
-                            depotIds.forEachIndexed { jobIndex, depotId ->
-                                // TODO: download shared install depots to a common location
-                                ContentDownloader(instance!!.steamClient!!).downloadApp(
-                                    appId = appId,
-                                    depotId = depotId,
-                                    installPath = PrefManager.appInstallPath,
-                                    stagingPath = PrefManager.appStagingPath,
-                                    branch = branch,
-                                    // maxDownloads = 1,
-                                    onDownloadProgress = { downloadInfo.setProgress(it, jobIndex + indexOffset) },
-                                    parentScope = coroutineContext.job as CoroutineScope,
-                                ).await()
-                            }
-                        } catch (e: Exception) {
-                            Timber.e(e, "Download failed")
-                        }
-
-                        downloadJobs.remove(appId)
-                    },
-                )
-            }
-
-            downloadJobs[appId] = downloadInfo
-
-            return downloadInfo
+            TODO()
+//            if (downloadJobs.contains(appId)) {
+//                Timber.w("Could not start new download job for $appId since one already exists")
+//                return getAppDownloadInfo(appId)
+//            }
+//
+//            if (depotIds.isEmpty()) {
+//                Timber.w("No depots to download for $appId")
+//                return null
+//            }
+//
+//            Timber.i("Found ${depotIds.size} depot(s) to download: $depotIds")
+//
+//            val needsImageFsDownload = !ImageFs.find(instance!!).rootDir.exists() &&
+//                !FileUtils.assetExists(instance!!.assets, "imagefs.txz")
+//            val indexOffset = if (needsImageFsDownload) 1 else 0
+//
+//            val downloadInfo = DownloadInfo(depotIds.size + indexOffset).also { downloadInfo ->
+//                downloadInfo.setDownloadJob(
+//                    CoroutineScope(Dispatchers.IO).launch {
+//                        // TODO: change downloads to be one item/depot per job and connect them to the game requesting to download them
+//                        try {
+//                            downloadImageFs(
+//                                onDownloadProgress = { downloadInfo.setProgress(it, 0) },
+//                                parentScope = this,
+//                            ).await()
+//
+//                            depotIds.forEachIndexed { jobIndex, depotId ->
+//                                // TODO: download shared install depots to a common location
+//                                ContentDownloader(instance!!.steamClient!!).downloadApp(
+//                                    appId = appId,
+//                                    depotId = depotId,
+//                                    installPath = PrefManager.appInstallPath,
+//                                    stagingPath = PrefManager.appStagingPath,
+//                                    branch = branch,
+//                                    // maxDownloads = 1,
+//                                    onDownloadProgress = { downloadInfo.setProgress(it, jobIndex + indexOffset) },
+//                                    parentScope = coroutineContext.job as CoroutineScope,
+//                                ).await()
+//                            }
+//                        } catch (e: Exception) {
+//                            Timber.e(e, "Download failed")
+//                        }
+//
+//                        downloadJobs.remove(appId)
+//                    },
+//                )
+//            }
+//
+//            downloadJobs[appId] = downloadInfo
+//
+//            return downloadInfo
         }
 
         fun getWindowsLaunchInfos(appId: Int): List<LaunchInfo> {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/renameFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/rename_game_item">
+    </item>
+    <item
+        android:id="@+id/deleteFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/remove_game_item">
+    </item>
+</menu>
+
+

@@ -8,10 +8,10 @@ import androidx.appcompat.widget.Toolbar
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.setSharedVars
 import com.micewine.emu.adapters.AdapterTabPagerDownloader
-import com.micewine.emu.databinding.ActivityRatManagerBinding
+import com.OxGames.Pluvia.databinding.ActivityRatManagerBinding
 
 class RatDownloaderActivity : AppCompatActivity() {
     private var binding: ActivityRatManagerBinding? = null

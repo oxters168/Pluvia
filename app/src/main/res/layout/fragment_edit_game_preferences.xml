@@ -1,0 +1,614 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:theme="@style/Theme.MiceWine">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/imageView"
+                    android:layout_width="128dp"
+                    android:layout_height="128dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_edit"
+                    android:padding="6dp"
+                    app:shapeAppearance="@style/ShapeAppearance.Material3.Corner.ExtraSmall">
+                </ImageView>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/name"
+                        android:textStyle="bold"
+                        android:textSize="18sp">
+                    </TextView>
+
+                    <EditText
+                        android:id="@+id/editTextNewName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:importantForAutofill="no"
+                        android:inputType="text"
+                        tools:ignore="LabelFor">
+                    </EditText>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/appArgumentsText"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/app_arguments">
+            </TextView>
+
+            <EditText
+                android:id="@+id/appArgumentsEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                tools:ignore="LabelFor">
+            </EditText>
+
+            <TextView
+                android:layout_marginTop="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="@string/display_settings_title">
+            </TextView>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/display_mode_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedDisplayMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/display_resolution_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedDisplayResolution"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="@string/driver_settings_title">
+            </TextView>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/select_driver_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedDriver"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/select_d3dx_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedD3DXRenderer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/select_dxvk_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedDXVK"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/select_wined3d_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedWineD3D"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/select_vkd3d_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedVKD3D"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="@string/wine_settings_title">
+            </TextView>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/wine_esync_title">
+            </TextView>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/wineESync"
+                android:theme="@style/Theme.MiceWine"
+                android:gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+            </com.google.android.material.materialswitch.MaterialSwitch>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/enable_wine_services_title">
+            </TextView>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/wineServices"
+                android:theme="@style/Theme.MiceWine"
+                android:gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+            </com.google.android.material.materialswitch.MaterialSwitch>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/enable_wine_virtual_desktop">
+            </TextView>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/enableWineVirtualDesktop"
+                android:theme="@style/Theme.MiceWine"
+                android:gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+            </com.google.android.material.materialswitch.MaterialSwitch>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/cpu_affinity_title">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/cpuAffinity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="@string/controller_settings">
+            </TextView>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/selected_controller_profile">
+            </TextView>
+
+            <TextView
+                android:id="@+id/noControllersConnected"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="8dp"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/no_controllers_connected">
+            </TextView>
+
+            <LinearLayout
+                android:id="@+id/controller0Layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/controller0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="6dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold">
+                </TextView>
+
+                <TextView
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:text="@string/enable_xinput_title">
+                </TextView>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/enableController0XInput"
+                    android:theme="@style/Theme.MiceWine"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent">
+                </com.google.android.material.materialswitch.MaterialSwitch>
+
+                <Spinner
+                    android:id="@+id/selectedController0Profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                </Spinner>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/controller1Layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/controller1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="6dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold">
+                </TextView>
+
+                <TextView
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:text="@string/enable_xinput_title">
+                </TextView>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/enableController1XInput"
+                    android:theme="@style/Theme.MiceWine"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent">
+                </com.google.android.material.materialswitch.MaterialSwitch>
+
+                <Spinner
+                    android:id="@+id/selectedController1Profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                </Spinner>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/controller2Layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/controller2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="6dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold">
+                </TextView>
+
+                <TextView
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:text="@string/enable_xinput_title">
+                </TextView>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/enableController2XInput"
+                    android:theme="@style/Theme.MiceWine"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent">
+                </com.google.android.material.materialswitch.MaterialSwitch>
+
+                <Spinner
+                    android:id="@+id/selectedController2Profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                </Spinner>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/controller3Layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/controller3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="6dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold">
+                </TextView>
+
+                <TextView
+                    android:layout_marginTop="16dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:text="@string/enable_xinput_title">
+                </TextView>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/enableController3XInput"
+                    android:theme="@style/Theme.MiceWine"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent">
+                </com.google.android.material.materialswitch.MaterialSwitch>
+
+                <Spinner
+                    android:id="@+id/selectedController3Profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                </Spinner>
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/selected_virtual_controller_profile">
+            </TextView>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/enable_xinput_title">
+            </TextView>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/enableVirtualControllerXInput"
+                android:theme="@style/Theme.MiceWine"
+                android:gravity="center_vertical"
+                android:layout_marginStart="6dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+            </com.google.android.material.materialswitch.MaterialSwitch>
+
+            <Spinner
+                android:id="@+id/selectedVirtualControllerProfile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="@string/others">
+            </TextView>
+
+            <TextView
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/selected_box64">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedBox64"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+            <TextView
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="@string/selected_box64_profile">
+            </TextView>
+
+            <Spinner
+                android:id="@+id/selectedBox64Profile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+            </Spinner>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel_text">
+        </com.google.android.material.button.MaterialButton>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonContinue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/confirm_text">
+        </com.google.android.material.button.MaterialButton>
+
+    </LinearLayout>
+
+</LinearLayout>

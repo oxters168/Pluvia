@@ -14,7 +14,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.VirtualControllerOverlayMapper.Companion.ACTION_INVALIDATE
 import com.micewine.emu.controller.XKeyCodes.getKeyNames
 import com.micewine.emu.controller.XKeyCodes.getXKeyScanCodes

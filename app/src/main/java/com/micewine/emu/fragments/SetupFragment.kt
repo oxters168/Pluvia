@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.customRootFSPath
 import com.micewine.emu.activities.MainActivity.Companion.setupDone
 import com.micewine.emu.fragments.FloatingFileManagerFragment.Companion.calledSetup

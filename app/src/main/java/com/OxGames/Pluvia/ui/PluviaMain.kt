@@ -47,9 +47,6 @@ import com.OxGames.Pluvia.ui.screen.login.UserLoginScreen
 import com.OxGames.Pluvia.ui.screen.settings.SettingsScreen
 import com.OxGames.Pluvia.ui.screen.xserver.XServerScreen
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.ContainerUtils
-import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientObjects.ECloudPendingRemoteOperation
-import java.util.Date
 import java.util.EnumSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -485,189 +482,190 @@ fun preLaunchApp(
     onSuccess: () -> Unit,
 ) {
     Timber.i("Pre launching app: $appId, $ignorePendingOperations, $preferredSave")
+    TODO()
 
-    setLoadingDialogVisible(true)
-    // TODO: add a way to cancel
-    // TODO: add fail conditions
-    CoroutineScope(Dispatchers.IO).launch {
-        // set up Ubuntu file system
-        SplitCompat.install(context)
-        ImageFsInstaller.installIfNeededFuture(context, context.assets) { progress ->
-            // Log.d("XServerScreen", "$progress")
-            setLoadingProgress(progress / 100f)
-        }.get()
-        setLoadingProgress(-1f)
-
-        // create container if it does not already exist
-        // TODO: combine somehow with container creation in HomeLibraryAppScreen
-        Timber.i("Loading container manager and getting container info")
-        val containerManager = ContainerManager(context)
-        val container = ContainerUtils.getOrCreateContainer(context, appId)
-        // must activate container before downloading save files
-        containerManager.activateContainer(container)
-        Timber.i("Got container: ${container.name}")
-
-        // sync save files and check no pending remote operations are running
-        val prefixToPath: (String) -> String = { prefix ->
-            PathType.from(prefix).toAbsPath(context, appId)
-        }
-        val postSyncInfo = SteamService.beginLaunchApp(
-            appId = appId,
-            prefixToPath = prefixToPath,
-            ignorePendingOperations = ignorePendingOperations,
-            preferredSave = preferredSave,
-            parentScope = this,
-        ).await()
-
-        setLoadingDialogVisible(false)
-
-        Timber.i("Post Sync Info was: $postSyncInfo")
-
-        when (postSyncInfo.syncResult) {
-            SyncResult.Conflict -> {
-                setMessageDialogState(
-                    MessageDialogState(
-                        visible = true,
-                        type = DialogType.SYNC_CONFLICT,
-                        title = R.string.dialog_title_sync_conflict,
-                        message = context.getString(
-                            R.string.dialog_message_sync_conflict,
-                            Date(postSyncInfo.localTimestamp).toString(),
-                            Date(postSyncInfo.remoteTimestamp).toString(),
-                        ),
-                        dismissBtnText = R.string.dialog_action_keep_local,
-                        confirmBtnText = R.string.dialog_action_keep_remote,
-                    ),
-                )
-            }
-
-            SyncResult.InProgress,
-            SyncResult.UnknownFail,
-            SyncResult.DownloadFail,
-            SyncResult.UpdateFail,
-            -> {
-                setMessageDialogState(
-                    MessageDialogState(
-                        visible = true,
-                        type = DialogType.SYNC_FAIL,
-                        title = R.string.dialog_title_sync_error,
-                        message = context.getString(R.string.dialog_message_sync_error, postSyncInfo.syncResult),
-                        dismissBtnText = R.string.ok,
-                    ),
-                )
-            }
-
-            SyncResult.PendingOperations -> {
-                Timber.i(
-                    "Pending remote operations:${
-                        postSyncInfo.pendingRemoteOperations.map { pro ->
-                            "\n\tmachineName: ${pro.machineName}" +
-                                "\n\ttimestamp: ${Date(pro.timeLastUpdated * 1000L)}" +
-                                "\n\toperation: ${pro.operation}"
-                        }.joinToString("\n")
-                    }",
-                )
-                if (postSyncInfo.pendingRemoteOperations.size == 1) {
-                    val pro = postSyncInfo.pendingRemoteOperations.first()
-                    when (pro.operation) {
-                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationUploadInProgress -> {
-                            // maybe this should instead wait for the upload to finish and then
-                            // launch the app
-                            setMessageDialogState(
-                                MessageDialogState(
-                                    visible = true,
-                                    type = DialogType.PENDING_UPLOAD_IN_PROGRESS,
-                                    title = R.string.dialog_title_sync_upload,
-                                    message = context.getString(
-                                        R.string.dialog_message_sync_upload,
-                                        SteamService.getAppInfoOf(appId)?.name,
-                                        pro.machineName,
-                                        Date(pro.timeLastUpdated * 1000L).toString(),
-                                    ),
-                                    dismissBtnText = R.string.ok,
-                                ),
-                            )
-                        }
-
-                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationUploadPending -> {
-                            setMessageDialogState(
-                                MessageDialogState(
-                                    visible = true,
-                                    type = DialogType.PENDING_UPLOAD,
-                                    title = R.string.dialog_title_pending_upload,
-                                    message = context.getString(
-                                        R.string.dialog_message_pending_upload,
-                                        SteamService.getAppInfoOf(appId)?.name,
-                                        pro.machineName,
-                                        Date(pro.timeLastUpdated * 1000L).toString(),
-                                    ),
-                                    confirmBtnText = R.string.dialog_action_play_anyway,
-                                    dismissBtnText = R.string.cancel,
-                                ),
-                            )
-                        }
-
-                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationAppSessionActive -> {
-                            setMessageDialogState(
-                                MessageDialogState(
-                                    visible = true,
-                                    type = DialogType.APP_SESSION_ACTIVE,
-                                    title = R.string.dialog_title_app_running,
-                                    message = context.getString(
-                                        R.string.dialog_message_app_running,
-                                        pro.machineName,
-                                        SteamService.getAppInfoOf(appId)?.name,
-                                        Date(pro.timeLastUpdated * 1000L).toString(),
-                                    ),
-                                    confirmBtnText = R.string.dialog_action_play_anyway,
-                                    dismissBtnText = R.string.cancel,
-                                ),
-                            )
-                        }
-
-                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationAppSessionSuspended -> {
-                            // I don't know what this means, yet
-                            setMessageDialogState(
-                                MessageDialogState(
-                                    visible = true,
-                                    type = DialogType.APP_SESSION_SUSPENDED,
-                                    title = R.string.dialog_title_sync_error,
-                                    message = context.getString(R.string.dialog_message_sync_terminated),
-                                    dismissBtnText = R.string.ok,
-                                ),
-                            )
-                        }
-
-                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationNone -> {
-                            // why are we here
-                            setMessageDialogState(
-                                MessageDialogState(
-                                    visible = true,
-                                    type = DialogType.PENDING_OPERATION_NONE,
-                                    title = R.string.dialog_title_sync_error,
-                                    message = context.getString(R.string.dialog_message_sync_none),
-                                    dismissBtnText = R.string.ok,
-                                ),
-                            )
-                        }
-                    }
-                } else {
-                    // this should probably be handled differently
-                    setMessageDialogState(
-                        MessageDialogState(
-                            visible = true,
-                            type = DialogType.MULTIPLE_PENDING_OPERATIONS,
-                            title = R.string.dialog_title_sync_error,
-                            message = context.getString(R.string.dialog_message_sync_multiple),
-                            dismissBtnText = R.string.ok,
-                        ),
-                    )
-                }
-            }
-
-            SyncResult.UpToDate,
-            SyncResult.Success,
-            -> onSuccess()
-        }
-    }
+//    setLoadingDialogVisible(true)
+//    // TODO: add a way to cancel
+//    // TODO: add fail conditions
+//    CoroutineScope(Dispatchers.IO).launch {
+//        // set up Ubuntu file system
+//        SplitCompat.install(context)
+//        ImageFsInstaller.installIfNeededFuture(context, context.assets) { progress ->
+//            // Log.d("XServerScreen", "$progress")
+//            setLoadingProgress(progress / 100f)
+//        }.get()
+//        setLoadingProgress(-1f)
+//
+//        // create container if it does not already exist
+//        // TODO: combine somehow with container creation in HomeLibraryAppScreen
+//        Timber.i("Loading container manager and getting container info")
+//        val containerManager = ContainerManager(context)
+//        val container = ContainerUtils.getOrCreateContainer(context, appId)
+//        // must activate container before downloading save files
+//        containerManager.activateContainer(container)
+//        Timber.i("Got container: ${container.name}")
+//
+//        // sync save files and check no pending remote operations are running
+//        val prefixToPath: (String) -> String = { prefix ->
+//            PathType.from(prefix).toAbsPath(context, appId)
+//        }
+//        val postSyncInfo = SteamService.beginLaunchApp(
+//            appId = appId,
+//            prefixToPath = prefixToPath,
+//            ignorePendingOperations = ignorePendingOperations,
+//            preferredSave = preferredSave,
+//            parentScope = this,
+//        ).await()
+//
+//        setLoadingDialogVisible(false)
+//
+//        Timber.i("Post Sync Info was: $postSyncInfo")
+//
+//        when (postSyncInfo.syncResult) {
+//            SyncResult.Conflict -> {
+//                setMessageDialogState(
+//                    MessageDialogState(
+//                        visible = true,
+//                        type = DialogType.SYNC_CONFLICT,
+//                        title = R.string.dialog_title_sync_conflict,
+//                        message = context.getString(
+//                            R.string.dialog_message_sync_conflict,
+//                            Date(postSyncInfo.localTimestamp).toString(),
+//                            Date(postSyncInfo.remoteTimestamp).toString(),
+//                        ),
+//                        dismissBtnText = R.string.dialog_action_keep_local,
+//                        confirmBtnText = R.string.dialog_action_keep_remote,
+//                    ),
+//                )
+//            }
+//
+//            SyncResult.InProgress,
+//            SyncResult.UnknownFail,
+//            SyncResult.DownloadFail,
+//            SyncResult.UpdateFail,
+//            -> {
+//                setMessageDialogState(
+//                    MessageDialogState(
+//                        visible = true,
+//                        type = DialogType.SYNC_FAIL,
+//                        title = R.string.dialog_title_sync_error,
+//                        message = context.getString(R.string.dialog_message_sync_error, postSyncInfo.syncResult),
+//                        dismissBtnText = R.string.ok,
+//                    ),
+//                )
+//            }
+//
+//            SyncResult.PendingOperations -> {
+//                Timber.i(
+//                    "Pending remote operations:${
+//                        postSyncInfo.pendingRemoteOperations.map { pro ->
+//                            "\n\tmachineName: ${pro.machineName}" +
+//                                "\n\ttimestamp: ${Date(pro.timeLastUpdated * 1000L)}" +
+//                                "\n\toperation: ${pro.operation}"
+//                        }.joinToString("\n")
+//                    }",
+//                )
+//                if (postSyncInfo.pendingRemoteOperations.size == 1) {
+//                    val pro = postSyncInfo.pendingRemoteOperations.first()
+//                    when (pro.operation) {
+//                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationUploadInProgress -> {
+//                            // maybe this should instead wait for the upload to finish and then
+//                            // launch the app
+//                            setMessageDialogState(
+//                                MessageDialogState(
+//                                    visible = true,
+//                                    type = DialogType.PENDING_UPLOAD_IN_PROGRESS,
+//                                    title = R.string.dialog_title_sync_upload,
+//                                    message = context.getString(
+//                                        R.string.dialog_message_sync_upload,
+//                                        SteamService.getAppInfoOf(appId)?.name,
+//                                        pro.machineName,
+//                                        Date(pro.timeLastUpdated * 1000L).toString(),
+//                                    ),
+//                                    dismissBtnText = R.string.ok,
+//                                ),
+//                            )
+//                        }
+//
+//                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationUploadPending -> {
+//                            setMessageDialogState(
+//                                MessageDialogState(
+//                                    visible = true,
+//                                    type = DialogType.PENDING_UPLOAD,
+//                                    title = R.string.dialog_title_pending_upload,
+//                                    message = context.getString(
+//                                        R.string.dialog_message_pending_upload,
+//                                        SteamService.getAppInfoOf(appId)?.name,
+//                                        pro.machineName,
+//                                        Date(pro.timeLastUpdated * 1000L).toString(),
+//                                    ),
+//                                    confirmBtnText = R.string.dialog_action_play_anyway,
+//                                    dismissBtnText = R.string.cancel,
+//                                ),
+//                            )
+//                        }
+//
+//                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationAppSessionActive -> {
+//                            setMessageDialogState(
+//                                MessageDialogState(
+//                                    visible = true,
+//                                    type = DialogType.APP_SESSION_ACTIVE,
+//                                    title = R.string.dialog_title_app_running,
+//                                    message = context.getString(
+//                                        R.string.dialog_message_app_running,
+//                                        pro.machineName,
+//                                        SteamService.getAppInfoOf(appId)?.name,
+//                                        Date(pro.timeLastUpdated * 1000L).toString(),
+//                                    ),
+//                                    confirmBtnText = R.string.dialog_action_play_anyway,
+//                                    dismissBtnText = R.string.cancel,
+//                                ),
+//                            )
+//                        }
+//
+//                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationAppSessionSuspended -> {
+//                            // I don't know what this means, yet
+//                            setMessageDialogState(
+//                                MessageDialogState(
+//                                    visible = true,
+//                                    type = DialogType.APP_SESSION_SUSPENDED,
+//                                    title = R.string.dialog_title_sync_error,
+//                                    message = context.getString(R.string.dialog_message_sync_terminated),
+//                                    dismissBtnText = R.string.ok,
+//                                ),
+//                            )
+//                        }
+//
+//                        ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationNone -> {
+//                            // why are we here
+//                            setMessageDialogState(
+//                                MessageDialogState(
+//                                    visible = true,
+//                                    type = DialogType.PENDING_OPERATION_NONE,
+//                                    title = R.string.dialog_title_sync_error,
+//                                    message = context.getString(R.string.dialog_message_sync_none),
+//                                    dismissBtnText = R.string.ok,
+//                                ),
+//                            )
+//                        }
+//                    }
+//                } else {
+//                    // this should probably be handled differently
+//                    setMessageDialogState(
+//                        MessageDialogState(
+//                            visible = true,
+//                            type = DialogType.MULTIPLE_PENDING_OPERATIONS,
+//                            title = R.string.dialog_title_sync_error,
+//                            message = context.getString(R.string.dialog_message_sync_multiple),
+//                            dismissBtnText = R.string.ok,
+//                        ),
+//                    )
+//                }
+//            }
+//
+//            SyncResult.UpToDate,
+//            SyncResult.Success,
+//            -> onSuccess()
+//        }
+//    }
 }

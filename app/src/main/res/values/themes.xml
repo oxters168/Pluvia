@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Pluvia" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- TODO remove -->
+    <style name="Base.Theme.MiceWine" parent="Theme.Material3.DynamicColors.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/darker_gray</item>
+        <item name="popupMenuBackground">@drawable/menu_bg</item>
+    </style>
+
+    <color name="textColor">#000</color>
+
+    <style name="Base.Theme.MiceWine.FullScreen" parent="Theme.Material3.DynamicColors.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/darker_gray</item>
+        <item name="popupMenuBackground">@drawable/menu_bg</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <style name="Theme.MiceWine" parent="Base.Theme.MiceWine" />
+    <style name="Theme.MiceWine.FullScreen" parent="Base.Theme.MiceWine.FullScreen" />
 </resources>

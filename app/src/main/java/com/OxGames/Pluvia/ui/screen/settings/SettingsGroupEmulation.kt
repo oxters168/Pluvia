@@ -12,7 +12,6 @@ import com.OxGames.Pluvia.ui.component.dialog.Box64PresetsDialog
 import com.OxGames.Pluvia.ui.component.dialog.ContainerConfigDialog
 import com.OxGames.Pluvia.ui.component.dialog.OrientationDialog
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
-import com.OxGames.Pluvia.utils.ContainerUtils
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 
@@ -28,16 +27,17 @@ fun SettingsGroupEmulation() {
             onDismiss = { showOrientationDialog = false },
         )
 
-        ContainerConfigDialog(
-            visible = showConfigDialog,
-            title = stringResource(R.string.dialog_title_default_container_config),
-            initialConfig = ContainerUtils.getDefaultContainerData(),
-            onDismissRequest = { showConfigDialog = false },
-            onSave = {
-                showConfigDialog = false
-                ContainerUtils.setDefaultContainerData(it)
-            },
-        )
+        // TODO
+        // ContainerConfigDialog(
+        //     visible = showConfigDialog,
+        //     title = stringResource(R.string.dialog_title_default_container_config),
+        //     initialConfig = ContainerUtils.getDefaultContainerData(),
+        //     onDismissRequest = { showConfigDialog = false },
+        //     onSave = {
+        //         showConfigDialog = false
+        //         ContainerUtils.setDefaultContainerData(it)
+        //     },
+        // )
 
         Box64PresetsDialog(
             visible = showBox64PresetsDialog,

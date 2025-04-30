@@ -11,7 +11,7 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.appRootDir
 import com.micewine.emu.activities.MainActivity.Companion.ratPackagesDir
 import com.micewine.emu.activities.MainActivity.Companion.setSharedVars
@@ -56,7 +56,7 @@ class DriverInfoFragment : Fragment() {
                 } else {
                     driverFile = File("$ratPackagesDir/$driverId/pkg-header").readLines()[4].substringAfter("=")
                 }
-                
+
                 setSharedVars(requireActivity(), null, null, null, null, null, null, null, null, null, null, null, (driverId.contains("AdrenoToolsDriver")), adrenoToolsDriverPath)
 
                 generateICDFile(driverFile, File("$appRootDir/vulkan_icd.json"))

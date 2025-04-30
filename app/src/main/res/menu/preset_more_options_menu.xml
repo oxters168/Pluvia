@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/editPreset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/edit">
+    </item>
+    <item
+        android:id="@+id/exportPreset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/export_preset">
+    </item>
+    <item
+        android:id="@+id/renamePreset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/rename_game_item">
+    </item>
+    <item
+        android:id="@+id/deletePreset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/remove_game_item">
+    </item>
+</menu>
+
+

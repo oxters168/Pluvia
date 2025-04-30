@@ -14,7 +14,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.PresetManagerActivity.Companion.ACTION_EDIT_BOX64_PRESET
 import com.micewine.emu.activities.PresetManagerActivity.Companion.ACTION_EDIT_CONTROLLER_MAPPING
 import com.micewine.emu.activities.VirtualControllerOverlayMapper

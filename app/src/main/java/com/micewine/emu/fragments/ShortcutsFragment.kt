@@ -39,7 +39,7 @@ import com.getkeepsafe.taptargetview.TapTarget
 import com.getkeepsafe.taptargetview.TapTargetView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.SELECTED_WINE_PREFIX
 import com.micewine.emu.activities.MainActivity
 import com.micewine.emu.activities.MainActivity.Companion.copyFile
@@ -50,7 +50,7 @@ import com.micewine.emu.activities.MainActivity.Companion.winePrefixesDir
 import com.micewine.emu.adapters.AdapterGame
 import com.micewine.emu.core.HighlightState
 import com.micewine.emu.core.RatPackageManager.listRatPackagesId
-import com.micewine.emu.databinding.FragmentShortcutsBinding
+import com.OxGames.Pluvia.databinding.FragmentShortcutsBinding
 import com.micewine.emu.fragments.CreatePresetFragment.Companion.WINEPREFIX_PRESET
 import com.micewine.emu.fragments.DebugSettingsFragment.Companion.availableCPUs
 import com.micewine.emu.fragments.DeleteItemFragment.Companion.DELETE_WINE_PREFIX

@@ -27,7 +27,6 @@ import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
 import com.OxGames.Pluvia.utils.application.CrashHandler
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
-import com.winlator.core.FileUtils
 import java.io.File
 import timber.log.Timber
 
@@ -152,22 +151,23 @@ fun SettingsGroupDebug() {
                         Toast.makeText(context, context.getString(R.string.toast_container_reset_verify), Toast.LENGTH_SHORT).show()
                         containerResetVerify = true
                     } else {
-                        File(context.filesDir, "imagefs").also { file ->
-                            file.walkTopDown().forEach { FileUtils.delete(it) }
-                            val result = file.deleteRecursively()
-                            Timber.i("imagefs deleted? $result")
-                        }
-                        File(context.filesDir, "pulseaudio").also { file ->
-                            val result = file.deleteRecursively()
-                            Timber.i("pulseaudio deleted? $result")
-                        }
-                        File(context.filesDir, "splitcompat").also { file ->
-                            val result = file.deleteRecursively()
-                            Timber.i("splitcompat deleted? $result")
-                        }
-                        com.winlator.PrefManager.clear(context)
-                        Toast.makeText(context, context.getString(R.string.toast_containers_reset), Toast.LENGTH_SHORT).show()
-                        containerResetVerify = false
+                        TODO()
+                        // File(context.filesDir, "imagefs").also { file ->
+                        //     file.walkTopDown().forEach { FileUtils.delete(it) }
+                        //     val result = file.deleteRecursively()
+                        //     Timber.i("imagefs deleted? $result")
+                        // }
+                        // File(context.filesDir, "pulseaudio").also { file ->
+                        //     val result = file.deleteRecursively()
+                        //     Timber.i("pulseaudio deleted? $result")
+                        // }
+                        // File(context.filesDir, "splitcompat").also { file ->
+                        //     val result = file.deleteRecursively()
+                        //     Timber.i("splitcompat deleted? $result")
+                        // }
+                        // com.winlator.PrefManager.clear(context)
+                        // Toast.makeText(context, context.getString(R.string.toast_containers_reset), Toast.LENGTH_SHORT).show()
+                        // containerResetVerify = false
                     }
                 },
                 onClick = {

@@ -30,6 +30,7 @@ import com.micewine.emu.views.OverlayView.Companion.SHAPE_RECTANGLE
 import com.micewine.emu.views.OverlayView.Companion.detectClick
 import kotlin.math.sqrt
 import androidx.core.graphics.createBitmap
+import com.OxGames.Pluvia.R
 
 class XInputOverlayView @JvmOverloads constructor(
     context: Context,

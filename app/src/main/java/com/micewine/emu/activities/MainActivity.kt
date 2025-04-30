@@ -25,12 +25,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
+import com.OxGames.Pluvia.BuildConfig
 import com.getkeepsafe.taptargetview.TapTarget
 import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.micewine.emu.BuildConfig
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.BOX64_AVX
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.BOX64_DYNAREC_ALIGNED_ATOMICS
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.BOX64_DYNAREC_BIGBLOCK
@@ -96,7 +96,7 @@ import com.micewine.emu.core.ShellLoader.runCommandWithOutput
 import com.micewine.emu.core.WineWrapper
 import com.micewine.emu.core.WineWrapper.getCpuHexMask
 import com.micewine.emu.core.WineWrapper.getSanitizedPath
-import com.micewine.emu.databinding.ActivityMainBinding
+import com.OxGames.Pluvia.databinding.ActivityMainBinding
 import com.micewine.emu.fragments.AskInstallPackageFragment
 import com.micewine.emu.fragments.AskInstallPackageFragment.Companion.ADTOOLS_DRIVER_PACKAGE
 import com.micewine.emu.fragments.AskInstallPackageFragment.Companion.MWP_PRESET_PACKAGE
@@ -1273,7 +1273,7 @@ class MainActivity : AppCompatActivity() {
                 adrenoToolsDriverFile = File(adrenoToolsDriverPath!!)
             }
 
-            appLang = activity.resources.getString(R.string.app_lang)
+            appLang = "en_US" // activity.resources.getString(R.string.app_lang)
             appBuiltinRootfs = activity.assets.list("")?.contains("rootfs.zip")!!
 
             selectedBox64 = box64Version ?: getBox64Version(selectedGameName)
@@ -1321,7 +1321,7 @@ class MainActivity : AppCompatActivity() {
 
             fileManagerDefaultDir = wineDisksFolder!!.path
 
-            paSink = preferences.getString(PA_SINK, PA_SINK_DEFAULT_VALUE)?.toLowerCase(Locale.getDefault())
+            paSink = preferences.getString(PA_SINK, PA_SINK_DEFAULT_VALUE)?.lowercase(Locale.getDefault())
         }
 
         private fun setBox64Preset(activity: Activity, name: String?) {

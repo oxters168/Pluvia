@@ -61,9 +61,9 @@ class OverlayView @JvmOverloads constructor(
     private val dpadRight: Path = Path()
 
     fun loadPreset(name: String?) {
-        var mapping = getMapping(name ?: PrefManager.getString(SELECTED_VIRTUAL_CONTROLLER_PRESET_KEY, "default"))
+        var mapping = getMapping(name ?: PrefManager.getString(SELECTED_VIRTUAL_CONTROLLER_PRESET_KEY, "default")!!)
 
-        if (name == "--") mapping = getMapping(PrefManager.getString(SELECTED_VIRTUAL_CONTROLLER_PRESET_KEY, "default"))
+        if (name == "--") mapping = getMapping(PrefManager.getString(SELECTED_VIRTUAL_CONTROLLER_PRESET_KEY, "default")!!)
 
         buttonList.clear()
         analogList.clear()

@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -53,6 +54,8 @@ android {
             mapOf("icon" to iconValue, "roundIcon" to iconRoundValue),
         )
 
+        buildConfigField("String", "GIT_SHORT_SHA", "\"${getGitShortSHA()}\"")
+
         ndk {
             abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
         }
@@ -65,6 +68,7 @@ android {
             "proguard-rules.pro",
         )
     }
+
 
     buildTypes {
         debug {
@@ -106,10 +110,18 @@ android {
         jvmTarget = "17"
     }
 
+    sourceSets {
+        getByName("main") {
+            aidl.srcDirs("src/main/aidl")
+        }
+    }
+
     buildFeatures {
         aidl = true
         compose = true
         buildConfig = true
+        viewBinding = true // TODO remove
+        dataBinding = true // TODO remove
     }
 
     ksp {
@@ -165,7 +177,26 @@ dependencies {
     implementation(libs.protobuf.java)
 
     // MiceWine
+    implementation(project(":app:stub"))
     implementation("net.lingala.zip4j:zip4j:2.11.5") // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
+
+    // TODO remove unneeded stuff.
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("org.apache.commons:commons-compress:1.26.1")
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.8.9")
+    implementation("androidx.navigation:navigation-ui-ktx:2.8.9")
+    implementation("androidx.activity:activity-ktx:1.10.1")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.github.vatbub:mslinks:1.0.6.2")
+    implementation("com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0")
+    implementation("com.getkeepsafe.taptargetview:taptargetview:1.15.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("androidx.databinding:databinding-runtime:8.9.2")
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -203,4 +234,13 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.test.manifest)
     testImplementation(libs.junit)
+}
+
+fun getGitShortSHA(): String {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine = listOf("git", "rev-parse", "--short", "HEAD")
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
 }

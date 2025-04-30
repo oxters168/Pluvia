@@ -10,13 +10,13 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.gson.Gson
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.enableMangoHUD
 import com.micewine.emu.activities.MainActivity.Companion.fpsLimit
 import com.micewine.emu.activities.MainActivity.Companion.setSharedVars
 import com.micewine.emu.activities.MainActivity.Companion.usrDir
 import com.micewine.emu.adapters.AdapterTabPager
-import com.micewine.emu.databinding.ActivityRatManagerBinding
+import com.OxGames.Pluvia.databinding.ActivityRatManagerBinding
 import java.io.File
 
 class RatManagerActivity : AppCompatActivity() {

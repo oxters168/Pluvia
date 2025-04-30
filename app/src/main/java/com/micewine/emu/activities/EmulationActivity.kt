@@ -47,7 +47,7 @@ import com.google.android.material.navigation.NavigationView
 import com.micewine.emu.CmdEntryPoint.Companion.ACTION_START
 import com.micewine.emu.ICmdEntryInterface
 import com.micewine.emu.LorieView
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.ENABLE_MANGOHUD
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.ENABLE_MANGOHUD_DEFAULT_VALUE
 import com.micewine.emu.activities.GeneralSettingsActivity.Companion.FPS_LIMIT

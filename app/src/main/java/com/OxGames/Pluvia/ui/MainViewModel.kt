@@ -14,9 +14,9 @@ import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.events.SteamEvent
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.screen.PluviaScreen
+import com.OxGames.Pluvia.ui.screen.xserver.Window
 import com.OxGames.Pluvia.utils.application.IAppTheme
 import com.materialkolor.PaletteStyle
-import com.winlator.xserver.Window
 import dagger.hilt.android.lifecycle.HiltViewModel
 import `in`.dragonbra.javasteam.steam.handlers.steamapps.AppProcessInfo
 import java.nio.file.Paths
@@ -203,41 +203,44 @@ class MainViewModel @Inject constructor(
         }
     }
 
+
     fun onWindowMapped(window: Window, appId: Int) {
-        viewModelScope.launch {
-            SteamService.getAppInfoOf(appId)?.let { appInfo ->
-                // TODO: this should not be a search, the app should have been launched with a specific launch config that we then use to compare
-                SteamService.getWindowsLaunchInfos(appId).firstOrNull {
-                    val gameExe = Paths.get(it.executable.replace('\\', '/')).name.lowercase()
-                    val windowExe = window.className.lowercase()
-                    gameExe == windowExe
-                }?.let {
-                    val steamProcessId = Process.myPid()
-                    val processes = mutableListOf<AppProcessInfo>()
-                    var currentWindow: Window = window
-                    do {
-                        var parentWindow: Window? = window.parent
-                        val process = if (parentWindow != null && parentWindow.className.lowercase() != "explorer.exe") {
-                            val processId = currentWindow.processId
-                            val parentProcessId = parentWindow.processId
-                            currentWindow = parentWindow
-
-                            AppProcessInfo(processId, parentProcessId, false)
-                        } else {
-                            parentWindow = null
-
-                            AppProcessInfo(currentWindow.processId, steamProcessId, true)
-                        }
-                        processes.add(process)
-                    } while (parentWindow != null)
-
-                    if (PrefManager.broadcastPlayingGame) {
-                        GameProcessInfo(appId = appId, processes = processes).let {
-                            SteamService.notifyRunningProcesses(it)
-                        }
-                    }
-                }
-            }
-        }
+        TODO()
     }
+//        viewModelScope.launch {
+//            SteamService.getAppInfoOf(appId)?.let { appInfo ->
+//                // TODO: this should not be a search, the app should have been launched with a specific launch config that we then use to compare
+//                SteamService.getWindowsLaunchInfos(appId).firstOrNull {
+//                    val gameExe = Paths.get(it.executable.replace('\\', '/')).name.lowercase()
+//                    val windowExe = window.className.lowercase()
+//                    gameExe == windowExe
+//                }?.let {
+//                    val steamProcessId = Process.myPid()
+//                    val processes = mutableListOf<AppProcessInfo>()
+//                    var currentWindow: Window = window
+//                    do {
+//                        var parentWindow: Window? = window.parent
+//                        val process = if (parentWindow != null && parentWindow.className.lowercase() != "explorer.exe") {
+//                            val processId = currentWindow.processId
+//                            val parentProcessId = parentWindow.processId
+//                            currentWindow = parentWindow
+//
+//                            AppProcessInfo(processId, parentProcessId, false)
+//                        } else {
+//                            parentWindow = null
+//
+//                            AppProcessInfo(currentWindow.processId, steamProcessId, true)
+//                        }
+//                        processes.add(process)
+//                    } while (parentWindow != null)
+//
+//                    if (PrefManager.broadcastPlayingGame) {
+//                        GameProcessInfo(appId = appId, processes = processes).let {
+//                            SteamService.notifyRunningProcesses(it)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 }

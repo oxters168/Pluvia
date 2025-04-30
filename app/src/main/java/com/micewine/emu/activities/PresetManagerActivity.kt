@@ -17,12 +17,12 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.adapters.AdapterPreset.Companion.PHYSICAL_CONTROLLER
 import com.micewine.emu.adapters.AdapterPreset.Companion.VIRTUAL_CONTROLLER
 import com.micewine.emu.adapters.AdapterPreset.Companion.clickedPresetType
 import com.micewine.emu.controller.ControllerUtils.connectedPhysicalControllers
-import com.micewine.emu.databinding.ActivityPresetManagerBinding
+import com.OxGames.Pluvia.databinding.ActivityPresetManagerBinding
 import com.micewine.emu.fragments.Box64PresetManagerFragment
 import com.micewine.emu.fragments.Box64SettingsFragment
 import com.micewine.emu.fragments.ControllerMapperFragment

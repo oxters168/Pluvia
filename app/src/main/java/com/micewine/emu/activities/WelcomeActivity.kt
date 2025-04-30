@@ -17,11 +17,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.micewine.emu.R
+import com.OxGames.Pluvia.R
 import com.micewine.emu.activities.MainActivity.Companion.ACTION_SETUP
 import com.micewine.emu.activities.MainActivity.Companion.appBuiltinRootfs
 import com.micewine.emu.adapters.AdapterWelcomeFragments
-import com.micewine.emu.databinding.ActivityWelcomeBinding
+import com.OxGames.Pluvia.databinding.ActivityWelcomeBinding
 
 class WelcomeActivity : AppCompatActivity() {
     private var binding: ActivityWelcomeBinding? = null
