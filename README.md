@@ -49,4 +49,4 @@ File an [issue](https://github.com/oxters168/Pluvia/issues) and let us know!
 [GPL 3.0](https://github.com/oxters168/Pluvia/blob/master/LICENSE)
 
 ## Privacy Policy
-[Privicy Policy](https://github.com/oxters168/Pluvia/blob/master/PrivacyPolicy/README.md)
+[Privacy Policy](https://github.com/oxters168/Pluvia/blob/master/PrivacyPolicy/README.md)
