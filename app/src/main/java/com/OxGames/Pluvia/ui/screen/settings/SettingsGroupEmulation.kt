@@ -10,6 +10,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
@@ -44,12 +45,14 @@ fun SettingsGroupEmulation() {
             subtitle = { Text(text = stringResource(R.string.controller_virtual_mapper_description)) },
             onClick = { showVirtualControllerMapper = true },
         )
-        SettingsMenuLink(
-            colors = settingsTileColors(),
-            title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
-            subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
-            onClick = { showBox64PresetManager = true },
-        )
+        if (!MiceWineUtils.isX86) {
+            SettingsMenuLink(
+                colors = settingsTileColors(),
+                title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
+                subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
+                onClick = { showBox64PresetManager = true },
+            )
+        }
         SettingsMenuLink(
             colors = settingsTileColors(),
             title = { Text(text = stringResource(R.string.rat_manager_title)) },

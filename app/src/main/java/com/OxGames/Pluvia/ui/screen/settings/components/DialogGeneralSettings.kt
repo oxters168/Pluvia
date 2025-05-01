@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
@@ -65,9 +66,19 @@ internal fun DialogGeneralSettings(
                     )
                 },
             ) { paddingValues ->
-                var debugSettingsExpanded by rememberSaveable { mutableStateOf(false) }
-                var soundSettingsExpanded by rememberSaveable { mutableStateOf(false) }
-                var driversSettingsExpanded by rememberSaveable { mutableStateOf(false) }
+                val view = LocalView.current
+                var debugSettingsExpanded by rememberSaveable {
+                    val value = view.isInEditMode
+                    mutableStateOf(value)
+                }
+                var soundSettingsExpanded by rememberSaveable {
+                    val value = view.isInEditMode
+                    mutableStateOf(value)
+                }
+                var driversSettingsExpanded by rememberSaveable {
+                    val value = view.isInEditMode
+                    mutableStateOf(value)
+                }
 
                 LazyColumn(
                     modifier = Modifier
@@ -78,6 +89,7 @@ internal fun DialogGeneralSettings(
                     // TODO `Box64 Settings` ??
                     //  I see it in code, but not on actual screen.
                     // }
+
                     item {
                         Column {
                             GeneralSettingsItem(

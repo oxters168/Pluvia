@@ -79,8 +79,13 @@ object PrefManager {
         }
     }
 
-    fun getBoolean(key: String, defaultValue: Boolean): Boolean =
-        getPref(booleanPreferencesKey(key), defaultValue)
+    fun getInt(key: String, defaultValue: Int): Int = getPref(intPreferencesKey(key), defaultValue)
+
+    fun setInt(key: String, defaultValue: Int) = setPref(intPreferencesKey(key), defaultValue)
+
+    fun getBoolean(key: String, defaultValue: Boolean): Boolean = getPref(booleanPreferencesKey(key), defaultValue)
+
+    fun setBoolean(key: String, defaultValue: Boolean) = setPref(booleanPreferencesKey(key), defaultValue)
 
     fun getString(key: String, defaultValue: String?): String? = runBlocking {
         dataStore.data.first()[stringPreferencesKey(key)] ?: defaultValue
