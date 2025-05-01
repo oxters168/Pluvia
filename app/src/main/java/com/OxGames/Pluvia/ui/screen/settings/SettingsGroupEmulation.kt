@@ -45,7 +45,7 @@ fun SettingsGroupEmulation() {
             subtitle = { Text(text = stringResource(R.string.controller_virtual_mapper_description)) },
             onClick = { showVirtualControllerMapper = true },
         )
-        if (!MiceWineUtils.isX86) {
+        if (MiceWineUtils.deviceArch != "x86_64") {
             SettingsMenuLink(
                 colors = settingsTileColors(),
                 title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },

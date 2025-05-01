@@ -51,7 +51,7 @@ enum class SettingsItemType(val value: Int) {
 @Composable
 fun SettingsItemList(
     title: String,
-    description: String,
+    description: String?,
     type: SettingsItemType,
     key: String,
     defaultValue: String,
@@ -67,7 +67,11 @@ fun SettingsItemList(
             SettingsSwitch(
                 state = preference,
                 title = { Text(text = title) },
-                subtitle = { Text(text = description) },
+                subtitle = description?.let {
+                    {
+                        Text(text = it)
+                    }
+                },
                 onCheckedChange = {
                     preference = it
                     PrefManager.setBoolean(key, it)
@@ -84,7 +88,11 @@ fun SettingsItemList(
 
             SettingsTileScaffold(
                 title = { Text(text = title) },
-                subtitle = { Text(text = description) },
+                subtitle = description?.let {
+                    {
+                        Text(text = it)
+                    }
+                },
                 action = {
                     Column {
                         Row(
@@ -130,7 +138,11 @@ fun SettingsItemList(
             }
             SettingsTileScaffold(
                 title = { Text(text = title) },
-                subtitle = { Text(text = description) },
+                subtitle = description?.let {
+                    {
+                        Text(text = it)
+                    }
+                },
                 action = {
                     Column {
                         Row(
