@@ -1,7 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.settings.components
 
 import android.content.res.Configuration
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -16,8 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +27,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -43,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 
@@ -52,38 +54,50 @@ internal fun SettingsLogViewerScreen(
     onToast: (String) -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     /* Crash Log stuff */
     var latestCrashFile: File? by rememberSaveable { mutableStateOf(null) }
+    var latestCrashText: String? by remember { mutableStateOf(null) }
     LaunchedEffect(Unit) {
-        val crashDir = File(context.getExternalFilesDir(null), "crash_logs")
-        latestCrashFile = crashDir.listFiles()
-            ?.filter { it.name.startsWith("pluvia_crash_") }
-            ?.maxByOrNull { it.lastModified() }
+        withContext(Dispatchers.IO) {
+            val crashDir = File(context.getExternalFilesDir(null), "crash_logs")
+            latestCrashFile = crashDir.listFiles()
+                ?.filter { it.name.startsWith("pluvia_crash_") }
+                ?.maxByOrNull { it.lastModified() }
+
+            latestCrashFile?.let {
+                latestCrashText = it.readText()
+            }
+        }
     }
 
     /* Save crash log */
     val saveResultContract = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/plain"),
     ) { resultUri ->
-        try {
-            resultUri?.let { uri ->
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    latestCrashFile?.inputStream()?.use { inputStream ->
-                        inputStream.copyTo(outputStream)
+        resultUri?.let { uri ->
+            scope.launch(Dispatchers.IO) {
+                try {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        latestCrashFile?.inputStream()?.use { inputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        val message = context.getString(R.string.toast_failed_crash_save)
+                        Timber.e(e, message)
+                        onToast(message)
                     }
                 }
             }
-        } catch (e: Exception) {
-            val message = context.getString(R.string.toast_failed_crash_save)
-            Timber.e(e, message)
-            onToast(message)
         }
     }
 
     SettingsLogViewerContent(
         fileName = latestCrashFile?.name ?: stringResource(R.string.settings_default_crash_filename),
-        fileText = latestCrashFile?.readText() ?: stringResource(R.string.settings_default_crash_message),
+        fileText = latestCrashText ?: stringResource(R.string.settings_default_crash_message),
         onSave = { latestCrashFile?.let { file -> saveResultContract.launch(file.name) } },
         onClose = onClose,
     )

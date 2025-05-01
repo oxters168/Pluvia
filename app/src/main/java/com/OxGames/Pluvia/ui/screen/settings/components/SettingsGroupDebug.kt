@@ -30,6 +30,8 @@ import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
 import com.OxGames.Pluvia.utils.application.CrashHandler
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @Suppress("UnnecessaryOptInAnnotation") // ExperimentalFoundationApi
@@ -41,12 +43,12 @@ fun SettingsGroupDebug(
     val context = LocalContext.current
 
     /* Crash Log stuff */
-    var latestCrashFile: File? by rememberSaveable { mutableStateOf(null) }
+    var hasCrashFile: Boolean by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        val crashDir = File(context.getExternalFilesDir(null), "crash_logs")
-        latestCrashFile = crashDir.listFiles()
-            ?.filter { it.name.startsWith("pluvia_crash_") }
-            ?.maxByOrNull { it.lastModified() }
+        withContext(Dispatchers.IO) {
+            val crashDir = File(context.getExternalFilesDir(null), "crash_logs")
+            hasCrashFile = crashDir.listFiles()?.isNotEmpty() ?: false
+        }
     }
 
     /* Save log cat */
@@ -81,14 +83,14 @@ fun SettingsGroupDebug(
             colors = settingsTileColors(),
             title = { Text(text = stringResource(R.string.settings_view_logcat_title)) },
             subtitle = {
-                val string = if (latestCrashFile != null) {
+                val string = if (hasCrashFile) {
                     R.string.settings_view_logcat_subtitle
                 } else {
                     R.string.settings_view_logcat_subtitle_alt
                 }
                 Text(text = stringResource(string))
             },
-            enabled = latestCrashFile != null,
+            enabled = hasCrashFile,
             onClick = onShowLog,
         )
 
