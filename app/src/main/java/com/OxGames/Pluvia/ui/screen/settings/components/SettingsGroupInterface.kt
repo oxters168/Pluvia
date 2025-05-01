@@ -1,5 +1,9 @@
-package com.OxGames.Pluvia.ui.screen.settings
+package com.OxGames.Pluvia.ui.screen.settings.components
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.ColorLens
@@ -10,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.OxGames.Pluvia.PrefManager
@@ -19,7 +24,6 @@ import com.OxGames.Pluvia.enums.HomeDestination
 import com.OxGames.Pluvia.ui.component.dialog.SingleChoiceDialog
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsAlt
-import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import com.materialkolor.PaletteStyle
@@ -88,7 +92,11 @@ fun SettingsGroupInterface(
         },
     )
 
-    SettingsGroup(title = { Text(text = stringResource(R.string.settings_group_interface)) }) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
         SettingsMenuLink(
             colors = settingsTileColors(),
             title = { Text(text = stringResource(R.string.settings_start_destination_title)) },

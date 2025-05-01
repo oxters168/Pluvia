@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.jetbrains.serialization)
     alias(libs.plugins.kotlinter)
     alias(libs.plugins.ksp)
+    id("kotlin-parcelize")
 }
 
 val keystorePropertiesFile = rootProject.file("app/keystores/keystore.properties")

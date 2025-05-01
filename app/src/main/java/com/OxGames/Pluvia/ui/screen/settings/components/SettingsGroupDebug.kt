@@ -1,4 +1,4 @@
-package com.OxGames.Pluvia.ui.screen.settings
+package com.OxGames.Pluvia.ui.screen.settings.components
 
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -6,6 +6,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,48 +23,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import coil.annotation.ExperimentalCoilApi
 import coil.imageLoader
+import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.service.SteamService
-import com.OxGames.Pluvia.ui.component.dialog.CrashLogDialog
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
 import com.OxGames.Pluvia.utils.application.CrashHandler
-import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import java.io.File
-import timber.log.Timber
 
 @Suppress("UnnecessaryOptInAnnotation") // ExperimentalFoundationApi
 @OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun SettingsGroupDebug() {
+fun SettingsGroupDebug(
+    onShowLog: () -> Unit,
+) {
     val context = LocalContext.current
 
     /* Crash Log stuff */
-    var showLogcatDialog by rememberSaveable { mutableStateOf(false) }
     var latestCrashFile: File? by rememberSaveable { mutableStateOf(null) }
     LaunchedEffect(Unit) {
         val crashDir = File(context.getExternalFilesDir(null), "crash_logs")
         latestCrashFile = crashDir.listFiles()
             ?.filter { it.name.startsWith("pluvia_crash_") }
             ?.maxByOrNull { it.lastModified() }
-    }
-
-    /* Save crash log */
-    val saveResultContract = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/plain"),
-    ) { resultUri ->
-        try {
-            resultUri?.let { uri ->
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    latestCrashFile?.inputStream()?.use { inputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Toast.makeText(context, context.getString(R.string.toast_failed_crash_save), Toast.LENGTH_SHORT).show()
-        }
     }
 
     /* Save log cat */
@@ -79,15 +65,11 @@ fun SettingsGroupDebug() {
         }
     }
 
-    CrashLogDialog(
-        visible = showLogcatDialog && latestCrashFile != null,
-        fileName = latestCrashFile?.name ?: stringResource(R.string.settings_default_crash_filename),
-        fileText = latestCrashFile?.readText() ?: stringResource(R.string.settings_default_crash_message),
-        onSave = { latestCrashFile?.let { file -> saveResultContract.launch(file.name) } },
-        onDismissRequest = { showLogcatDialog = false },
-    )
-
-    SettingsGroup(title = { Text(text = stringResource(R.string.settings_group_debug)) }) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
         SettingsMenuLink(
             colors = settingsTileColors(),
             title = { Text(text = stringResource(R.string.settings_save_logcat_title)) },
@@ -107,7 +89,7 @@ fun SettingsGroupDebug() {
                 Text(text = stringResource(string))
             },
             enabled = latestCrashFile != null,
-            onClick = { showLogcatDialog = true },
+            onClick = onShowLog,
         )
 
         SettingsMenuLink(
@@ -196,5 +178,14 @@ fun SettingsGroupDebug() {
             subtitle = { Text(text = stringResource(R.string.settings_reset_image_cache_subtitle)) },
             onClick = {},
         )
+
+        if (BuildConfig.DEBUG) {
+            SettingsMenuLink(
+                title = { Text(text = "Crash App") },
+                onClick = {
+                    throw NotImplementedError("Debug crash test")
+                },
+            )
+        }
     }
 }

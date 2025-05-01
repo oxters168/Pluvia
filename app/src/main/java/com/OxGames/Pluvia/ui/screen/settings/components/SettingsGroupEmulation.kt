@@ -1,24 +1,32 @@
-package com.OxGames.Pluvia.ui.screen.settings
+package com.OxGames.Pluvia.ui.screen.settings.components
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.ui.screen.settings.dialog.DialogGeneralSettings
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
-import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 
 @Composable
 fun SettingsGroupEmulation() {
+    val view = LocalView.current
     var showGeneralSettings by rememberSaveable { mutableStateOf(false) }
     var showControllerMapper by rememberSaveable { mutableStateOf(false) }
     var showVirtualControllerMapper by rememberSaveable { mutableStateOf(false) }
@@ -26,7 +34,21 @@ fun SettingsGroupEmulation() {
     var showRatPackageManager by rememberSaveable { mutableStateOf(false) }
     var showRatPackageDownloader by rememberSaveable { mutableStateOf(false) }
 
-    SettingsGroup(title = { Text(text = stringResource(R.string.settings_group_emulation)) }) {
+    val deviceArch by remember {
+        val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
+        mutableStateOf(value)
+    }
+
+    DialogGeneralSettings(
+        visible = showGeneralSettings,
+        onDismissRequest = { showGeneralSettings = false },
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
         SettingsMenuLink(
             colors = settingsTileColors(),
             title = { Text(text = stringResource(R.string.general_settings)) },
@@ -45,7 +67,7 @@ fun SettingsGroupEmulation() {
             subtitle = { Text(text = stringResource(R.string.controller_virtual_mapper_description)) },
             onClick = { showVirtualControllerMapper = true },
         )
-        if (MiceWineUtils.deviceArch != "x86_64") {
+        if (deviceArch != "x86_64") {
             SettingsMenuLink(
                 colors = settingsTileColors(),
                 title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },

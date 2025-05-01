@@ -1,5 +1,6 @@
-package com.OxGames.Pluvia.ui.screen.settings.components
+package com.OxGames.Pluvia.ui.screen.settings.dialog
 
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.ui.screen.settings.components.SettingsItemList
+import com.OxGames.Pluvia.ui.screen.settings.components.SettingsItemType
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.alorma.compose.settings.ui.SettingsMenuLink
 
@@ -304,7 +307,7 @@ private fun GeneralSettingsItem(
     )
 }
 
-@Preview
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Preview
 @Composable
 private fun Preview_DialogGeneralSettings() {
