@@ -1,91 +1,148 @@
 package com.OxGames.Pluvia.ui.screen.settings.components
 
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.DeveloperBoard
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.PestControlRodent
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.VideogameAsset
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.R
-import com.OxGames.Pluvia.ui.screen.settings.dialog.DialogGeneralSettings
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
+import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 
 @Composable
-fun SettingsGroupEmulation() {
+fun SettingsGroupEmulation(
+    onClick: (String) -> Unit,
+) {
     val view = LocalView.current
-    var showGeneralSettings by rememberSaveable { mutableStateOf(false) }
-    var showControllerMapper by rememberSaveable { mutableStateOf(false) }
-    var showVirtualControllerMapper by rememberSaveable { mutableStateOf(false) }
-    var showBox64PresetManager by rememberSaveable { mutableStateOf(false) }
-    var showRatPackageManager by rememberSaveable { mutableStateOf(false) }
-    var showRatPackageDownloader by rememberSaveable { mutableStateOf(false) }
-
-    val deviceArch by remember {
-        val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
-        mutableStateOf(value)
-    }
-
-    DialogGeneralSettings(
-        visible = showGeneralSettings,
-        onDismissRequest = { showGeneralSettings = false },
-    )
-
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-        SettingsMenuLink(
-            colors = settingsTileColors(),
-            title = { Text(text = stringResource(R.string.general_settings)) },
-            subtitle = { Text(text = stringResource(R.string.settings_description)) },
-            onClick = { showGeneralSettings = true },
+
+        SettingsGroup(
+            title = { Text(text = "General") },
+            content = {
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    title = { Text(text = stringResource(R.string.debug_settings_title)) },
+                    subtitle = { Text(text = stringResource(R.string.debug_settings_description)) },
+                    icon = { Icon(imageVector = Icons.Default.BugReport, null) },
+                    onClick = { onClick("mw_general_debug") },
+                )
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    title = { Text(text = stringResource(R.string.sound_settings_title)) },
+                    subtitle = { Text(text = stringResource(R.string.sound_settings_description)) },
+                    icon = { Icon(imageVector = Icons.AutoMirrored.Default.VolumeUp, contentDescription = null) },
+                    onClick = { onClick("mw_general_sound") },
+                )
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    title = { Text(text = stringResource(R.string.driver_settings_title)) },
+                    subtitle = { Text(text = stringResource(R.string.driver_settings_description)) },
+                    icon = { Icon(imageVector = Icons.Default.DeveloperBoard, null) },
+                    onClick = { onClick("mw_general_driver") },
+                )
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    title = { Text(text = stringResource(R.string.driver_info_title)) },
+                    subtitle = { Text(text = stringResource(R.string.driver_info_description)) },
+                    icon = { Icon(imageVector = Icons.Default.DeveloperBoard, null) },
+                    onClick = { onClick("mw_general_driver_info") },
+                )
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    title = { Text(text = stringResource(R.string.env_settings_title)) },
+                    subtitle = { Text(text = stringResource(R.string.env_settings_description)) },
+                    icon = { Icon(imageVector = Icons.Default.Public, null) },
+                    onClick = { onClick("mw_general_environment") },
+                )
+            },
         )
-        SettingsMenuLink(
-            colors = settingsTileColors(),
-            title = { Text(text = stringResource(R.string.controller_mapper_title)) },
-            subtitle = { Text(text = stringResource(R.string.controller_mapper_description)) },
-            onClick = { showControllerMapper = true },
+
+        SettingsGroup(
+            title = { Text("Controller") },
+            content = {
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    icon = { Icon(imageVector = Icons.Default.VideogameAsset, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.controller_mapper_title)) },
+                    subtitle = { Text(text = stringResource(R.string.controller_mapper_description)) },
+                    onClick = { onClick("mw_controller_mapper") },
+                )
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    icon = { Icon(imageVector = Icons.Default.VideogameAsset, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.virtual_controller_mapper_title)) },
+                    subtitle = { Text(text = stringResource(R.string.controller_virtual_mapper_description)) },
+                    onClick = { onClick("mw_controller_virtual_mapper") },
+                )
+            },
         )
-        SettingsMenuLink(
-            colors = settingsTileColors(),
-            title = { Text(text = stringResource(R.string.virtual_controller_mapper_title)) },
-            subtitle = { Text(text = stringResource(R.string.controller_virtual_mapper_description)) },
-            onClick = { showVirtualControllerMapper = true },
-        )
+
+        // TODO Verify
+        val deviceArch by remember {
+            val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
+            mutableStateOf(value)
+        }
         if (deviceArch != "x86_64") {
-            SettingsMenuLink(
-                colors = settingsTileColors(),
-                title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
-                subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
-                onClick = { showBox64PresetManager = true },
+            SettingsGroup(
+                title = { Text(text = "Box64") },
+                content = {
+                    SettingsMenuLink(
+                        colors = settingsTileColors(),
+                        title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
+                        subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
+                        onClick = { onClick("mw_box64_preset") },
+                    )
+                },
             )
         }
-        SettingsMenuLink(
-            colors = settingsTileColors(),
-            title = { Text(text = stringResource(R.string.rat_manager_title)) },
-            subtitle = { Text(text = stringResource(R.string.rat_manager_description)) },
-            onClick = { showRatPackageManager = true },
-        )
-        SettingsMenuLink(
-            colors = settingsTileColors(),
-            title = { Text(text = stringResource(R.string.rat_downloader_title)) },
-            subtitle = { Text(text = stringResource(R.string.rat_downloader_description)) },
-            onClick = { showRatPackageDownloader = true },
+
+        SettingsGroup(
+            title = { Text(text = "Rat Package") },
+            content = {
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    icon = { Icon(imageVector = Icons.Default.PestControlRodent, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.rat_manager_title)) },
+                    subtitle = { Text(text = stringResource(R.string.rat_manager_description)) },
+                    onClick = { onClick("mw_rat_package_manager") },
+                )
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    icon = { Icon(imageVector = Icons.Default.Download, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.rat_downloader_title)) },
+                    subtitle = { Text(text = stringResource(R.string.rat_downloader_description)) },
+                    onClick = { onClick("mw_rat_package_downloader") },
+                )
+            },
         )
     }
 }
@@ -96,7 +153,7 @@ fun SettingsGroupEmulation() {
 private fun Preview_SettingsGroupEmulation() {
     PluviaTheme {
         Surface {
-            SettingsGroupEmulation()
+            SettingsGroupEmulation(onClick = {})
         }
     }
 }

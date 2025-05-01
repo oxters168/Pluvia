@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.settings.components
 
+import android.content.res.Configuration
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -10,6 +11,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,14 +28,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import coil.annotation.ExperimentalCoilApi
 import coil.imageLoader
 import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.service.SteamService
+import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
 import com.OxGames.Pluvia.utils.application.CrashHandler
+import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -74,6 +84,7 @@ fun SettingsGroupDebug(
     ) {
         SettingsMenuLink(
             colors = settingsTileColors(),
+            icon = { Icon(imageVector = Icons.Default.Save, contentDescription = null) },
             title = { Text(text = stringResource(R.string.settings_save_logcat_title)) },
             subtitle = { Text(text = stringResource(R.string.settings_save_logcat_subtitle)) },
             onClick = { saveLogCat.launch("app_logs_${CrashHandler.timestamp}.txt") },
@@ -81,6 +92,7 @@ fun SettingsGroupDebug(
 
         SettingsMenuLink(
             colors = settingsTileColors(),
+            icon = { Icon(imageVector = Icons.Default.Description, contentDescription = null) },
             title = { Text(text = stringResource(R.string.settings_view_logcat_title)) },
             subtitle = {
                 val string = if (hasCrashFile) {
@@ -94,100 +106,105 @@ fun SettingsGroupDebug(
             onClick = onShowLog,
         )
 
-        SettingsMenuLink(
-            modifier = Modifier.combinedClickable(
-                onLongClick = {
-                    SteamService.logOut()
-                    (context as ComponentActivity).finishAffinity()
-                },
-                onClick = {
-                    Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
-                },
-            ),
-            colors = settingsTileColorsDebug(),
-            title = { Text(text = stringResource(R.string.settings_clear_pref_title)) },
-            subtitle = { Text(text = stringResource(R.string.settings_clear_pref_subtitle)) },
-            onClick = {},
-        )
+        SettingsGroup(
+            title = { Text(text = "Advanced") },
+            content = {
+                SettingsMenuLink(
+                    modifier = Modifier.combinedClickable(
+                        onLongClick = {
+                            SteamService.logOut()
+                            (context as ComponentActivity).finishAffinity()
+                        },
+                        onClick = {
+                            Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
+                        },
+                    ),
+                    colors = settingsTileColorsDebug(),
+                    icon = { Icon(imageVector = Icons.Default.Warning, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.settings_clear_pref_title)) },
+                    subtitle = { Text(text = stringResource(R.string.settings_clear_pref_subtitle)) },
+                    onClick = {},
+                )
 
-        SettingsMenuLink(
-            modifier = Modifier.combinedClickable(
-                onLongClick = {
-                    SteamService.stop()
-                    SteamService.clearDatabase()
-                    (context as ComponentActivity).finishAffinity()
-                },
-                onClick = {
-                    Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
-                },
-            ),
-            colors = settingsTileColorsDebug(),
-            title = { Text(text = stringResource(R.string.settings_clear_db_title)) },
-            subtitle = { Text(text = stringResource(R.string.settings_clear_db_subtitle)) },
-            onClick = {},
-        )
+                SettingsMenuLink(
+                    modifier = Modifier.combinedClickable(
+                        onLongClick = {
+                            SteamService.stop()
+                            SteamService.clearDatabase()
+                            (context as ComponentActivity).finishAffinity()
+                        },
+                        onClick = {
+                            Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
+                        },
+                    ),
+                    colors = settingsTileColorsDebug(),
+                    icon = { Icon(imageVector = Icons.Default.Warning, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.settings_clear_db_title)) },
+                    subtitle = { Text(text = stringResource(R.string.settings_clear_db_subtitle)) },
+                    onClick = {},
+                )
 
-        var containerResetVerify by remember { mutableStateOf(false) } // Okay to not be rememberSavable
-        SettingsMenuLink(
-            modifier = Modifier.combinedClickable(
-                onLongClick = {
-                    if (!containerResetVerify) {
-                        Toast.makeText(context, context.getString(R.string.toast_container_reset_verify), Toast.LENGTH_SHORT).show()
-                        containerResetVerify = true
-                    } else {
-                        TODO()
-                        // File(context.filesDir, "imagefs").also { file ->
-                        //     file.walkTopDown().forEach { FileUtils.delete(it) }
-                        //     val result = file.deleteRecursively()
-                        //     Timber.i("imagefs deleted? $result")
-                        // }
-                        // File(context.filesDir, "pulseaudio").also { file ->
-                        //     val result = file.deleteRecursively()
-                        //     Timber.i("pulseaudio deleted? $result")
-                        // }
-                        // File(context.filesDir, "splitcompat").also { file ->
-                        //     val result = file.deleteRecursively()
-                        //     Timber.i("splitcompat deleted? $result")
-                        // }
-                        // com.winlator.PrefManager.clear(context)
-                        // Toast.makeText(context, context.getString(R.string.toast_containers_reset), Toast.LENGTH_SHORT).show()
-                        // containerResetVerify = false
-                    }
-                },
-                onClick = {
-                    Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
-                    containerResetVerify = false
-                },
-            ),
-            colors = settingsTileColorsDebug(),
-            title = { Text(text = stringResource(R.string.settings_reset_containers_title)) },
-            subtitle = { Text(text = stringResource(R.string.settings_reset_containers_subtitle)) },
-            onClick = {},
-        )
+                var containerResetVerify by remember { mutableStateOf(false) } // Okay to not be rememberSavable
+                SettingsMenuLink(
+                    modifier = Modifier.combinedClickable(
+                        onLongClick = {
+                            if (!containerResetVerify) {
+                                Toast.makeText(context, context.getString(R.string.toast_container_reset_verify), Toast.LENGTH_SHORT).show()
+                                containerResetVerify = true
+                            } else {
+                                TODO()
+                            }
+                        },
+                        onClick = {
+                            Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
+                            containerResetVerify = false
+                        },
+                    ),
+                    colors = settingsTileColorsDebug(),
+                    icon = { Icon(imageVector = Icons.Default.Warning, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.settings_reset_containers_title)) },
+                    subtitle = { Text(text = stringResource(R.string.settings_reset_containers_subtitle)) },
+                    onClick = {},
+                )
 
-        SettingsMenuLink(
-            modifier = Modifier.combinedClickable(
-                onLongClick = {
-                    context.imageLoader.diskCache?.clear()
-                    context.imageLoader.memoryCache?.clear()
-                },
-                onClick = {
-                    Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
-                },
-            ),
-            colors = settingsTileColorsDebug(),
-            title = { Text(text = stringResource(R.string.settings_reset_image_cache_title)) },
-            subtitle = { Text(text = stringResource(R.string.settings_reset_image_cache_subtitle)) },
-            onClick = {},
-        )
+                SettingsMenuLink(
+                    modifier = Modifier.combinedClickable(
+                        onLongClick = {
+                            context.imageLoader.diskCache?.clear()
+                            context.imageLoader.memoryCache?.clear()
+                        },
+                        onClick = {
+                            Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
+                        },
+                    ),
+                    colors = settingsTileColorsDebug(),
+                    icon = { Icon(imageVector = Icons.Default.Warning, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.settings_reset_image_cache_title)) },
+                    subtitle = { Text(text = stringResource(R.string.settings_reset_image_cache_subtitle)) },
+                    onClick = {},
+                )
 
-        if (BuildConfig.DEBUG) {
-            SettingsMenuLink(
-                title = { Text(text = "Crash App") },
-                onClick = {
-                    throw NotImplementedError("Debug crash test")
-                },
-            )
+                if (BuildConfig.DEBUG) {
+                    SettingsMenuLink(
+                        title = { Text(text = "Crash App") },
+                        icon = { Icon(imageVector = Icons.Default.Warning, contentDescription = null) },
+                        onClick = {
+                            throw NotImplementedError("Debug crash test")
+                        },
+                    )
+                }
+            },
+        )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
+@Composable
+private fun Preview_SettingsGroupDebug() {
+    PluviaTheme {
+        Surface {
+            SettingsGroupDebug(onShowLog = {})
         }
     }
 }

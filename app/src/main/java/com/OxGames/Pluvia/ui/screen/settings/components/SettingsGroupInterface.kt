@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.settings.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -7,7 +8,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.Contrast
+import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Web
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,11 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.enums.HomeDestination
 import com.OxGames.Pluvia.ui.component.dialog.SingleChoiceDialog
+import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsAlt
 import com.alorma.compose.settings.ui.SettingsMenuLink
@@ -99,24 +108,28 @@ fun SettingsGroupInterface(
     ) {
         SettingsMenuLink(
             colors = settingsTileColors(),
+            icon = { Icon(imageVector = Icons.Default.Map, contentDescription = null) },
             title = { Text(text = stringResource(R.string.settings_start_destination_title)) },
             subtitle = { Text(text = stringResource(R.string.settings_start_destination_subtitle)) },
             onClick = { openStartScreenDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
+            icon = { Icon(imageVector = Icons.Default.Contrast, contentDescription = null) },
             title = { Text(text = stringResource(R.string.settings_app_theme_title)) },
             subtitle = { Text(text = stringResource(R.string.settings_app_theme_subtitle)) },
             onClick = { openAppThemeDialog = true },
         )
         SettingsMenuLink(
             colors = settingsTileColors(),
+            icon = { Icon(imageVector = Icons.Default.Palette, contentDescription = null) },
             title = { Text(text = stringResource(R.string.settings_app_palette_title)) },
             subtitle = { Text(text = stringResource(R.string.settings_app_palette_subtitle)) },
             onClick = { openAppPaletteDialog = true },
         )
         SettingsSwitch(
             colors = settingsTileColorsAlt(),
+            icon = { Icon(imageVector = Icons.Default.Web, contentDescription = null) },
             title = { Text(text = stringResource(R.string.settings_web_links_title)) },
             subtitle = { Text(text = stringResource(R.string.settings_web_links_subtitle)) },
             state = openWebLinks,
@@ -127,6 +140,7 @@ fun SettingsGroupInterface(
         )
         SettingsSwitch(
             colors = settingsTileColorsAlt(),
+            icon = { Icon(imageVector = Icons.Default.Gamepad, contentDescription = null) },
             title = { Text(text = stringResource(R.string.settings_broadcast_game_title)) },
             subtitle = { Text(text = stringResource(R.string.settings_broadcast_game_subtitle)) },
             state = broadcastPlayingGame,
@@ -135,5 +149,23 @@ fun SettingsGroupInterface(
                 PrefManager.broadcastPlayingGame = it
             },
         )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
+@Composable
+private fun Preview_SettingsGroupInterface() {
+    val context = LocalContext.current
+    PrefManager.init(context)
+    PluviaTheme {
+        Surface {
+            SettingsGroupInterface(
+                appTheme = AppTheme.NIGHT,
+                paletteStyle = PaletteStyle.Neutral,
+                onAppTheme = {},
+                onPaletteStyle = {},
+            )
+        }
     }
 }

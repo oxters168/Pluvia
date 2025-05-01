@@ -1,8 +1,7 @@
 package com.OxGames.Pluvia.ui.screen.settings
 
 import android.content.res.Configuration
-import android.os.Bundle
-import android.os.Parcelable
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,8 +22,13 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -47,19 +51,33 @@ import com.OxGames.Pluvia.ui.screen.settings.components.SettingsLogViewerScreen
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.launch
-import kotlinx.parcelize.Parcelize
-
-private const val BUNDLE_CONTENT_TYPE = "content_type"
-
-@Parcelize
-class SettingsPaneDetails(val currentPane: SettingsCurrentPane, val extras: Bundle? = null) : Parcelable
 
 enum class SettingsCurrentPane(@StringRes val string: Int?) {
     DETAIL_EMULATION(R.string.settings_group_emulation),
     DETAIL_INTERFACE(R.string.settings_group_interface),
     DETAIL_DEBUG(R.string.settings_group_debug),
-    EXTRA_CRASH_LOG(null),
     NONE(null),
+}
+
+data class SettingsPane(
+    val currentPane: SettingsCurrentPane = SettingsCurrentPane.NONE,
+    val extra: String = "",
+) {
+    companion object {
+        val Saver = Saver<SettingsPane, Pair<Int, String>>(
+            save = { settingsPane ->
+                Pair(settingsPane.currentPane.ordinal, settingsPane.extra)
+            },
+            restore = { savedState ->
+                val (ordinal, extra) = savedState
+                SettingsPane(
+                    currentPane = SettingsCurrentPane.entries[ordinal],
+                    extra = extra,
+                )
+            },
+        )
+
+    }
 }
 
 // See link for implementation
@@ -91,37 +109,23 @@ private fun SettingsScreenContent(
     onPaletteStyle: (PaletteStyle) -> Unit,
     onBack: () -> Unit,
 ) {
-    val navigator = rememberListDetailPaneScaffoldNavigator<SettingsPaneDetails>()
+    val navigator = rememberListDetailPaneScaffoldNavigator<Nothing>()
+    var currentPane by rememberSaveable(stateSaver = SettingsPane.Saver) { mutableStateOf(SettingsPane()) }
+
     val scope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
     val windowWidth = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
 
-    fun navigateToDetailPane(paneType: SettingsCurrentPane, contentType: SettingsCurrentPane) {
-        val extras = Bundle().apply {
-            putString(BUNDLE_CONTENT_TYPE, contentType.name)
-        }
+    val onNavBack: () -> Unit = {
         scope.launch {
-            navigator.navigateTo(
-                pane = ListDetailPaneScaffoldRole.Detail,
-                contentKey = SettingsPaneDetails(paneType, extras),
-            )
+            currentPane = currentPane.copy(extra = "")
+            navigator.navigateBack()
         }
     }
 
-    fun navigateToExtraPane(detailContentType: SettingsCurrentPane, extraContentType: SettingsCurrentPane) {
-        val extras = Bundle().apply {
-            putString(BUNDLE_CONTENT_TYPE, detailContentType.name)
-            putString("BUNDLE_EXTRA_CONTENT_TYPE", extraContentType.name)
-        }
-
+    BackHandler(enabled = navigator.canNavigateBack()) {
         scope.launch {
-            navigator.navigateTo(
-                pane = ListDetailPaneScaffoldRole.Extra,
-                contentKey = SettingsPaneDetails(
-                    currentPane = navigator.currentDestination?.contentKey?.currentPane ?: SettingsCurrentPane.NONE,
-                    extras = extras,
-                ),
-            )
+            navigator.navigateBack()
         }
     }
 
@@ -144,7 +148,16 @@ private fun SettingsScreenContent(
                             .fillMaxSize(),
                         contentPadding = PaddingValues(vertical = 16.dp),
                         content = {
-                            item { SettingsGroupMain(onClick = { navigateToDetailPane(it, it) }) }
+                            item {
+                                SettingsGroupMain(
+                                    onClick = {
+                                        scope.launch {
+                                            currentPane = currentPane.copy(currentPane = it)
+                                            navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                                        }
+                                    },
+                                )
+                            }
                             item { SettingsGroupInfo() }
                             item { SettingsGroupCredits() }
                         },
@@ -153,11 +166,6 @@ private fun SettingsScreenContent(
             }
         },
         detailPane = {
-            val currentPane = navigator.currentDestination?.contentKey ?: SettingsPaneDetails(SettingsCurrentPane.NONE)
-            val contentType = currentPane.extras?.getString(BUNDLE_CONTENT_TYPE)?.let {
-                SettingsCurrentPane.valueOf(it)
-            }
-
             AnimatedPane {
                 Scaffold(
                     topBar = {
@@ -165,7 +173,7 @@ private fun SettingsScreenContent(
                             CenterAlignedTopAppBar(
                                 title = {
                                     Text(
-                                        text = stringResource(contentType!!.string!!),
+                                        text = stringResource(currentPane.currentPane.string!!),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -183,7 +191,14 @@ private fun SettingsScreenContent(
                 ) { paddingValues ->
                     Box(modifier = Modifier.padding(paddingValues)) {
                         when (currentPane.currentPane) {
-                            SettingsCurrentPane.DETAIL_EMULATION -> SettingsGroupEmulation()
+                            SettingsCurrentPane.DETAIL_EMULATION -> SettingsGroupEmulation(
+                                onClick = {
+                                    scope.launch {
+                                        currentPane = currentPane.copy(extra = it)
+                                        navigator.navigateTo(ListDetailPaneScaffoldRole.Extra)
+                                    }
+                                },
+                            )
 
                             SettingsCurrentPane.DETAIL_INTERFACE -> SettingsGroupInterface(
                                 appTheme = appTheme,
@@ -194,7 +209,10 @@ private fun SettingsScreenContent(
 
                             SettingsCurrentPane.DETAIL_DEBUG -> SettingsGroupDebug(
                                 onShowLog = {
-                                    navigateToExtraPane(SettingsCurrentPane.DETAIL_DEBUG, SettingsCurrentPane.EXTRA_CRASH_LOG)
+                                    scope.launch {
+                                        currentPane = currentPane.copy(extra = "crash_log")
+                                        navigator.navigateTo(ListDetailPaneScaffoldRole.Extra)
+                                    }
                                 },
                             )
 
@@ -205,25 +223,28 @@ private fun SettingsScreenContent(
             }
         },
         extraPane = {
-            val currentPane = navigator.currentDestination?.contentKey ?: SettingsPaneDetails(SettingsCurrentPane.NONE)
-            val extraContentType = currentPane.extras?.getString("BUNDLE_EXTRA_CONTENT_TYPE")?.let {
-                SettingsCurrentPane.valueOf(it)
-            }
             AnimatedPane {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    when (extraContentType) {
-                        SettingsCurrentPane.EXTRA_CRASH_LOG -> {
-                            SettingsLogViewerScreen(
-                                onClose = {
-                                    scope.launch { navigator.navigateBack() }
-                                },
-                                onToast = {
-                                    scope.launch {
-                                        snackBarHostState.showSnackbar(it)
-                                        navigator.navigateBack()
-                                    }
-                                },
-                            )
+                    when (currentPane.currentPane) {
+                        SettingsCurrentPane.DETAIL_DEBUG -> {
+                            if (currentPane.extra == "crash_log") {
+                                SettingsLogViewerScreen(
+                                    onClose = onNavBack,
+                                    onToast = {
+                                        scope.launch {
+                                            snackBarHostState.showSnackbar(it)
+                                            onNavBack()
+                                        }
+                                    },
+                                )
+                            }
+                        }
+
+                        SettingsCurrentPane.DETAIL_EMULATION -> {
+                            when(currentPane.extra) {
+                                "mw_general_settings" -> {
+                                }
+                            }
                         }
 
                         else -> SettingsEmptyDetail()
@@ -236,10 +257,7 @@ private fun SettingsScreenContent(
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
-@Preview(
-    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL,
-    device = "spec:parent=pixel_5,orientation=landscape",
-)
+@Preview
 @Composable
 private fun Preview_SettingsScreen() {
     val context = LocalContext.current
