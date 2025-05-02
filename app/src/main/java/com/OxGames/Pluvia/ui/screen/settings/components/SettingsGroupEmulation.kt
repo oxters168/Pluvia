@@ -1,7 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.settings.components
 
 import android.content.res.Configuration
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -18,21 +17,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
-import kotlinx.coroutines.Dispatchers
+
+// TODO strings
 
 @Composable
 fun SettingsGroupEmulation(
@@ -107,26 +102,26 @@ fun SettingsGroupEmulation(
             },
         )
 
-        // TODO Verify
-        val deviceArch by remember {
-            with(Dispatchers.IO) {
-                val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
-                mutableStateOf(value)
-            }
-        }
-        if (deviceArch != "x86_64") {
-            SettingsGroup(
-                title = { Text(text = "Box64") },
-                content = {
-                    SettingsMenuLink(
-                        colors = settingsTileColors(),
-                        title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
-                        subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
-                        onClick = { onClick("mw_box64_preset") },
-                    )
-                },
-            )
-        }
+        // TODO Implement once stable
+//        val deviceArch by remember {
+//            with(Dispatchers.IO) {
+//                val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
+//                mutableStateOf(value)
+//            }
+//        }
+//        if (deviceArch != "x86_64") {
+//            SettingsGroup(
+//                title = { Text(text = "Box64") },
+//                content = {
+//                    SettingsMenuLink(
+//                        colors = settingsTileColors(),
+//                        title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
+//                        subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
+//                        onClick = { onClick("mw_box64_preset") },
+//                    )
+//                },
+//            )
+//        }
 
         SettingsGroup(
             title = { Text(text = "Rat Package") },

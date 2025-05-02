@@ -41,6 +41,10 @@ import com.alorma.compose.settings.ui.SettingsSwitch
 import com.alorma.compose.settings.ui.base.internal.SettingsTileDefaults
 import com.alorma.compose.settings.ui.base.internal.SettingsTileScaffold
 
+// TODO strings
+// TODO move SettingsItemType
+// TODO rename file
+
 enum class SettingsItemType(val value: Int) {
     SWITCH(1),
     SPINNER(2),
@@ -106,7 +110,7 @@ fun SettingsItemList(
                             Text(text = spinnerOptions!!.find { it == preference }!!, fontSize = 14.sp)
                             Icon(
                                 imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = null, // TODO
+                                contentDescription = null,
                             )
                         }
                         DropdownMenu(
@@ -154,14 +158,14 @@ fun SettingsItemList(
                         ) {
                             Text(
                                 modifier = Modifier.fillMaxWidth(.40f),
-                                text = preference.ifEmpty { "Nothing Selected" }, // TODO
+                                text = preference.ifEmpty { "Nothing Selected" },
                                 fontSize = 14.sp,
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                             )
                             Icon(
                                 imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                contentDescription = null, // TODO
+                                contentDescription = null,
                             )
                         }
                         DropdownMenu(
@@ -205,7 +209,7 @@ fun SettingsItemList(
 
         SettingsItemType.SEEKBAR -> {
             var preference by remember(key) {
-                val value = PrefManager.getInt(key, defaultValue.toInt())!!
+                val value = PrefManager.getInt(key, defaultValue.toInt())
                 mutableIntStateOf(value)
             }
             SettingsSlider(

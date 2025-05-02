@@ -51,6 +51,7 @@ import com.OxGames.Pluvia.ui.screen.settings.components.SettingsLogViewerScreen
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsMiceWineDebug
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsMiceWineDriver
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsMiceWineDriverInfo
+import com.OxGames.Pluvia.ui.screen.settings.components.SettingsMiceWineEnvVariables
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsMiceWineSound
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.materialkolor.PaletteStyle
@@ -250,12 +251,12 @@ private fun SettingsScreenContent(
                                 "mw_general_sound" -> SettingsMiceWineSound(onBack = onNavBack)
                                 "mw_general_driver" -> SettingsMiceWineDriver(onBack = onNavBack)
                                 "mw_general_driver_info" -> SettingsMiceWineDriverInfo(onBack = onNavBack)
-                                "mw_general_environment" -> TODO()
-                                "mw_controller_mapper" -> TODO()
-                                "mw_controller_virtual_mapper" -> TODO()
-                                "mw_box64_preset" -> TODO()
-                                "mw_rat_package_manager" -> TODO()
-                                "mw_rat_package_downloader" -> TODO()
+                                "mw_general_environment" -> SettingsMiceWineEnvVariables(onBack = onNavBack)
+                                "mw_controller_mapper" -> EmptyScreen("Feature Not Implemented") // TODO
+                                "mw_controller_virtual_mapper" -> EmptyScreen("Feature Not Implemented") // TODO
+                                "mw_box64_preset" -> EmptyScreen("Feature Not Implemented") // TODO
+                                "mw_rat_package_manager" -> EmptyScreen("Feature Not Implemented") // TODO
+                                "mw_rat_package_downloader" -> EmptyScreen("Feature Not Implemented") // TODO
                             }
                         }
 

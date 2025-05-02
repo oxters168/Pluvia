@@ -606,4 +606,9 @@ object MiceWineUtils {
 
             mangoHudConfFile.writeText(options.toString())
         }
+
+    /* EnvVarsSettingsFragment */
+    data class EnvironmentVariable(val key: String, val value: String)
+
+    const val ENV_VARS_KEY = "environmentVariables"
 }

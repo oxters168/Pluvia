@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,8 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-@Suppress("UnnecessaryOptInAnnotation") // ExperimentalFoundationApi
-@OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun SettingsGroupDebug(
     onShowLog: () -> Unit,

@@ -27,6 +27,8 @@ import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 
+// TODO strings
+
 @Composable
 fun SettingsGroupInfo() {
     SettingsGroup(title = { Text(text = stringResource(R.string.settings_group_info)) }) {
