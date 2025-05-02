@@ -58,7 +58,7 @@ android {
         buildConfigField("String", "GIT_SHORT_SHA", "\"${getGitShortSHA()}\"")
 
         ndk {
-            abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
+            abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
