@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import com.micewine.emu.activities.EmulationActivity.Companion.handler
 import com.micewine.emu.activities.EmulationActivity.Companion.sharedLogs
 import com.micewine.emu.fragments.InfoDialogFragment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -13,7 +15,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 
 object ShellLoader {
-    fun runCommandWithOutput(cmd: String, enableStdErr: Boolean = false): String {
+    fun runCommandWithOutput(cmd: String, enableStdErr: Boolean = false): String = runBlocking(Dispatchers.IO) {
         try {
             val shell = Runtime.getRuntime().exec("/system/bin/sh")
             val os = DataOutputStream(shell.outputStream).apply {
@@ -66,11 +68,11 @@ object ShellLoader {
             shell.waitFor()
             shell.destroy()
 
-            return "$output"
+            return@runBlocking "$output"
         } catch (_: IOException) {
         }
 
-        return ""
+        return@runBlocking ""
     }
 
     fun runCommand(cmd: String) {
@@ -91,7 +93,7 @@ object ShellLoader {
             Thread {
                 try {
                     var stdOut: String?
-                    while ( stdout?.readLine().also { stdOut = it } != null) {
+                    while (stdout?.readLine().also { stdOut = it } != null) {
                         sharedLogs?.appendText("$stdOut")
                         Timber.tag("ShellLoader").v("$stdOut")
                     }

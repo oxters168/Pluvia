@@ -32,13 +32,14 @@ import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun SettingsGroupEmulation(
     onClick: (String) -> Unit,
 ) {
     val view = LocalView.current
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -108,8 +109,10 @@ fun SettingsGroupEmulation(
 
         // TODO Verify
         val deviceArch by remember {
-            val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
-            mutableStateOf(value)
+            with(Dispatchers.IO) {
+                val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
+                mutableStateOf(value)
+            }
         }
         if (deviceArch != "x86_64") {
             SettingsGroup(
