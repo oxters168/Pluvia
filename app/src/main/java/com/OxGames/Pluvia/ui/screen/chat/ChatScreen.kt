@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
@@ -34,14 +33,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -60,7 +57,6 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -74,6 +70,7 @@ import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.FriendMessage
 import com.OxGames.Pluvia.data.SteamFriend
+import com.OxGames.Pluvia.ui.component.EmptyScreen
 import com.OxGames.Pluvia.ui.component.ListItemImage
 import com.OxGames.Pluvia.ui.component.data.fakeSteamFriends
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
@@ -191,7 +188,7 @@ private fun ChatMessages(
 
     Box(modifier = modifier) {
         AnimatedVisibility(state.messages.isEmpty()) {
-            NoChatHistoryBox()
+            EmptyScreen(message = stringResource(R.string.chat_no_history))
         }
 
         LazyColumn(
@@ -250,27 +247,6 @@ private fun ChatMessages(
             modifier = Modifier.align(Alignment.BottomCenter),
             hostState = snackbarHost,
         )
-    }
-}
-
-@Composable
-private fun NoChatHistoryBox() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shadowElevation = 8.dp,
-        ) {
-            Text(
-                modifier = Modifier.padding(24.dp),
-                text = stringResource(R.string.chat_no_history),
-                textAlign = TextAlign.Center,
-            )
-        }
     }
 }
 

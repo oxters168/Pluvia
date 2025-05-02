@@ -9,10 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -33,9 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.ui.component.EmptyScreen
 import com.OxGames.Pluvia.ui.component.topbar.AccountButton
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
@@ -141,17 +139,7 @@ private fun DownloadsScreenPane(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             content = {
-                Surface(
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shadowElevation = 8.dp,
-                ) {
-                    Text(
-                        modifier = Modifier.padding(24.dp),
-                        text = "\uD83D\uDEA7 Not Available \uD83D\uDEA7",
-                    )
-                }
+                EmptyScreen(message = "\uD83D\uDEA7 Not Available \uD83D\uDEA7")
             },
         )
     }

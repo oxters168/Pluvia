@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
@@ -101,6 +100,7 @@ import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.enums.DialogType
 import com.OxGames.Pluvia.ui.component.BBCodeText
+import com.OxGames.Pluvia.ui.component.EmptyScreen
 import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.component.data.fakeSteamFriends
 import com.OxGames.Pluvia.ui.component.dialog.GamesListDialog
@@ -120,8 +120,8 @@ import com.skydoves.landscapist.coil.CoilImage
 import `in`.dragonbra.javasteam.enums.EResult
 import `in`.dragonbra.javasteam.steam.handlers.steamfriends.callback.ProfileInfoCallback
 import `in`.dragonbra.javasteam.types.SteamID
-import java.util.Date
 import kotlinx.coroutines.launch
+import java.util.Date
 
 // TODO pressing back wont make the selected profile go to the initial details screen.
 
@@ -321,7 +321,7 @@ private fun FriendsDetailPane(
             contentAlignment = Alignment.Center,
             content = {
                 if (state.profileFriend == null) {
-                    DefaultDetailsScreen()
+                    EmptyScreen(message = stringResource(R.string.friend_no_selection))
                 } else {
                     ProfileDetailsScreen(
                         state = state,
@@ -335,21 +335,6 @@ private fun FriendsDetailPane(
                     )
                 }
             },
-        )
-    }
-}
-
-@Composable
-private fun DefaultDetailsScreen() {
-    Surface(
-        modifier = Modifier.padding(horizontal = 24.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = 8.dp,
-    ) {
-        Text(
-            modifier = Modifier.padding(24.dp),
-            text = stringResource(R.string.friend_no_selection),
         )
     }
 }

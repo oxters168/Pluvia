@@ -39,8 +39,8 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
+import com.OxGames.Pluvia.ui.component.EmptyScreen
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
-import com.OxGames.Pluvia.ui.screen.settings.components.SettingsEmptyDetail
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsGroupCredits
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsGroupDebug
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsGroupEmulation
@@ -220,7 +220,7 @@ private fun SettingsScreenContent(
                                 },
                             )
 
-                            else -> SettingsEmptyDetail()
+                            else -> EmptyScreen("Select a setting option.")
                         }
                     }
                 }
@@ -259,7 +259,7 @@ private fun SettingsScreenContent(
                             }
                         }
 
-                        else -> SettingsEmptyDetail()
+                        else -> EmptyScreen("Select a setting option.")
 
                     }
                 }
