@@ -49,7 +49,7 @@ enum class SettingsItemType(val value: Int) {
     SWITCH(1),
     SPINNER(2),
     CHECKBOX(3),
-    SEEKBAR(4)
+    SEEKBAR(4),
 }
 
 @Composable
@@ -78,7 +78,7 @@ fun SettingsItemList(
                 },
                 onCheckedChange = {
                     preference = it
-                    PrefManager.setBoolean(key, it)
+                    PrefManager.putBoolean(key, it)
                 },
             )
         }
@@ -121,7 +121,7 @@ fun SettingsItemList(
                                     DropdownMenuItem(
                                         text = { Text(text = it) },
                                         onClick = {
-                                            PrefManager.setString(key, it)
+                                            PrefManager.putString(key, it)
                                             preference = it
                                             expanded = false
                                         },
@@ -185,7 +185,7 @@ fun SettingsItemList(
                                         .filter { checked.contains(it) }
                                         .joinToString(",")
                                     preference = builder
-                                    PrefManager.setString(key, builder)
+                                    PrefManager.putString(key, builder)
                                 }
 
                                 spinnerOptions!!.forEach { item ->
@@ -227,13 +227,12 @@ fun SettingsItemList(
                 },
                 onValueChange = { newValue ->
                     preference = newValue.toInt()
-                    PrefManager.setInt(key, preference)
+                    PrefManager.putInt(key, preference)
                 },
             )
         }
     }
 }
-
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Preview

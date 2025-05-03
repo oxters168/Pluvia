@@ -1,15 +1,15 @@
-//package com.OxGames.Pluvia.utils
+package com.OxGames.Pluvia.utils
 //
-//import android.content.Context
-//import com.OxGames.Pluvia.PrefManager
-//import com.OxGames.Pluvia.service.SteamService
-//import java.io.File
-//import kotlin.Boolean
-//import org.json.JSONArray
-//import org.json.JSONObject
-//import timber.log.Timber
+// import android.content.Context
+// import com.OxGames.Pluvia.PrefManager
+// import com.OxGames.Pluvia.service.SteamService
+// import java.io.File
+// import kotlin.Boolean
+// import org.json.JSONArray
+// import org.json.JSONObject
+// import timber.log.Timber
 //
-//object ContainerUtils {
+// object ContainerUtils {
 //
 //    data class GpuInfo(
 //        val deviceId: Int,
@@ -275,4 +275,4 @@
 //            container
 //        }
 //    }
-//}
+// }

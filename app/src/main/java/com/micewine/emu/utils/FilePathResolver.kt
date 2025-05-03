@@ -7,10 +7,10 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import com.micewine.emu.activities.MainActivity
-import timber.log.Timber
-import java.io.File
 import androidx.core.net.toUri
+import com.micewine.emu.MiceWineUtils
+import java.io.File
+import timber.log.Timber
 
 object FilePathResolver {
     fun resolvePath(context: Context, uri: Uri): String? {
@@ -31,7 +31,7 @@ object FilePathResolver {
 
     private fun getDosHomeDirs(): List<String> {
         val dosHomeDirs = mutableListOf<String>()
-        val dosHomeDir = File(MainActivity.fileManagerDefaultDir)
+        val dosHomeDir = File(MiceWineUtils.Main.fileManagerDefaultDir)
 
         if (dosHomeDir.exists() && dosHomeDir.isDirectory) {
             dosHomeDirs.addAll(dosHomeDir.listFiles()?.map { it.absolutePath } ?: emptyList())

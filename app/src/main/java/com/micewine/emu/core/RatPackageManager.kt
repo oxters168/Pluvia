@@ -5,26 +5,20 @@ import android.content.Context
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.google.gson.Gson
-import com.micewine.emu.activities.GeneralSettingsActivity.Companion.SELECTED_BOX64
-import com.micewine.emu.activities.GeneralSettingsActivity.Companion.SELECTED_VULKAN_DRIVER
-import com.micewine.emu.activities.MainActivity.Companion.appRootDir
-import com.micewine.emu.activities.MainActivity.Companion.ratPackagesDir
+import com.micewine.emu.MiceWineUtils
 import com.micewine.emu.core.ShellLoader.runCommand
-import com.micewine.emu.fragments.SetupFragment.Companion.dialogTitleText
-import com.micewine.emu.fragments.SetupFragment.Companion.progressBarIsIndeterminate
-import com.micewine.emu.fragments.SetupFragment.Companion.progressBarValue
+import java.io.File
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.progress.ProgressMonitor
-import java.io.File
 
 object RatPackageManager {
     @SuppressLint("SetTextI18n")
     fun installRat(ratPackage: RatPackage, context: Context) {
         // val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
-        progressBarIsIndeterminate = false
+        MiceWineUtils.Setup.progressBarIsIndeterminate = false
 
-        var extractDir = appRootDir.parent
+        var extractDir = MiceWineUtils.Main.appRootDir.parent
 
         ratPackage.ratFile.use { ratFile ->
             ratFile?.isRunInThread = true
@@ -32,20 +26,20 @@ object RatPackageManager {
             if (ratPackage.category == "rootfs") {
                 installingRootFS = true
             } else {
-                extractDir = "$ratPackagesDir/${ratPackage.category}-${java.util.UUID.randomUUID()}"
+                extractDir = "${MiceWineUtils.Main.ratPackagesDir}/${ratPackage.category}-${java.util.UUID.randomUUID()}"
                 File(extractDir!!).mkdirs()
             }
 
             ratFile?.extractAll(extractDir)
 
             while (!ratFile?.progressMonitor?.state?.equals(ProgressMonitor.State.READY)!!) {
-                progressBarValue = ratFile.progressMonitor.percentDone
+                MiceWineUtils.Setup.progressBarValue = ratFile.progressMonitor.percentDone
 
                 Thread.sleep(100)
             }
         }
 
-        progressBarValue = 0
+        MiceWineUtils.Setup.progressBarValue = 0
 
         runCommand("chmod -R 700 $extractDir")
         runCommand("sh $extractDir/makeSymlinks.sh").also {
@@ -54,15 +48,15 @@ object RatPackageManager {
 
         when (ratPackage.category) {
             "rootfs" -> {
-                File("$extractDir/pkg-header").renameTo(File("$ratPackagesDir/rootfs-pkg-header"))
+                File("$extractDir/pkg-header").renameTo(File("${MiceWineUtils.Main.ratPackagesDir}/rootfs-pkg-header"))
 
                 val adrenoToolsFolder = File("$extractDir/adrenoTools")
                 val vulkanDriversFolder = File("$extractDir/vulkanDrivers")
                 val box64Folder = File("$extractDir/box64")
                 val wineFolder = File("$extractDir/wine")
 
-                File("$appRootDir/wine-utils/DXVK").listFiles()?.forEach {
-                    val dxvkDir = File("$ratPackagesDir/DXVK-${java.util.UUID.randomUUID()}")
+                File("${MiceWineUtils.Main.appRootDir}/wine-utils/DXVK").listFiles()?.forEach {
+                    val dxvkDir = File("${MiceWineUtils.Main.ratPackagesDir}/DXVK-${java.util.UUID.randomUUID()}")
                     dxvkDir.mkdirs()
                     val dxvkFilesDir = File("$dxvkDir/files")
                     dxvkFilesDir.mkdirs()
@@ -70,11 +64,12 @@ object RatPackageManager {
 
                     it.renameTo(dxvkFilesDir)
 
-                    File("$dxvkDir/pkg-header").writeText("name=DXVK\ncategory=DXVK\nversion=$dxvkVersion\narchitecture=any\nvkDriverLib=\n")
+                    File("$dxvkDir/pkg-header")
+                        .writeText("name=DXVK\ncategory=DXVK\nversion=$dxvkVersion\narchitecture=any\nvkDriverLib=\n")
                 }
 
-                File("$appRootDir/wine-utils/WineD3D").listFiles()?.forEach {
-                    val wineD3DDir = File("$ratPackagesDir/WineD3D-${java.util.UUID.randomUUID()}")
+                File("${MiceWineUtils.Main.appRootDir}/wine-utils/WineD3D").listFiles()?.forEach {
+                    val wineD3DDir = File("${MiceWineUtils.Main.ratPackagesDir}/WineD3D-${java.util.UUID.randomUUID()}")
                     wineD3DDir.mkdirs()
                     val wineD3DFilesFir = File("$wineD3DDir/files")
                     wineD3DFilesFir.mkdirs()
@@ -82,11 +77,12 @@ object RatPackageManager {
 
                     it.renameTo(wineD3DFilesFir)
 
-                    File("$wineD3DDir/pkg-header").writeText("name=WineD3D\ncategory=WineD3D\nversion=$wineD3DVersion\narchitecture=any\nvkDriverLib=\n")
+                    File("$wineD3DDir/pkg-header")
+                        .writeText("name=WineD3D\ncategory=WineD3D\nversion=$wineD3DVersion\narchitecture=any\nvkDriverLib=\n")
                 }
 
-                File("$appRootDir/wine-utils/VKD3D").listFiles()?.forEach {
-                    val vkd3dDir = File("$ratPackagesDir/VKD3D-${java.util.UUID.randomUUID()}")
+                File("${MiceWineUtils.Main.appRootDir}/wine-utils/VKD3D").listFiles()?.forEach {
+                    val vkd3dDir = File("${MiceWineUtils.Main.ratPackagesDir}/VKD3D-${java.util.UUID.randomUUID()}")
                     vkd3dDir.mkdirs()
                     val vkd3dFilesDir = File("$vkd3dDir/files")
                     vkd3dFilesDir.mkdirs()
@@ -94,10 +90,11 @@ object RatPackageManager {
 
                     it.renameTo(vkd3dFilesDir)
 
-                    File("$vkd3dDir/pkg-header").writeText("name=VKD3D\ncategory=VKD3D\nversion=$vkd3dVersion\narchitecture=any\nvkDriverLib=\n")
+                    File("$vkd3dDir/pkg-header")
+                        .writeText("name=VKD3D\ncategory=VKD3D\nversion=$vkd3dVersion\narchitecture=any\nvkDriverLib=\n")
                 }
 
-                dialogTitleText = context.getString(R.string.installing_drivers)
+                MiceWineUtils.Setup.dialogTitleText = context.getString(R.string.installing_drivers)
 
                 if (vulkanDriversFolder.exists()) {
                     vulkanDriversFolder.listFiles()?.sorted()?.forEach { ratFile ->
@@ -115,7 +112,7 @@ object RatPackageManager {
                     adrenoToolsFolder.deleteRecursively()
                 }
 
-                dialogTitleText = context.getString(R.string.installing_box64)
+                MiceWineUtils.Setup.dialogTitleText = context.getString(R.string.installing_box64)
 
                 if (box64Folder.exists()) {
                     box64Folder.listFiles()?.sorted()?.forEach { ratFile ->
@@ -125,7 +122,7 @@ object RatPackageManager {
                     box64Folder.deleteRecursively()
                 }
 
-                dialogTitleText = context.getString(R.string.installing_wine)
+                MiceWineUtils.Setup.dialogTitleText = context.getString(R.string.installing_wine)
 
                 if (wineFolder.exists()) {
                     wineFolder.listFiles()?.sorted()?.forEach { ratFile ->
@@ -137,32 +134,56 @@ object RatPackageManager {
 
                 installingRootFS = false
             }
+
             "Box64" -> {
-                if (PrefManager.getString(SELECTED_BOX64, "") == "") {
-                    PrefManager.setString(SELECTED_BOX64, File(extractDir!!).name)
+                if (PrefManager.getString(MiceWineUtils.GeneralSettings.SELECTED_BOX64, "") == "") {
+                    PrefManager.putString(MiceWineUtils.GeneralSettings.SELECTED_BOX64, File(extractDir!!).name)
                 }
 
-                File("$extractDir/pkg-header").writeText("name=${ratPackage.name}\ncategory=${ratPackage.category}\nversion=${ratPackage.version}\narchitecture=${ratPackage.architecture}\nvkDriverLib=\n")
+                File("$extractDir/pkg-header")
+                    .writeText(
+                        "name=${ratPackage.name}\n" +
+                            "category=${ratPackage.category}\n" +
+                            "version=${ratPackage.version}\n" +
+                            "architecture=${ratPackage.architecture}\n" +
+                            "vkDriverLib=\n",
+                    )
 
                 if (!installingRootFS) {
                     File("$extractDir/pkg-external").writeText("")
                 }
             }
+
             "VulkanDriver", "AdrenoTools" -> {
-                    if (PrefManager.getString(SELECTED_VULKAN_DRIVER, "") == "") {
-                        PrefManager.setString(SELECTED_VULKAN_DRIVER, File(extractDir!!).name)
-                    }
+                if (PrefManager.getString(MiceWineUtils.GeneralSettings.SELECTED_VULKAN_DRIVER, "") == "") {
+                    PrefManager.putString(MiceWineUtils.GeneralSettings.SELECTED_VULKAN_DRIVER, File(extractDir!!).name)
+                }
 
                 val driverLibPath = "$extractDir/files/usr/lib/${ratPackage.driverLib}"
 
-                File("$extractDir/pkg-header").writeText("name=${ratPackage.name}\ncategory=${ratPackage.category}\nversion=${ratPackage.version}\narchitecture=${ratPackage.architecture}\nvkDriverLib=$driverLibPath\n")
+                File("$extractDir/pkg-header")
+                    .writeText(
+                        "name=${ratPackage.name}\n" +
+                            "category=${ratPackage.category}\n" +
+                            "version=${ratPackage.version}\n" +
+                            "architecture=${ratPackage.architecture}\n" +
+                            "vkDriverLib=$driverLibPath\n",
+                    )
 
                 if (!installingRootFS) {
                     File("$extractDir/pkg-external").writeText("")
                 }
             }
+
             "Wine", "DXVK", "WineD3D", "VKD3D" -> {
-                File("$extractDir/pkg-header").writeText("name=${ratPackage.name}\ncategory=${ratPackage.category}\nversion=${ratPackage.version}\narchitecture=${ratPackage.architecture}\nvkDriverLib=\n")
+                File("$extractDir/pkg-header")
+                    .writeText(
+                        "name=${ratPackage.name}\n" +
+                            "category=${ratPackage.category}\n" +
+                            "version=${ratPackage.version}\n" +
+                            "architecture=${ratPackage.architecture}\n" +
+                            "vkDriverLib=\n",
+                    )
 
                 if (!installingRootFS) {
                     File("$extractDir/pkg-external").writeText("")
@@ -174,7 +195,7 @@ object RatPackageManager {
     fun listRatPackages(type: String = "", anotherType: String = "?"): List<RatPackage> {
         val packagesList: MutableList<RatPackage> = mutableListOf()
 
-        File("$appRootDir/packages").listFiles()?.forEach { file ->
+        File("${MiceWineUtils.Main.appRootDir}/packages").listFiles()?.forEach { file ->
             if (file.isDirectory && (file.name.startsWith(type) || file.name.startsWith(anotherType))) {
                 val pkgHeader = File("$file/pkg-header")
                 if (!pkgHeader.exists()) {
@@ -202,7 +223,7 @@ object RatPackageManager {
                         folderName = file.name
 
                         isUserInstalled = File("$file/pkg-external").exists()
-                    }
+                    },
                 )
             }
         }
@@ -213,7 +234,7 @@ object RatPackageManager {
     fun listRatPackagesId(type: String = "", anotherType: String = "?"): List<String> {
         val packagesIdList: MutableList<String> = mutableListOf()
 
-        File("$appRootDir/packages").listFiles()?.forEach { file ->
+        File("${MiceWineUtils.Main.appRootDir}/packages").listFiles()?.forEach { file ->
             if (file.isDirectory && (file.name.startsWith(type) || file.name.startsWith(anotherType))) {
                 packagesIdList.add(file.name)
             }
@@ -223,7 +244,7 @@ object RatPackageManager {
     }
 
     fun getPackageNameVersionById(id: String?): String? {
-        val pkgHeader = File("$ratPackagesDir/$id/pkg-header")
+        val pkgHeader = File("${MiceWineUtils.Main.ratPackagesDir}/$id/pkg-header")
 
         if (pkgHeader.exists() && id != null) {
             val lines = pkgHeader.readLines()
@@ -244,31 +265,38 @@ object RatPackageManager {
     }
 
     fun installADToolsDriver(adrenoToolsPackage: AdrenoToolsPackage) {
-        progressBarIsIndeterminate = false
+        MiceWineUtils.Setup.progressBarIsIndeterminate = false
 
         var extractDir: String
 
         adrenoToolsPackage.adrenoToolsFile.use {
             it.isRunInThread = true
 
-            extractDir = "$ratPackagesDir/AdrenoToolsDriver-${java.util.UUID.randomUUID()}"
+            extractDir = "${MiceWineUtils.Main.ratPackagesDir}/AdrenoToolsDriver-${java.util.UUID.randomUUID()}"
 
             it.extractAll(extractDir)
 
             while (!it.progressMonitor.state.equals(ProgressMonitor.State.READY)) {
-                progressBarValue = it.progressMonitor.percentDone
+                MiceWineUtils.Setup.progressBarValue = it.progressMonitor.percentDone
 
                 Thread.sleep(100)
             }
         }
 
-        progressBarValue = 0
+        MiceWineUtils.Setup.progressBarValue = 0
 
         runCommand("chmod -R 700 $extractDir")
 
         val driverLibPath = "$extractDir/${adrenoToolsPackage.driverLib}"
 
-        File("$extractDir/pkg-header").writeText("name=${adrenoToolsPackage.name}\ncategory=AdrenoToolsDriver\nversion=${adrenoToolsPackage.version}\narchitecture=aarch64\nvkDriverLib=$driverLibPath\n")
+        File("$extractDir/pkg-header")
+            .writeText(
+                "name=${adrenoToolsPackage.name}\n" +
+                    "category=AdrenoToolsDriver\n" +
+                    "version=${adrenoToolsPackage.version}\n" +
+                    "architecture=aarch64\n" +
+                    "vkDriverLib=$driverLibPath\n",
+            )
 
         if (!installingRootFS) {
             File("$extractDir/pkg-external").writeText("")
@@ -305,7 +333,7 @@ object RatPackageManager {
         val description: String,
         val author: String,
         val driverVersion: String,
-        val libraryName: String
+        val libraryName: String,
     )
 
     class RatPackage(ratPath: String? = null) {

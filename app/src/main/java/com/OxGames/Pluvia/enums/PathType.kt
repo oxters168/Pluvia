@@ -1,8 +1,6 @@
 package com.OxGames.Pluvia.enums
 
 import android.content.Context
-import com.OxGames.Pluvia.service.SteamService
-import java.nio.file.Paths
 import timber.log.Timber
 
 enum class PathType {

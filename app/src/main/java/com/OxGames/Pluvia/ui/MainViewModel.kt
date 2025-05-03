@@ -1,12 +1,10 @@
 package com.OxGames.Pluvia.ui
 
 import android.content.Context
-import android.os.Process
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
-import com.OxGames.Pluvia.data.GameProcessInfo
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.enums.LoginResult
 import com.OxGames.Pluvia.enums.PathType
@@ -18,10 +16,7 @@ import com.OxGames.Pluvia.ui.screen.xserver.Window
 import com.OxGames.Pluvia.utils.application.IAppTheme
 import com.materialkolor.PaletteStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
-import `in`.dragonbra.javasteam.steam.handlers.steamapps.AppProcessInfo
-import java.nio.file.Paths
 import javax.inject.Inject
-import kotlin.io.path.name
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -202,7 +197,6 @@ class MainViewModel @Inject constructor(
             }.await()
         }
     }
-
 
     fun onWindowMapped(window: Window, appId: Int) {
         TODO()

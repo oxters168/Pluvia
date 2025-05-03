@@ -39,9 +39,9 @@ import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
 import com.OxGames.Pluvia.utils.application.CrashHandler
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable

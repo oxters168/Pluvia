@@ -12,7 +12,6 @@ import android.graphics.Point
 import android.graphics.drawable.ColorDrawable
 import android.text.InputType
 import android.util.AttributeSet
-import android.util.Log
 import android.view.KeyEvent
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -22,13 +21,12 @@ import android.view.inputmethod.InputConnection
 import androidx.annotation.Keep
 import com.OxGames.Pluvia.PrefManager
 import com.micewine.emu.activities.EmulationActivity
-import com.micewine.emu.activities.MainActivity.Companion.selectedResolution
 import com.micewine.emu.input.InputStub
 import com.micewine.emu.input.TouchInputHandler
 import dalvik.annotation.optimization.CriticalNative
 import dalvik.annotation.optimization.FastNative
-import timber.log.Timber
 import java.nio.charset.StandardCharsets
+import timber.log.Timber
 
 @Keep
 @SuppressLint("WrongConstant")
@@ -164,7 +162,10 @@ class LorieView : SurfaceView, InputStub {
         get() {
             val width = measuredWidth
             val height = measuredHeight
-            val resolution = (selectedResolution ?: "1280x720" ).split("x".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val resolution = (MiceWineUtils.Main.selectedResolution ?: "1280x720")
+                .split("x".toRegex())
+                .dropLastWhile { it.isEmpty() }
+                .toTypedArray()
             val w = resolution[0].toInt()
             val h = resolution[1].toInt()
 
@@ -191,11 +192,15 @@ class LorieView : SurfaceView, InputStub {
         var width = measuredWidth
         var height = measuredHeight
 
-        if ((width < height && p.x > p.y) || (width > height && p.x < p.y))
+        if ((width < height && p.x > p.y) || (width > height && p.x < p.y)) {
             p[p.y] = p.x
+        }
 
-        if (width > height * p.x / p.y) width = height * p.x / p.y
-        else height = width * p.y / p.x
+        if (width > height * p.x / p.y) {
+            width = height * p.x / p.y
+        } else {
+            height = width * p.y / p.x
+        }
 
         holder.setFixedSize(p.x, p.y)
         setMeasuredDimension(width, height)
@@ -215,7 +220,8 @@ class LorieView : SurfaceView, InputStub {
         return (a is EmulationActivity) && a.handleKey(event)
     }
 
-    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener = ClipboardManager.OnPrimaryClipChangedListener { this.handleClipboardChange() }
+    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener =
+        ClipboardManager.OnPrimaryClipChangedListener { this.handleClipboardChange() }
 
     fun reloadPreferences() {
         hardwareKbdScancodesWorkaround = false
@@ -257,9 +263,14 @@ class LorieView : SurfaceView, InputStub {
 
     private fun checkForClipboardChange() {
         val desc = clipboard!!.primaryClipDescription
-        if (clipboardSyncEnabled && desc != null && lastClipboardTimestamp < desc.timestamp && desc.mimeTypeCount == 1 &&
-            (desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) ||
-                    desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML))
+        if (clipboardSyncEnabled &&
+            desc != null &&
+            lastClipboardTimestamp < desc.timestamp &&
+            desc.mimeTypeCount == 1 &&
+            (
+                desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) ||
+                    desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML)
+                )
         ) {
             lastClipboardTimestamp = desc.timestamp
             sendClipboardAnnounce()
@@ -276,13 +287,16 @@ class LorieView : SurfaceView, InputStub {
         if (clipboardSyncEnabled && hasFocus) {
             clipboard!!.addPrimaryClipChangedListener(clipboardListener)
             checkForClipboardChange()
-        } else clipboard!!.removePrimaryClipChangedListener(clipboardListener)
+        } else {
+            clipboard!!.removePrimaryClipChangedListener(clipboardListener)
+        }
 
         TouchInputHandler.refreshInputDevices()
     }
 
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
-        outAttrs.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        outAttrs.inputType =
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
 
         // Note that IME_ACTION_NONE cannot be used as that makes it impossible to input newlines using the on-screen
         // keyboard on Android TV (see https://github.com/termux/termux-app/issues/221).
@@ -341,25 +355,32 @@ class LorieView : SurfaceView, InputStub {
         @JvmStatic
         external fun renderingInActivity(): Boolean
 
-        @JvmStatic @FastNative
+        @JvmStatic
+        @FastNative
         external fun connect(fd: Int)
 
-        @JvmStatic @CriticalNative
+        @JvmStatic
+        @CriticalNative
         external fun connected(): Boolean
 
-        @JvmStatic @FastNative
+        @JvmStatic
+        @FastNative
         external fun startLogcat(fd: Int)
 
-        @JvmStatic @FastNative
+        @JvmStatic
+        @FastNative
         external fun setClipboardSyncEnabled(enabled: Boolean, ignored: Boolean)
 
-        @JvmStatic @FastNative
+        @JvmStatic
+        @FastNative
         external fun sendWindowChange(width: Int, height: Int, framerate: Int, name: String?)
 
-        @JvmStatic @FastNative
+        @JvmStatic
+        @FastNative
         external fun requestStylusEnabled(enabled: Boolean)
 
-        @JvmStatic @CriticalNative
+        @JvmStatic
+        @CriticalNative
         external fun requestConnection()
 
         init {

@@ -1,15 +1,16 @@
 package com.micewine.emu.utils
 
-import com.micewine.emu.activities.MainActivity
+import com.micewine.emu.MiceWineUtils
 import java.io.File
 
 object DriveUtils {
     class DriveInfo(val letter: String, val source: String, private val relativePath: String) {
-        private val drivesBaseDirectory = MainActivity.fileManagerDefaultDir + UNIX_SEPARATOR
+        private val drivesBaseDirectory = MiceWineUtils.Main.fileManagerDefaultDir + UNIX_SEPARATOR
 
         fun getWindowsPath(absolute: Boolean = false): String {
             var path = "$letter:$WINDOWS_SEPARATOR" + relativePath.replace(
-                UNIX_SEPARATOR, WINDOWS_SEPARATOR)
+                UNIX_SEPARATOR, WINDOWS_SEPARATOR,
+            )
             if (absolute) {
                 path = drivesBaseDirectory.replace(UNIX_SEPARATOR, WINDOWS_SEPARATOR) + path
             }
@@ -29,7 +30,7 @@ object DriveUtils {
     private const val UNIX_SEPARATOR = "/"
     private const val WINDOWS_SEPARATOR = "\\"
 
-    private val drivesBaseDirectory = MainActivity.fileManagerDefaultDir + UNIX_SEPARATOR
+    private val drivesBaseDirectory = MiceWineUtils.Main.fileManagerDefaultDir + UNIX_SEPARATOR
 
     fun parseUnixPath(path: String): DriveInfo? {
         val drives = File(drivesBaseDirectory).listFiles()

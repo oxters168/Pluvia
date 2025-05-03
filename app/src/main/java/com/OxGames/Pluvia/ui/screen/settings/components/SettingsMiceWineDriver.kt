@@ -12,9 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
+import com.micewine.emu.MiceWineUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,8 +39,8 @@ internal fun SettingsMiceWineDriver(
                 title = stringResource(R.string.enable_dri3),
                 description = null,
                 type = SettingsItemType.SWITCH,
-                defaultValue = "${MiceWineUtils.ENABLE_DRI3_DEFAULT_VALUE}",
-                key = MiceWineUtils.ENABLE_DRI3,
+                defaultValue = "${MiceWineUtils.GeneralSettings.ENABLE_DRI3_DEFAULT_VALUE}",
+                key = MiceWineUtils.GeneralSettings.ENABLE_DRI3,
             )
             SettingsItemList(
                 title = stringResource(R.string.select_dxvk_hud_preset_title),
@@ -53,16 +53,16 @@ internal fun SettingsMiceWineDriver(
                     "descriptors", "drawcalls", "submissions",
                 ),
                 type = SettingsItemType.CHECKBOX,
-                defaultValue = MiceWineUtils.SELECTED_DXVK_HUD_PRESET_DEFAULT_VALUE,
-                key = MiceWineUtils.SELECTED_DXVK_HUD_PRESET,
+                defaultValue = MiceWineUtils.GeneralSettings.SELECTED_DXVK_HUD_PRESET_DEFAULT_VALUE,
+                key = MiceWineUtils.GeneralSettings.SELECTED_DXVK_HUD_PRESET,
             )
             SettingsItemList(
                 title = stringResource(R.string.mesa_vk_wsi_present_mode_title),
                 description = null,
                 spinnerOptions = arrayOf("fifo", "relaxed", "mailbox", "immediate"),
                 type = SettingsItemType.SPINNER,
-                defaultValue = MiceWineUtils.SELECTED_MESA_VK_WSI_PRESENT_MODE_DEFAULT_VALUE,
-                key = MiceWineUtils.SELECTED_MESA_VK_WSI_PRESENT_MODE,
+                defaultValue = MiceWineUtils.GeneralSettings.SELECTED_MESA_VK_WSI_PRESENT_MODE_DEFAULT_VALUE,
+                key = MiceWineUtils.GeneralSettings.SELECTED_MESA_VK_WSI_PRESENT_MODE,
             )
             SettingsItemList(
                 title = stringResource(R.string.tu_debug_title),
@@ -73,8 +73,8 @@ internal fun SettingsMiceWineDriver(
                     "noubwc", "nomultipos", "forcebin",
                 ),
                 type = SettingsItemType.CHECKBOX,
-                defaultValue = MiceWineUtils.SELECTED_TU_DEBUG_PRESET_DEFAULT_VALUE,
-                key = MiceWineUtils.SELECTED_TU_DEBUG_PRESET,
+                defaultValue = MiceWineUtils.GeneralSettings.SELECTED_TU_DEBUG_PRESET_DEFAULT_VALUE,
+                key = MiceWineUtils.GeneralSettings.SELECTED_TU_DEBUG_PRESET,
             )
             SettingsItemList(
                 title = stringResource(R.string.select_gl_profile_title),
@@ -86,8 +86,8 @@ internal fun SettingsMiceWineDriver(
                     "GL 4.4", "GL 4.5", "GL 4.6",
                 ),
                 type = SettingsItemType.SPINNER,
-                defaultValue = MiceWineUtils.SELECTED_GL_PROFILE_DEFAULT_VALUE,
-                key = MiceWineUtils.SELECTED_GL_PROFILE,
+                defaultValue = MiceWineUtils.GeneralSettings.SELECTED_GL_PROFILE_DEFAULT_VALUE,
+                key = MiceWineUtils.GeneralSettings.SELECTED_GL_PROFILE,
             )
         }
     }

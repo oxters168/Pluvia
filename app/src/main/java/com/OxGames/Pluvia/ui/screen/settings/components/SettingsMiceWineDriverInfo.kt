@@ -42,18 +42,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.alorma.compose.settings.ui.base.internal.SettingsTileDefaults
+import com.micewine.emu.MiceWineUtils
 import com.micewine.emu.core.EnvVars
 import com.micewine.emu.core.RatPackageManager.listRatPackages
 import com.micewine.emu.core.RatPackageManager.listRatPackagesId
 import com.micewine.emu.core.ShellLoader
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
 
 // TODO incomplete
 
@@ -134,8 +134,8 @@ internal fun SettingsMiceWineDriverInfo(
 
                                         val driverFile: String
                                         var adrenoToolsDriverPath: String? = null
-                                        val ratPackagesDir = MiceWineUtils.ratPackagesDir
-                                        val appRootDir = MiceWineUtils.appRootDir
+                                        val ratPackagesDir = MiceWineUtils.Main.ratPackagesDir
+                                        val appRootDir = MiceWineUtils.Main.appRootDir
 
                                         if (driverId.contains("AdrenoToolsDriver")) {
                                             driverFile = File(
@@ -156,7 +156,7 @@ internal fun SettingsMiceWineDriverInfo(
                                                 .substringAfter("=")
                                         }
 
-                                        MiceWineUtils.setSharedVars(
+                                        MiceWineUtils.Main.setSharedVars(
                                             context = context,
                                             box64Version = null,
                                             box64Preset = null,
@@ -173,7 +173,7 @@ internal fun SettingsMiceWineDriverInfo(
                                             adrenoToolsDriverPath = adrenoToolsDriverPath,
                                         )
 
-                                        MiceWineUtils.generateICDFile(
+                                        MiceWineUtils.RatManager.generateICDFile(
                                             driverLib = driverFile,
                                             destIcd = File("$appRootDir/vulkan_icd.json"),
                                         )

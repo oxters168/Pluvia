@@ -1,8 +1,7 @@
 package com.OxGames.Pluvia.ui.screen.xserver
 
-
 // TODO
-//data class XServerState(
+// data class XServerState(
 //    var winStarted: Boolean = false,
 //    val dxwrapper: String = Container.DEFAULT_DXWRAPPER,
 //    val dxwrapperConfig: KeyValueSet? = null,
@@ -16,4 +15,4 @@ package com.OxGames.Pluvia.ui.screen.xserver
 //    var firstTimeBoot: Boolean = false,
 //    var taskAffinityMask: Int = 0,
 //    var taskAffinityMaskWoW64: Int = 0,
-//)
+// )

@@ -1,14 +1,16 @@
 package com.OxGames.Pluvia
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.content.res.Configuration
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color.TRANSPARENT
+import android.hardware.input.InputManager
 import android.os.Build
 import android.os.Bundle
-import android.view.KeyEvent
-import android.view.MotionEvent
-import android.view.OrientationEventListener
+import android.os.storage.StorageManager
+import android.view.InputDevice
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -22,72 +24,153 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
-import com.OxGames.Pluvia.enums.Orientation
 import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.PluviaMain
 import com.OxGames.Pluvia.utils.decoders.AnimatedPngDecoder
 import com.OxGames.Pluvia.utils.decoders.IconDecoder
+import com.micewine.emu.MiceWineUtils
+import com.micewine.emu.controller.ControllerUtils
+import com.micewine.emu.core.ShellLoader
+import com.micewine.emu.core.WineWrapper
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.EnumSet
-import kotlin.math.abs
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okio.Path.Companion.toOkioPath
 import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    companion object {
-        private var totalIndex = 0
-
-        private var currentOrientationChangeValue: Int = 0
-        private var availableOrientations: EnumSet<Orientation> = EnumSet.of(Orientation.UNSPECIFIED)
-    }
-
-    private val onSetSystemUi: (AndroidEvent.SetSystemUIVisibility) -> Unit = {
-        // AppUtils.hideSystemUI(this, !it.visible)
-    }
-
-    private val onSetAllowedOrientation: (AndroidEvent.SetAllowedOrientation) -> Unit = {
-        // Log.d("MainActivity", "Requested allowed orientations of $it")
-        availableOrientations = it.orientations
-        setOrientationTo(currentOrientationChangeValue, availableOrientations)
-    }
-
-    private val onStartOrientator: (AndroidEvent.StartOrientator) -> Unit = {
-        // TODO: When rotating the device on login screen:
-        //  StrictMode policy violation: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.
-        startOrientator()
-    }
-
     private val onEndProcess: (AndroidEvent.EndProcess) -> Unit = {
         finishAndRemoveTask()
     }
 
-    private var index = totalIndex++
+    private var inputManager: InputManager? = null
+
+    private val inputDeviceListener: InputManager.InputDeviceListener = object : InputManager.InputDeviceListener {
+        override fun onInputDeviceAdded(deviceId: Int) {
+            InputDevice.getDevice(deviceId)
+        }
+
+        override fun onInputDeviceChanged(deviceId: Int) {
+            val inputDevice = InputDevice.getDevice(deviceId) ?: return
+
+            if ((inputDevice.sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD) ||
+                (inputDevice.sources and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK)
+            ) {
+                if (ControllerUtils.connectedPhysicalControllers.indexOfFirst { it.id == deviceId } == -1) {
+                    ControllerUtils.connectedPhysicalControllers.add(
+                        ControllerUtils.PhysicalController(
+                            name = inputDevice.name,
+                            id = deviceId,
+                            mappingType = -1,
+                            virtualXInputId = -1,
+                        ),
+                    )
+                }
+
+                ControllerUtils.prepareButtonsAxisValues()
+            }
+        }
+
+        override fun onInputDeviceRemoved(deviceId: Int) {
+            val index = ControllerUtils.connectedPhysicalControllers.indexOfFirst { it.id == deviceId }
+            if (index == -1) return
+
+            ControllerUtils.GamePadServer.disconnectController(ControllerUtils.connectedPhysicalControllers[index].virtualXInputId)
+            ControllerUtils.connectedPhysicalControllers.removeAt(index)
+        }
+    }
+
+    private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                MiceWineUtils.Main.ACTION_RUN_WINE -> {
+                }
+
+                MiceWineUtils.Main.ACTION_SELECT_FILE_MANAGER -> {
+                }
+
+                MiceWineUtils.Main.ACTION_SETUP -> {
+                }
+
+                MiceWineUtils.Main.ACTION_INSTALL_RAT -> {
+                }
+
+                MiceWineUtils.Main.ACTION_INSTALL_ADTOOLS_DRIVER -> {
+                }
+
+                MiceWineUtils.Main.ACTION_SELECT_ICON -> {
+                }
+
+                MiceWineUtils.Main.ACTION_CREATE_WINE_PREFIX -> {
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.light(TRANSPARENT, TRANSPARENT))
+
         super.onCreate(savedInstanceState)
 
-        // startOrientator() // causes memory leak since activity restarted every orientation change
-        PluviaApp.events.on<AndroidEvent.SetSystemUIVisibility, Unit>(onSetSystemUi)
-        PluviaApp.events.on<AndroidEvent.StartOrientator, Unit>(onStartOrientator)
-        PluviaApp.events.on<AndroidEvent.SetAllowedOrientation, Unit>(onSetAllowedOrientation)
+        /* MiceWine Initialization */
+        ControllerUtils.initialize(this@MainActivity)
+
+        lifecycleScope.launch {
+            ControllerUtils.controllerMouseEmulation()
+        }
+
+        inputManager = getSystemService(INPUT_SERVICE) as InputManager
+        inputManager?.registerInputDeviceListener(inputDeviceListener, null)
+
+        registerReceiver(
+            receiver,
+            object : IntentFilter() {
+                init {
+                    addAction(MiceWineUtils.Main.ACTION_RUN_WINE)
+                    addAction(MiceWineUtils.Main.ACTION_SETUP)
+                    addAction(MiceWineUtils.Main.ACTION_INSTALL_RAT)
+                    addAction(MiceWineUtils.Main.ACTION_INSTALL_ADTOOLS_DRIVER)
+                    addAction(MiceWineUtils.Main.ACTION_SELECT_FILE_MANAGER)
+                    addAction(MiceWineUtils.Main.ACTION_SELECT_ICON)
+                    addAction(MiceWineUtils.Main.ACTION_CREATE_WINE_PREFIX)
+                }
+            },
+        )
+
+        onNewIntent(intent) // TODO do we need?
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (MiceWineUtils.Main.winePrefix?.exists() == true) {
+                WineWrapper.clearDrives()
+
+                (application.getSystemService(Context.STORAGE_SERVICE) as StorageManager).storageVolumes.forEach { volume ->
+                    if (volume.isRemovable) {
+                        WineWrapper.addDrive("${volume.directory}")
+                    }
+                }
+            }
+        }
+
+        /* Back to Pluvia */
         PluviaApp.events.on<AndroidEvent.EndProcess, Unit>(onEndProcess)
 
         setContent {
             var hasNotificationPermission by remember { mutableStateOf(false) }
             val permissionLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission(),
-            ) { isGranted ->
-                hasNotificationPermission = isGranted
-            }
+                onResult = { hasNotificationPermission = it },
+            )
 
             LaunchedEffect(Unit) {
                 if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -107,8 +190,6 @@ class MainActivity : ComponentActivity() {
                     .directory(context.cacheDir.resolve("image_cache").toOkioPath())
                     .build()
 
-                // val logger = if (BuildConfig.DEBUG) DebugLogger() else null
-
                 ImageLoader.Builder(context)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .memoryCache(memoryCache)
@@ -118,29 +199,45 @@ class MainActivity : ComponentActivity() {
                         add(IconDecoder.Factory())
                         add(AnimatedPngDecoder.Factory())
                     }
-                    // .logger(logger)
+                    // .logger(if (BuildConfig.DEBUG) DebugLogger() else null)
                     .build()
             }
 
-            CompositionLocalProvider(LocalCoilImageLoader provides imageLoader) {
-                PluviaMain()
-            }
+            CompositionLocalProvider(
+                value = LocalCoilImageLoader provides imageLoader,
+                content = { PluviaMain() },
+            )
         }
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+
+        if (!MiceWineUtils.Main.usrDir.exists()) {
+            // TODO go back to setup (WelcomeActivity)
+        } else {
+            MiceWineUtils.Main.setupDone = true
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        lifecycleScope.launch { runXServer(":0") }
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
+        unregisterReceiver(receiver)
+        inputManager?.unregisterInputDeviceListener(inputDeviceListener)
+
         PluviaApp.events.emit(AndroidEvent.ActivityDestroyed)
 
-        PluviaApp.events.off<AndroidEvent.SetSystemUIVisibility, Unit>(onSetSystemUi)
-        PluviaApp.events.off<AndroidEvent.StartOrientator, Unit>(onStartOrientator)
-        PluviaApp.events.off<AndroidEvent.SetAllowedOrientation, Unit>(onSetAllowedOrientation)
         PluviaApp.events.off<AndroidEvent.EndProcess, Unit>(onEndProcess)
 
         Timber.d(
-            "onDestroy - Index: %d, Connected: %b, Logged-In: %b, Changing-Config: %b",
-            index,
+            "onDestroy - Connected: %b, Logged-In: %b, Changing-Config: %b",
             SteamService.isConnected,
             SteamService.isLoggedIn,
             isChangingConfigurations,
@@ -152,122 +249,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-    //     // Log.d("MainActivity$index", "onKeyDown($keyCode):\n$event")
-    //     if (keyCode == KeyEvent.KEYCODE_BACK) {
-    //         PluviaApp.events.emit(AndroidEvent.BackPressed)
-    //         return true
-    //     }
-    //     return super.onKeyDown(keyCode, event)
-    // }
+    private suspend fun runXServer(display: String) = withContext(Dispatchers.IO) {
+        if (MiceWineUtils.Main.runningXServer && !MiceWineUtils.Main.setupDone) {
+            return@withContext
+        }
 
-    @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // Log.d("MainActivity$index", "dispatchKeyEvent(${event.keyCode}):\n$event")
+        MiceWineUtils.Main.runningXServer = true
 
-        var eventDispatched = PluviaApp.events.emit(AndroidEvent.KeyEvent(event)) { keyEvent ->
-            keyEvent.any { it }
-        } == true
+        ShellLoader.runCommand(
+            "env CLASSPATH=${getClassPath()} /system/bin/app_process / com.micewine.emu.CmdEntryPoint $display &> /dev/null",
+        )
 
-        // TODO: Temp'd removed this.
-        //  Idealy, compose handles back presses automaticially in which we can override it in certain composables.
-        //  Since LibraryScreen uses its own navigation system, this will need to be re-worked accordingly.
-//        if (!eventDispatched) {
-//            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-//                PluviaApp.events.emit(AndroidEvent.BackPressed)
-//                eventDispatched = true
-//            }
-//        }
-
-        return if (!eventDispatched) super.dispatchKeyEvent(event) else true
+        MiceWineUtils.Main.runningXServer = false
     }
 
-    override fun dispatchGenericMotionEvent(ev: MotionEvent?): Boolean {
-        // Log.d("MainActivity$index", "dispatchGenericMotionEvent(${ev?.deviceId}:${ev?.device?.name}):\n$ev")
-
-        val eventDispatched = PluviaApp.events.emit(AndroidEvent.MotionEvent(ev)) { event ->
-            event.any { it }
-        } == true
-
-        return if (!eventDispatched) super.dispatchGenericMotionEvent(ev) else true
+    private fun getClassPath(): String {
+        return File(getLibsPath()).parentFile?.parentFile?.absolutePath + "/base.apk"
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        // Log.d("MainActivity", "Requested orientation: $requestedOrientation => ${Orientation.fromActivityInfoValue(requestedOrientation)}")
-    }
-
-    private fun startOrientator() {
-        // Log.d("MainActivity$index", "Orientator starting up")
-
-        val orientationEventListener = object : OrientationEventListener(this) {
-            override fun onOrientationChanged(orientation: Int) {
-                currentOrientationChangeValue = if (orientation != ORIENTATION_UNKNOWN) {
-                    orientation
-                } else {
-                    currentOrientationChangeValue
-                }
-
-                setOrientationTo(currentOrientationChangeValue, availableOrientations)
-            }
-        }
-
-        if (orientationEventListener.canDetectOrientation()) {
-            orientationEventListener.enable()
-        }
-    }
-
-    private fun setOrientationTo(orientation: Int, conformTo: EnumSet<Orientation>) {
-        // Log.d("MainActivity$index", "Setting orientation to conform")
-
-        // reverse direction of orientation
-        val adjustedOrientation = 360 - orientation
-
-        // if our available orientations are empty then assume unspecified
-        val orientations = conformTo.ifEmpty { EnumSet.of(Orientation.UNSPECIFIED) }
-
-        var inRange = orientations
-            .filter { it.angleRanges.any { it.contains(adjustedOrientation) } }
-            .toTypedArray()
-
-        if (inRange.isEmpty()) {
-            // none of the available orientations conform to the reported orientation
-            // so set it to the original orientations in preparation for finding the
-            // nearest conforming orientation
-            inRange = orientations.toTypedArray()
-        }
-
-        // find the nearest orientation to the reported
-        val distances = orientations.map {
-            it to it.angleRanges.minOf { angleRange ->
-                angleRange.minOf { angle ->
-                    // since 0 can be represented as 360 and vice versa
-                    if (adjustedOrientation == 0 || adjustedOrientation == 360) {
-                        minOf(abs(angle), abs(angle - 360))
-                    } else {
-                        abs(angle - adjustedOrientation)
-                    }
-                }
-            }
-        }
-
-        val nearest = distances.minBy { it.second }
-
-        // set the requested orientation to the nearest if it is not already as long as it is nearer than what is currently set
-        val currentOrientationDist = distances
-            .firstOrNull { it.first.activityInfoValue == requestedOrientation }
-            ?.second
-            ?: Int.MAX_VALUE
-
-        if (requestedOrientation != nearest.first.activityInfoValue && currentOrientationDist > nearest.second) {
-            Timber.d(
-                "$adjustedOrientation => currentOrientation(" +
-                    "${Orientation.fromActivityInfoValue(requestedOrientation)}) " +
-                    "!= nearestOrientation(${nearest.first}) && " +
-                    "currentDistance($currentOrientationDist) > nearestDistance(${nearest.second})",
-            )
-
-            requestedOrientation = nearest.first.activityInfoValue
-        }
+    private fun getLibsPath(): String {
+        return this@MainActivity.applicationInfo.nativeLibraryDir
     }
 }

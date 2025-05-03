@@ -1,40 +1,40 @@
-//package com.OxGames.Pluvia.ui.screen.xserver
+package com.OxGames.Pluvia.ui.screen.xserver
 //
-//import android.annotation.SuppressLint
-//import android.content.Context
-//import androidx.lifecycle.ViewModel
-//import androidx.lifecycle.viewModelScope
-//import com.OxGames.Pluvia.BuildConfig
-//import com.OxGames.Pluvia.Constants
-//import com.OxGames.Pluvia.PluviaApp
-//import com.OxGames.Pluvia.PrefManager
-//import com.OxGames.Pluvia.R
-//import com.OxGames.Pluvia.data.LaunchInfo
-//import com.OxGames.Pluvia.events.AndroidEvent
-//import com.OxGames.Pluvia.events.SteamEvent
-//import com.OxGames.Pluvia.service.SteamService
-//import com.OxGames.Pluvia.utils.ContainerUtils
-//import dagger.hilt.android.lifecycle.HiltViewModel
-//import dagger.hilt.android.qualifiers.ApplicationContext
-//import java.io.File
-//import javax.inject.Inject
-//import kotlinx.coroutines.CoroutineScope
-//import kotlinx.coroutines.Dispatchers
-//import kotlinx.coroutines.channels.Channel
-//import kotlinx.coroutines.flow.MutableStateFlow
-//import kotlinx.coroutines.flow.StateFlow
-//import kotlinx.coroutines.flow.asStateFlow
-//import kotlinx.coroutines.flow.receiveAsFlow
-//import kotlinx.coroutines.flow.update
-//import kotlinx.coroutines.launch
-//import org.json.JSONException
-//import org.json.JSONObject
-//import timber.log.Timber
+// import android.annotation.SuppressLint
+// import android.content.Context
+// import androidx.lifecycle.ViewModel
+// import androidx.lifecycle.viewModelScope
+// import com.OxGames.Pluvia.BuildConfig
+// import com.OxGames.Pluvia.Constants
+// import com.OxGames.Pluvia.PluviaApp
+// import com.OxGames.Pluvia.PrefManager
+// import com.OxGames.Pluvia.R
+// import com.OxGames.Pluvia.data.LaunchInfo
+// import com.OxGames.Pluvia.events.AndroidEvent
+// import com.OxGames.Pluvia.events.SteamEvent
+// import com.OxGames.Pluvia.service.SteamService
+// import com.OxGames.Pluvia.utils.ContainerUtils
+// import dagger.hilt.android.lifecycle.HiltViewModel
+// import dagger.hilt.android.qualifiers.ApplicationContext
+// import java.io.File
+// import javax.inject.Inject
+// import kotlinx.coroutines.CoroutineScope
+// import kotlinx.coroutines.Dispatchers
+// import kotlinx.coroutines.channels.Channel
+// import kotlinx.coroutines.flow.MutableStateFlow
+// import kotlinx.coroutines.flow.StateFlow
+// import kotlinx.coroutines.flow.asStateFlow
+// import kotlinx.coroutines.flow.receiveAsFlow
+// import kotlinx.coroutines.flow.update
+// import kotlinx.coroutines.launch
+// import org.json.JSONException
+// import org.json.JSONObject
+// import timber.log.Timber
 //
-//@HiltViewModel
-//class XServerViewModel @Inject constructor(
+// @HiltViewModel
+// class XServerViewModel @Inject constructor(
 //    @ApplicationContext val context: Context,
-//) : ViewModel() {
+// ) : ViewModel() {
 //
 //    @SuppressLint("StaticFieldLeak")
 //    internal var xServerView: XServerView? = null
@@ -964,4 +964,4 @@
 //        changeWineAudioDriver(container, ImageFs.find(context))
 //        setupXEnvironment(_state.value.appId, bootToContainer, envVars, container)
 //    }
-//}
+// }

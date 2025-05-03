@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.EmptyScreen
@@ -34,7 +33,7 @@ import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.micewine.emu.fragments.EnvVarsSettingsFragment.Companion.ENV_VARS_KEY
+import com.micewine.emu.MiceWineUtils
 import timber.log.Timber
 
 // TODO strings
@@ -48,7 +47,7 @@ fun SettingsMiceWineEnvVariables(
     val expanded by remember { derivedStateOf { state.firstVisibleItemIndex == 0 } }
 
     var envVarsList by remember {
-        val list = listOf<MiceWineUtils.EnvironmentVariable>()
+        val list = listOf<MiceWineUtils.EnvVarsSettings.EnvironmentVariable>()
         mutableStateOf(list)
     }
     var dialogVisible by remember { mutableStateOf(false) }
@@ -58,7 +57,7 @@ fun SettingsMiceWineEnvVariables(
 
     val saveEnvironmentVariables: () -> Unit = {
         val varsJson = Gson().toJson(envVarsList)
-        PrefManager.setString(ENV_VARS_KEY, varsJson)
+        PrefManager.putString(MiceWineUtils.EnvVarsSettings.ENV_VARS_KEY, varsJson)
     }
 
     val showDialog: (Int?) -> Unit = { position ->
@@ -81,14 +80,13 @@ fun SettingsMiceWineEnvVariables(
     }
 
     LaunchedEffect(Unit) {
-        val savedVarsJson = PrefManager.getString(MiceWineUtils.ENV_VARS_KEY, null)
+        val savedVarsJson = PrefManager.getString(MiceWineUtils.EnvVarsSettings.ENV_VARS_KEY, null)
         savedVarsJson?.let {
-            val type = object : TypeToken<List<MiceWineUtils.EnvironmentVariable>>() {}.type
-            val savedVars = Gson().fromJson<List<MiceWineUtils.EnvironmentVariable>>(it, type)
+            val type = object : TypeToken<List<MiceWineUtils.EnvVarsSettings.EnvironmentVariable>>() {}.type
+            val savedVars = Gson().fromJson<List<MiceWineUtils.EnvVarsSettings.EnvironmentVariable>>(it, type)
             envVarsList = savedVars
         }
     }
-
 
     KeyValueDialog(
         visible = dialogVisible,
@@ -107,7 +105,7 @@ fun SettingsMiceWineEnvVariables(
             val value = tempVal.orEmpty().trim()
 
             if (key.isNotEmpty() && value.isNotEmpty()) {
-                val envVar = MiceWineUtils.EnvironmentVariable(key, value)
+                val envVar = MiceWineUtils.EnvVarsSettings.EnvironmentVariable(key, value)
                 val tempList = envVarsList.toMutableList()
                 if (tempPos == null) {
                     tempList.add(envVar)

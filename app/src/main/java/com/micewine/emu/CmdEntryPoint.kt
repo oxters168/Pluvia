@@ -19,13 +19,13 @@ import android.os.RemoteException
 import android.system.Os
 import android.view.Surface
 import androidx.annotation.Keep
-import timber.log.Timber
 import java.io.DataInputStream
 import java.io.OutputStream
 import java.io.PrintStream
 import java.net.InetAddress
 import java.net.ServerSocket
 import kotlin.system.exitProcess
+import timber.log.Timber
 
 @Keep
 @SuppressLint("StaticFieldLeak", "UnsafeDynamicallyLoadedCode")
@@ -45,7 +45,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
         intent.putExtra(null, bundle)
         intent.setPackage(targetPackage)
 
-        if (Os.getuid() == 0 || Os.getuid() == 2000) intent.setFlags(0x00400000 /* FLAG_RECEIVER_FROM_SHELL */)
+        if (Os.getuid() == 0 || Os.getuid() == 2000) intent.setFlags(0x00400000) // FLAG_RECEIVER_FROM_SHELL
 
         return intent
     }
@@ -120,6 +120,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
         const val ACTION_START: String = "com.micewine.emu.CmdEntryPoint.ACTION_START"
         const val PORT = 7892
         val MAGIC = "0xDEADBEEF".toByteArray()
+
         @JvmField
         val handler: Handler
         var ctx: Context?
@@ -141,10 +142,11 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
             try {
                 ctx!!.sendBroadcast(intent)
             } catch (e: Exception) {
-                if (e is NullPointerException && ctx == null)
+                if (e is NullPointerException && ctx == null) {
                     Timber.tag("Broadcast").i("Context is null, falling back to manual broadcasting")
-                else
+                } else {
                     Timber.tag("Broadcast").e(e, "Falling back to manual broadcasting, failed to broadcast intent through Context:")
+                }
 
                 val packageName: String
                 try {
@@ -227,10 +229,12 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                 context = if (System.getenv("OLD_CONTEXT") != null) {
                     ActivityThread.systemMain().systemContext
                 } else {
-                    (Class.forName
-                        ("sun.misc.Unsafe").getMethod
-                        ("allocateInstance", Class::class.java).invoke
-                        (unsafe, ActivityThread::class.java) as ActivityThread)
+                    (
+                        Class.forName
+                            ("sun.misc.Unsafe").getMethod
+                            ("allocateInstance", Class::class.java).invoke
+                            (unsafe, ActivityThread::class.java) as ActivityThread
+                        )
                         .systemContext
                 }
             } catch (e: Exception) {

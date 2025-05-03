@@ -5,14 +5,13 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.micewine.emu.activities.EmulationActivity.Companion.handler
 import com.micewine.emu.activities.EmulationActivity.Companion.sharedLogs
-import com.micewine.emu.fragments.InfoDialogFragment
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import timber.log.Timber
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 object ShellLoader {
     fun runCommandWithOutput(cmd: String, enableStdErr: Boolean = false): String = runBlocking(Dispatchers.IO) {
@@ -158,24 +157,27 @@ object ShellLoader {
 
                     Timber.tag("DLL Import").v("Error loading '$missingDllName'")
 
-                    InfoDialogFragment(
-                        "Missing DLL",
-                        "Error loading '$missingDllName'",
-                    ).show(supportFragmentManager, "")
+                    // TODO()
+                    // InfoDialogFragment(
+                    //     "Missing DLL",
+                    //     "Error loading '$missingDllName'",
+                    // ).show(supportFragmentManager, "")
                 } else if (text.contains("VK_ERROR_DEVICE_LOST")) {
                     Timber.tag("VK Driver").v("VK_ERROR_DEVICE_LOST")
 
-                    InfoDialogFragment(
-                        "VK_ERROR_DEVICE_LOST",
-                        "Error on Vulkan Graphics Driver 'VK_ERROR_DEVICE_LOST'",
-                    ).show(supportFragmentManager, "")
+                    // TODO()
+                    // InfoDialogFragment(
+                    //     "VK_ERROR_DEVICE_LOST",
+                    //     "Error on Vulkan Graphics Driver 'VK_ERROR_DEVICE_LOST'",
+                    // ).show(supportFragmentManager, "")
                 } else if (text.contains("X_CreateWindow")) {
                     Timber.tag("X11 Driver").v("BadWindow: X_CreateWindow")
 
-                    InfoDialogFragment(
-                        "X_CreateWindow",
-                        "Error on Creating X Window 'X_CreateWindow'",
-                    ).show(supportFragmentManager, "")
+                    // TODO()
+                    // InfoDialogFragment(
+                    //     "X_CreateWindow",
+                    //     "Error on Creating X Window 'X_CreateWindow'",
+                    // ).show(supportFragmentManager, "")
                 }
             }
         }

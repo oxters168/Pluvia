@@ -81,7 +81,6 @@ data class SettingsPane(
                 )
             },
         )
-
     }
 }
 
@@ -261,7 +260,6 @@ private fun SettingsScreenContent(
                         }
 
                         else -> EmptyScreen("Select a setting option.")
-
                     }
                 }
             }

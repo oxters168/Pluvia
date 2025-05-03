@@ -40,7 +40,6 @@ fun SettingsGroupEmulation(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
-
         SettingsGroup(
             title = { Text(text = "General") },
             content = {

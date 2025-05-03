@@ -17,7 +17,7 @@ import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @Composable
 fun EmptyScreen(
-    message: String
+    message: String,
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Surface(

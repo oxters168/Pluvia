@@ -12,9 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.OxGames.Pluvia.MiceWineUtils
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
+import com.micewine.emu.MiceWineUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,8 +40,8 @@ internal fun SettingsMiceWineSound(
                 description = null,
                 spinnerOptions = arrayOf("SLES", "AAudio"),
                 type = SettingsItemType.SPINNER,
-                defaultValue = MiceWineUtils.PA_SINK_DEFAULT_VALUE,
-                key = MiceWineUtils.PA_SINK,
+                defaultValue = MiceWineUtils.GeneralSettings.PA_SINK_DEFAULT_VALUE,
+                key = MiceWineUtils.GeneralSettings.PA_SINK,
             )
         }
     }

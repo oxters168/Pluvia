@@ -120,8 +120,8 @@ import com.skydoves.landscapist.coil.CoilImage
 import `in`.dragonbra.javasteam.enums.EResult
 import `in`.dragonbra.javasteam.steam.handlers.steamfriends.callback.ProfileInfoCallback
 import `in`.dragonbra.javasteam.types.SteamID
-import kotlinx.coroutines.launch
 import java.util.Date
+import kotlinx.coroutines.launch
 
 // TODO pressing back wont make the selected profile go to the initial details screen.
 

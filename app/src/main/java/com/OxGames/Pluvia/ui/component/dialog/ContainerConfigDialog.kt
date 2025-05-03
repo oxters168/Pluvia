@@ -2,7 +2,6 @@ package com.OxGames.Pluvia.ui.component.dialog
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.mapSaver
 import androidx.compose.ui.res.stringResource
 import com.OxGames.Pluvia.R
@@ -11,7 +10,7 @@ data class ContainerData(val beans: String = "") {
     companion object {
         val Saver = mapSaver(
             save = { mapOf() },
-            restore = { ContainerData() } ,
+            restore = { ContainerData() },
         )
     }
 }

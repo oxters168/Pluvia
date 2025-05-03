@@ -4,7 +4,8 @@ enum class HighlightState {
     HIGHLIGHT_SHORTCUTS,
     HIGHLIGHT_SETTINGS,
     HIGHLIGHT_FILES,
-    HIGHLIGHT_DONE;
+    HIGHLIGHT_DONE,
+    ;
 
     companion object {
         const val HIGHLIGHT_PREFERENCE_KEY = "tutorialState"

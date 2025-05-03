@@ -1,7 +1,6 @@
 package com.OxGames.Pluvia.ui.screen.xserver
 
 import androidx.compose.runtime.Composable
-import androidx.hilt.navigation.compose.hiltViewModel
 
 data object Window
 
