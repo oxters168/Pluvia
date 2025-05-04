@@ -18,8 +18,6 @@ import android.view.MotionEvent;
 import java.util.List;
 import java.util.TreeSet;
 
-import timber.log.Timber;
-
 /**
  * A set of functions to send users' activities, which are represented by Android classes, to
  * remote host machine. This class uses a {@link InputStub} to do the real injections.
@@ -54,7 +52,7 @@ public final class InputEventSender {
     }
 
     public void sendMouseDown(int button, boolean relative) {
-        if (!buttons.contains(button))
+        if (!buttons.contains(button)) 
             return;
         mInjector.sendMouseEvent(0, 0, button, true, relative);
     }
@@ -143,7 +141,7 @@ public final class InputEventSender {
         boolean pressed = e.getAction() == KeyEvent.ACTION_DOWN;
 
         if ((e.getFlags() & KeyEvent.FLAG_CANCELED) == KeyEvent.FLAG_CANCELED) {
-            Timber.tag("KeyEvent").d("We've got key event with FLAG_CANCELED, it will not be consumed. Details: %s", e);
+            android.util.Log.d("KeyEvent", "We've got key event with FLAG_CANCELED, it will not be consumed. Details: " + e);
             return true;
         }
 

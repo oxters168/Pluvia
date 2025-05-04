@@ -177,7 +177,6 @@ dependencies {
 
     // TODO remove unneeded stuff.
     // MiceWine
-    implementation(project(":app:stub"))
     implementation("net.lingala.zip4j:zip4j:2.11.5") // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
     implementation("org.apache.commons:commons-compress:1.26.1")
     implementation("com.google.code.gson:gson:2.12.1")

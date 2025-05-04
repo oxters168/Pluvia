@@ -33,8 +33,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
-import timber.log.Timber;
-
 /**
  * This class is responsible for handling Touch input from the user.  Touch events which manipulate
  * the local canvas are handled in this class and any input which should be sent to the remote host
@@ -152,13 +150,13 @@ public class TouchInputHandler {
             public void onInputDeviceAdded(int deviceId) {
                 InputDevice dev = InputDevice.getDevice(deviceId);
                 String name = dev != null ? dev.getName() : "null";
-                Timber.tag("InputDeviceListener").d("added " + name);
+                android.util.Log.d("InputDeviceListener", "added " + name);
                 refreshInputDevices();
             }
 
             @Override
             public void onInputDeviceRemoved(int deviceId) {
-                Timber.tag("InputDeviceListener").d("device removed");
+                android.util.Log.d("InputDeviceListener", "device removed");
                 refreshInputDevices();
             }
 
@@ -166,7 +164,7 @@ public class TouchInputHandler {
             public void onInputDeviceChanged(int deviceId) {
                 InputDevice dev = InputDevice.getDevice(deviceId);
                 String name = dev != null ? dev.getName() : "null";
-                Timber.tag("InputDeviceListener").d("changed " + name);
+                android.util.Log.d("InputDeviceListener", "changed " + name);
                 refreshInputDevices();
             }
         }, null);
@@ -180,16 +178,16 @@ public class TouchInputHandler {
     static public void refreshInputDevices() {
         AtomicBoolean stylusAvailable = new AtomicBoolean(false);
         AtomicBoolean externalKeyboardAvailable = new AtomicBoolean(false);
-        Timber.tag("DEVICES").d("external keyboard connected %s", stylusAvailable.get());
+        android.util.Log.d("DEVICES", "external keyboard connected " + stylusAvailable.get());
         Arrays.stream(InputDevice.getDeviceIds())
                 .mapToObj(InputDevice::getDevice)
                 .filter(Objects::nonNull)
                 .forEach((device) -> {
                     //noinspection DataFlowIssue
-                    Timber.tag("DEVICES").d("found device \"" + device.getName() + "\" " +
+                    android.util.Log.d("DEVICES", "found device \"" + device.getName() + "\" " +
                             (device.supportsSource(InputDevice.SOURCE_STYLUS) ? ((isExternal(device) ? "external " : "") + "stylus ") : "") +
                             ((device.supportsSource(InputDevice.SOURCE_KEYBOARD) && device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC) ? ((isExternal(device) ? "external " : "") + "keyboard ") : "") +
-                            "sources " + "0x%08X", device.getSources());
+                            "sources " + String.format("0x%08X", device.getSources()));
 
                     if (device.supportsSource(InputDevice.SOURCE_STYLUS))
                         stylusAvailable.set(true);
@@ -197,8 +195,8 @@ public class TouchInputHandler {
                     if (device.supportsSource(InputDevice.SOURCE_KEYBOARD) && device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC && isExternal(device))
                         externalKeyboardAvailable.set(true);
                 });
-        Timber.tag("DEVICES").d("requesting stylus %s", stylusAvailable.get());
-        Timber.tag("DEVICES").d("external keyboard connected %s", externalKeyboardAvailable.get());
+        android.util.Log.d("DEVICES", "requesting stylus " + stylusAvailable.get());
+        android.util.Log.d("DEVICES", "external keyboard connected " + externalKeyboardAvailable.get());
 
         LorieView.requestStylusEnabled(stylusAvailable.get());
         EmulationActivity.getInstance().setExternalKeyboardConnected(externalKeyboardAvailable.get());

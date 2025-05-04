@@ -5,16 +5,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.micewine.emu.activities.EmulationActivity.Companion.handler
 import com.micewine.emu.activities.EmulationActivity.Companion.sharedLogs
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import timber.log.Timber
 
 object ShellLoader {
-    fun runCommandWithOutput(cmd: String, enableStdErr: Boolean = false): String = runBlocking(Dispatchers.IO) {
+    fun runCommandWithOutput(cmd: String, enableStdErr: Boolean = false): String {
         try {
             val shell = Runtime.getRuntime().exec("/system/bin/sh")
             val os = DataOutputStream(shell.outputStream).apply {
@@ -67,11 +65,11 @@ object ShellLoader {
             shell.waitFor()
             shell.destroy()
 
-            return@runBlocking "$output"
+            return "$output"
         } catch (_: IOException) {
         }
 
-        return@runBlocking ""
+        return ""
     }
 
     fun runCommand(cmd: String) {
@@ -92,7 +90,7 @@ object ShellLoader {
             Thread {
                 try {
                     var stdOut: String?
-                    while (stdout?.readLine().also { stdOut = it } != null) {
+                    while ( stdout?.readLine().also { stdOut = it } != null) {
                         sharedLogs?.appendText("$stdOut")
                         Timber.tag("ShellLoader").v("$stdOut")
                     }
@@ -157,7 +155,6 @@ object ShellLoader {
 
                     Timber.tag("DLL Import").v("Error loading '$missingDllName'")
 
-                    // TODO()
                     // InfoDialogFragment(
                     //     "Missing DLL",
                     //     "Error loading '$missingDllName'",
@@ -165,7 +162,6 @@ object ShellLoader {
                 } else if (text.contains("VK_ERROR_DEVICE_LOST")) {
                     Timber.tag("VK Driver").v("VK_ERROR_DEVICE_LOST")
 
-                    // TODO()
                     // InfoDialogFragment(
                     //     "VK_ERROR_DEVICE_LOST",
                     //     "Error on Vulkan Graphics Driver 'VK_ERROR_DEVICE_LOST'",
@@ -173,10 +169,9 @@ object ShellLoader {
                 } else if (text.contains("X_CreateWindow")) {
                     Timber.tag("X11 Driver").v("BadWindow: X_CreateWindow")
 
-                    // TODO()
                     // InfoDialogFragment(
                     //     "X_CreateWindow",
-                    //     "Error on Creating X Window 'X_CreateWindow'",
+                    //     "Error on Creating X Window 'X_CreateWindow'"
                     // ).show(supportFragmentManager, "")
                 }
             }

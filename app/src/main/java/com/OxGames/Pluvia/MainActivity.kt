@@ -162,7 +162,7 @@ class MainActivity : ComponentActivity() {
         onNewIntent(intent) // TODO do we need?
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (MiceWineUtils.Main.winePrefix?.exists() == true) {
+            if (MiceWineUtils.WinePrefixManager.getWinePrefixFile(MiceWineUtils.Main.winePrefix!!).exists()) {
                 WineWrapper.clearDrives()
 
                 (application.getSystemService(Context.STORAGE_SERVICE) as StorageManager).storageVolumes.forEach { volume ->

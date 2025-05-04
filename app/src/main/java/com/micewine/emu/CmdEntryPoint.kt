@@ -17,6 +17,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.RemoteException
 import android.system.Os
+import android.util.Log
 import android.view.Surface
 import androidx.annotation.Keep
 import java.io.DataInputStream
@@ -25,7 +26,6 @@ import java.io.PrintStream
 import java.net.InetAddress
 import java.net.ServerSocket
 import kotlin.system.exitProcess
-import timber.log.Timber
 
 @Keep
 @SuppressLint("StaticFieldLeak", "UnsafeDynamicallyLoadedCode")
@@ -45,7 +45,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
         intent.putExtra(null, bundle)
         intent.setPackage(targetPackage)
 
-        if (Os.getuid() == 0 || Os.getuid() == 2000) intent.setFlags(0x00400000) // FLAG_RECEIVER_FROM_SHELL
+        if (Os.getuid() == 0 || Os.getuid() == 2000) intent.setFlags(0x00400000 /* FLAG_RECEIVER_FROM_SHELL */)
 
         return intent
     }
@@ -75,21 +75,20 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                 before running micewine-emu, the initial sendBroadcast had no effect because no one
                 received the intent. To allow the application to reconnect freely, we will listen on
                 port `PORT` and when receiving a magic phrase, we will send another intent.
-             */
-            Timber.tag("CmdEntryPoint").e("Listening port $PORT")
+             */Log.e("CmdEntryPoint", "Listening port $PORT")
             try {
                 ServerSocket(PORT, 0, InetAddress.getByName("127.0.0.1")).use { listeningSocket ->
                     listeningSocket.reuseAddress = true
                     while (true) {
                         try {
                             listeningSocket.accept().use { client ->
-                                Timber.tag("CmdEntryPoint").e("Somebody connected!")
+                                Log.e("CmdEntryPoint", "Somebody connected!")
                                 // We should ensure that it is some
                                 val b = ByteArray(MAGIC.size)
                                 val reader = DataInputStream(client.getInputStream())
                                 reader.readFully(b)
                                 if (MAGIC.contentEquals(b)) {
-                                    Timber.tag("CmdEntryPoint").e("New client connection!")
+                                    Log.e("CmdEntryPoint", "New client connection!")
                                     context.sendBroadcast(intent)
                                 }
                             }
@@ -120,7 +119,6 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
         const val ACTION_START: String = "com.micewine.emu.CmdEntryPoint.ACTION_START"
         const val PORT = 7892
         val MAGIC = "0xDEADBEEF".toByteArray()
-
         @JvmField
         val handler: Handler
         var ctx: Context?
@@ -142,11 +140,15 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
             try {
                 ctx!!.sendBroadcast(intent)
             } catch (e: Exception) {
-                if (e is NullPointerException && ctx == null) {
-                    Timber.tag("Broadcast").i("Context is null, falling back to manual broadcasting")
-                } else {
-                    Timber.tag("Broadcast").e(e, "Falling back to manual broadcasting, failed to broadcast intent through Context:")
-                }
+                if (e is NullPointerException && ctx == null) Log.i(
+                    "Broadcast",
+                    "Context is null, falling back to manual broadcasting"
+                )
+                else Log.e(
+                    "Broadcast",
+                    "Falling back to manual broadcasting, failed to broadcast intent through Context:",
+                    e
+                )
 
                 val packageName: String
                 try {
@@ -171,7 +173,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
 
                 val sender = am.getIntentSender(
                     1, packageName, null, null, 0, arrayOf(intent),
-                    null, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_ONE_SHOT, null, 0,
+                    null, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_ONE_SHOT, null, 0
                 )
                 try {
                     IIntentSender::class.java
@@ -183,24 +185,20 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                             IBinder::class.java,
                             IIntentReceiver::class.java,
                             String::class.java,
-                            Bundle::class.java,
+                            Bundle::class.java
                         )
-                        .invoke(
-                            sender, 0, intent, null, null,
-                            object : IIntentReceiver.Stub() {
-                                override fun performReceive(
-                                    i: Intent,
-                                    r: Int,
-                                    d: String,
-                                    e: Bundle,
-                                    o: Boolean,
-                                    s: Boolean,
-                                    a: Int,
-                                ) {
-                                }
-                            },
-                            null, null,
-                        )
+                        .invoke(sender, 0, intent, null, null, object : IIntentReceiver.Stub() {
+                            override fun performReceive(
+                                i: Intent,
+                                r: Int,
+                                d: String,
+                                e: Bundle,
+                                o: Boolean,
+                                s: Boolean,
+                                a: Int
+                            ) {
+                            }
+                        }, null, null)
                 } catch (ex: Exception) {
                     throw RuntimeException(ex)
                 }
@@ -219,26 +217,20 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                 val unsafe = f[null]
                 // Hiding harmless framework errors, like this:
                 // java.io.FileNotFoundException: /data/system/theme_config/theme_compatibility.xml: open failed: ENOENT (No such file or directory)
-                System.setErr(
-                    PrintStream(
-                        object : OutputStream() {
-                            override fun write(arg0: Int) {}
-                        },
-                    ),
-                )
+                System.setErr(PrintStream(object : OutputStream() {
+                    override fun write(arg0: Int) {}
+                }))
                 context = if (System.getenv("OLD_CONTEXT") != null) {
                     ActivityThread.systemMain().systemContext
                 } else {
-                    (
-                        Class.forName
-                            ("sun.misc.Unsafe").getMethod
-                            ("allocateInstance", Class::class.java).invoke
-                            (unsafe, ActivityThread::class.java) as ActivityThread
-                        )
+                    (Class.forName
+                        ("sun.misc.Unsafe").getMethod
+                        ("allocateInstance", Class::class.java).invoke
+                        (unsafe, ActivityThread::class.java) as ActivityThread)
                         .systemContext
                 }
             } catch (e: Exception) {
-                Timber.tag("Context").e(e, "Failed to instantiate context:")
+                Log.e("Context", "Failed to instantiate context:", e)
                 context = null
             } finally {
                 System.setErr(err)
@@ -256,7 +248,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
             try {
                 if (Looper.getMainLooper() == null) Looper.prepareMainLooper()
             } catch (e: Exception) {
-                Timber.tag("CmdEntryPoint").e(e, "Something went wrong when preparing MainLooper")
+                Log.e("CmdEntryPoint", "Something went wrong when preparing MainLooper", e)
             }
             handler = Handler()
             ctx = createContext()
@@ -269,7 +261,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                 try {
                     System.load(libPath)
                 } catch (e: Exception) {
-                    Timber.tag("CmdEntryPoint").e(e, "Failed to dlopen $libPath")
+                    Log.e("CmdEntryPoint", "Failed to dlopen $libPath", e)
                     System.err.println("Failed to load native library. Did you install the right apk? Try the universal one.")
                     exitProcess(134)
                 }

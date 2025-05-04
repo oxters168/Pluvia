@@ -6,7 +6,6 @@ import android.app.ActivityManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
@@ -39,6 +38,8 @@ import java.util.Collections
 import java.util.Locale
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /**
@@ -134,7 +135,7 @@ object MiceWineUtils {
         var ratPackagesDir = File("$appRootDir/packages")
         var appBuiltinRootfs: Boolean = false
         var deviceArch = Build.SUPPORTED_ABIS[0].replace("arm64-v8a", "aarch64")
-        private val unixUsername = runCommandWithOutput("whoami").replace("\n", "")
+        val unixUsername = runCommandWithOutput("whoami").replace("\n", "")
         var customRootFSPath: String? = null
         var usrDir = File("$appRootDir/usr")
         var tmpDir = File("$usrDir/tmp")
@@ -165,10 +166,10 @@ object MiceWineUtils {
         var box64DynarecWait: String? = null
         var box64DynarecDirty: String? = null
         var box64DynarecForward: String? = null
-        var box64ShowSegv: String? = null
-        var box64ShowBt: String? = null
-        var box64NoSigSegv: String? = null
-        var box64NoSigill: String? = null
+        var box64ShowSegv: Boolean = false
+        var box64ShowBt: Boolean = false
+        var box64NoSigSegv: Boolean = false
+        var box64NoSigill: Boolean = false
         var wineLogLevel: String? = null
         var selectedBox64: String? = null
         var selectedD3DXRenderer: String? = null
@@ -184,7 +185,7 @@ object MiceWineUtils {
         var totalCpuUsage = "???%"
         var winePrefixesDir: File = File("$appRootDir/winePrefixes")
         var wineDisksFolder: File? = null
-        var winePrefix: File? = null
+        var winePrefix: String? = null
         var wineESync: Boolean = false
         var wineServices: Boolean = false
         var selectedCpuAffinity: String? = null
@@ -212,6 +213,7 @@ object MiceWineUtils {
         const val ACTION_STOP_ALL = "com.micewine.emu.ACTION_STOP_ALL"
         const val ACTION_SELECT_FILE_MANAGER = "com.micewine.emu.ACTION_SELECT_FILE_MANAGER"
         const val ACTION_SELECT_ICON = "com.micewine.emu.ACTION_SELECT_ICON"
+        const val ACTION_SELECT_EXE_PATH = "com.micewine.emu.ACTION_SELECT_EXE_PATH"
         const val ACTION_CREATE_WINE_PREFIX = "com.micewine.emu.ACTION_CREATE_WINE_PREFIX"
         const val RAM_COUNTER = "ramCounter"
         const val RAM_COUNTER_DEFAULT_VALUE = true
@@ -220,56 +222,7 @@ object MiceWineUtils {
         const val ENABLE_DEBUG_INFO = "debugInfo"
         const val ENABLE_DEBUG_INFO_DEFAULT_VALUE = true
         const val APP_VERSION = "appVersion"
-
-        fun setupWinePrefix(winePrefix: File, wine: String) {
-            if (!winePrefix.exists()) {
-                val driveC = File("$winePrefix/drive_c")
-                val wineUtils = File("$appRootDir/wine-utils")
-                val startMenu = File("$driveC/ProgramData/Microsoft/Windows/Start Menu")
-                val userSharedFolder = File("/storage/emulated/0/MiceWine")
-                val localAppData = File("$driveC/users/$unixUsername/AppData")
-                val localSavedGames = File("$driveC/users/$unixUsername/Saved Games")
-                val system32 = File("$driveC/windows/system32")
-                val syswow64 = File("$driveC/windows/syswow64")
-                val winePrefixConfigFile = File("$winePrefix/config")
-
-                winePrefix.mkdirs()
-                winePrefixConfigFile.writeText(wine + "\n")
-
-                selectedWine = wine
-
-                WineWrapper.wine("wineboot -i")
-
-                File("$appRootDir/wine-utils/CoreFonts").copyRecursively(File("$winePrefix/drive_c/windows/Fonts"), true)
-
-                localAppData.copyRecursively(File("$userSharedFolder/AppData"))
-                localAppData.deleteRecursively()
-
-                File("$userSharedFolder/AppData").mkdirs()
-
-                localSavedGames.deleteRecursively()
-
-                File("$userSharedFolder/Saved Games").mkdirs()
-
-                runCommand("ln -sf '$userSharedFolder/AppData' '$localAppData'")
-                runCommand("ln -sf '$userSharedFolder/Saved Games' '$localSavedGames'")
-
-                startMenu.deleteRecursively()
-
-                File("$wineUtils/Start Menu").copyRecursively(File("$startMenu"), true)
-                File("$wineUtils/Addons").copyRecursively(File("$driveC/Addons"), true)
-                File("$wineUtils/Addons/Windows").copyRecursively(File("$driveC/windows"), true)
-                File("$wineUtils/DirectX/x64").copyRecursively(system32, true)
-                File("$wineUtils/DirectX/x32").copyRecursively(syswow64, true)
-                File("$wineUtils/OpenAL/x64").copyRecursively(system32, true)
-                File("$wineUtils/OpenAL/x32").copyRecursively(syswow64, true)
-
-                WineWrapper.wine("regedit '$driveC/Addons/DefaultDLLsOverrides.reg'")
-                WineWrapper.wine("regedit '$driveC/Addons/Themes/DarkBlue/DarkBlue.reg'")
-                WineWrapper.wine("reg add HKCU\\\\Software\\\\Wine\\\\X11\\ Driver /t REG_SZ /v Decorated /d N /f")
-                WineWrapper.wine("reg add HKCU\\\\Software\\\\Wine\\\\X11\\ Driver /t REG_SZ /v Managed /d N /f")
-            }
-        }
+        const val ADRENOTOOLS_LD_PRELOAD_WORKAROUND = "adrenoToolsLdPreload"
 
         private fun strBoolToNumStr(strBool: String): String {
             return strBoolToNumStr(strBool.toBoolean())
@@ -307,6 +260,11 @@ object MiceWineUtils {
             selectedBox64 = box64Version ?: Shortcuts.getBox64Version(Game.selectedGameName)
             box64LogLevel = PrefManager.getString(GeneralSettings.BOX64_LOG, GeneralSettings.BOX64_LOG_DEFAULT_VALUE)
 
+            box64ShowSegv = PrefManager.getBoolean(GeneralSettings.BOX64_SHOWSEGV, GeneralSettings.BOX64_SHOWSEGV_DEFAULT_VALUE)
+            box64ShowBt = PrefManager.getBoolean(GeneralSettings.BOX64_SHOWBT, GeneralSettings.BOX64_SHOWBT_DEFAULT_VALUE)
+            box64NoSigill = PrefManager.getBoolean(GeneralSettings.BOX64_NOSIGILL, GeneralSettings.BOX64_NOSIGILL_DEFAULT_VALUE)
+            box64NoSigSegv = PrefManager.getBoolean(GeneralSettings.BOX64_NOSIGSEGV, GeneralSettings.BOX64_NOSIGSEGV_DEFAULT_VALUE)
+
             setBox64Preset(box64Preset)
 
             enableDRI3 = PrefManager.getBoolean(GeneralSettings.ENABLE_DRI3, GeneralSettings.ENABLE_DRI3_DEFAULT_VALUE)
@@ -324,22 +282,17 @@ object MiceWineUtils {
             enableWineVirtualDesktop = virtualDesktop ?: Shortcuts.getWineVirtualDesktop(Game.selectedGameName)
             selectedCpuAffinity = cpuAffinity ?: Shortcuts.getCpuAffinity(Game.selectedGameName)
 
-            selectedGLProfile = PrefManager.getString(
-                GeneralSettings.SELECTED_GL_PROFILE,
-                GeneralSettings.SELECTED_GL_PROFILE_DEFAULT_VALUE,
-            )
-            selectedDXVKHud = PrefManager.getString(
-                GeneralSettings.SELECTED_DXVK_HUD_PRESET,
-                GeneralSettings.SELECTED_DXVK_HUD_PRESET_DEFAULT_VALUE,
-            )
-            selectedMesaVkWsiPresentMode = PrefManager.getString(
-                GeneralSettings.SELECTED_MESA_VK_WSI_PRESENT_MODE,
-                GeneralSettings.SELECTED_MESA_VK_WSI_PRESENT_MODE_DEFAULT_VALUE,
-            )
-            selectedTuDebugPreset = PrefManager.getString(
-                GeneralSettings.SELECTED_TU_DEBUG_PRESET,
-                GeneralSettings.SELECTED_TU_DEBUG_PRESET_DEFAULT_VALUE,
-            )
+            selectedGLProfile =
+                PrefManager.getString(GeneralSettings.SELECTED_GL_PROFILE, GeneralSettings.SELECTED_GL_PROFILE_DEFAULT_VALUE)
+            selectedDXVKHud =
+                PrefManager.getString(GeneralSettings.SELECTED_DXVK_HUD_PRESET, GeneralSettings.SELECTED_DXVK_HUD_PRESET_DEFAULT_VALUE)
+            selectedMesaVkWsiPresentMode =
+                PrefManager.getString(
+                    GeneralSettings.SELECTED_MESA_VK_WSI_PRESENT_MODE,
+                    GeneralSettings.SELECTED_MESA_VK_WSI_PRESENT_MODE_DEFAULT_VALUE,
+                )
+            selectedTuDebugPreset =
+                PrefManager.getString(GeneralSettings.SELECTED_TU_DEBUG_PRESET, GeneralSettings.SELECTED_TU_DEBUG_PRESET_DEFAULT_VALUE)
 
             enableRamCounter = PrefManager.getBoolean(RAM_COUNTER, RAM_COUNTER_DEFAULT_VALUE)
             enableCpuCounter = PrefManager.getBoolean(CPU_COUNTER, CPU_COUNTER_DEFAULT_VALUE)
@@ -351,62 +304,58 @@ object MiceWineUtils {
             vulkanDriverDeviceName = getVulkanDriverInfo("deviceName") + if (useAdrenoTools) " (AdrenoTools)" else ""
             vulkanDriverDriverVersion = getVulkanDriverInfo("driverVersion").split(" ")[0]
 
-            winePrefix = File("$winePrefixesDir/${PrefManager.getString(GeneralSettings.SELECTED_WINE_PREFIX, "default")}")
-            wineDisksFolder = File("$winePrefix/dosdevices/")
+            winePrefix = WinePrefixManager.getSelectedWinePrefix()
+            wineDisksFolder = File("$winePrefixesDir/$winePrefix/dosdevices/")
 
-            val winePrefixConfigFile = File("$winePrefix/config")
+            val winePrefixConfigFile = File("$winePrefixesDir/$winePrefix/config")
             if (winePrefixConfigFile.exists()) {
                 selectedWine = winePrefixConfigFile.readLines()[0]
             }
 
             fileManagerDefaultDir = wineDisksFolder!!.path
 
-            paSink = PrefManager.getString(
-                GeneralSettings.PA_SINK,
-                GeneralSettings.PA_SINK_DEFAULT_VALUE,
-            )?.lowercase(Locale.getDefault())
+            paSink = PrefManager.getString(GeneralSettings.PA_SINK, GeneralSettings.PA_SINK_DEFAULT_VALUE)?.lowercase(Locale.getDefault())
         }
 
         private fun setBox64Preset(name: String?) {
-            var selectedBox64Preset = name ?: PrefManager.getString(PresetManager.SELECTED_BOX64_PRESET_KEY, "default")!!
+            var selectedBox64Preset = name ?: PrefManager.getString(PresetManager.SELECTED_BOX64_PRESET, "default")!!
 
-            if (name == "--") selectedBox64Preset = PrefManager.getString(PresetManager.SELECTED_BOX64_PRESET_KEY, "default")!!
+            if (name == "--") selectedBox64Preset = PrefManager.getString(PresetManager.SELECTED_BOX64_PRESET, "default")!!
 
-            box64Mmap32 = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_MMAP32)[0],
-            )
-            box64Avx = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_AVX)[0]
-            box64Sse42 = strBoolToNumStr(strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_SSE42)[0])
-            box64DynarecBigblock = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_BIGBLOCK)[0]
-            box64DynarecStrongmem = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_STRONGMEM)[0]
-            box64DynarecWeakbarrier = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_WEAKBARRIER)[0]
-            box64DynarecPause = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_PAUSE)[0]
-            box64DynarecX87double = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_X87DOUBLE)[0],
-            )
-            box64DynarecFastnan = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_FASTNAN)[0],
-            )
-            box64DynarecFastround = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_FASTROUND)[0],
-            )
-            box64DynarecSafeflags = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_SAFEFLAGS)[0]
-            box64DynarecCallret = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_CALLRET)[0],
-            )
-            box64DynarecAlignedAtomics = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_ALIGNED_ATOMICS)[0],
-            )
-            box64DynarecNativeflags = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_NATIVEFLAGS)[0],
-            )
-            box64DynarecWait = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_WAIT)[0],
-            )
-            box64DynarecDirty = strBoolToNumStr(
-                strBool = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_DIRTY)[0],
-            )
-            box64DynarecForward = Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_FORWARD)[0]
+            box64Mmap32 =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_MMAP32)[0])
+            box64Avx =
+                Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_AVX)[0]
+            box64Sse42 =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_SSE42)[0])
+            box64DynarecBigblock =
+                Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_BIGBLOCK)[0]
+            box64DynarecStrongmem =
+                Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_STRONGMEM)[0]
+            box64DynarecWeakbarrier =
+                Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_WEAKBARRIER)[0]
+            box64DynarecPause =
+                Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_PAUSE)[0]
+            box64DynarecX87double =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_X87DOUBLE)[0])
+            box64DynarecFastnan =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_FASTNAN)[0])
+            box64DynarecFastround =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_FASTROUND)[0])
+            box64DynarecSafeflags =
+                Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_SAFEFLAGS)[0]
+            box64DynarecCallret =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_CALLRET)[0])
+            box64DynarecAlignedAtomics =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_ALIGNED_ATOMICS)[0])
+            box64DynarecNativeflags =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_NATIVEFLAGS)[0])
+            box64DynarecWait =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_WAIT)[0])
+            box64DynarecDirty =
+                strBoolToNumStr(Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_DIRTY)[0])
+            box64DynarecForward =
+                Box64PresetManager.getBox64Mapping(selectedBox64Preset, GeneralSettings.BOX64_DYNAREC_FORWARD)[0]
         }
 
         fun copyAssets(activity: Activity, filename: String, outputPath: String) {
@@ -435,8 +384,67 @@ object MiceWineUtils {
             }
         }
 
-        private fun getVulkanDriverInfo(info: String): String {
-            return runCommandWithOutput("echo $(${getEnv()} DISPLAY= vulkaninfo | grep $info | cut -d '=' -f 2)")
+        private fun getVulkanDriverInfo(info: String, stdErr: Boolean = false): String {
+            return runCommandWithOutput("echo $(${getEnv()} DISPLAY= vulkaninfo | grep $info | cut -d '=' -f 2)", stdErr)
+        }
+
+        private val driverWorkaroundLdPreload = StringBuilder()
+        private var findingLdPreloadWorkaround = false
+
+        fun getLdPreloadWorkaround(): String {
+            fun locateLibraryBySymbol(symbol: String): String {
+                return runBlocking {
+                    val libFiles = File("/system/lib64").listFiles()?.filter { it.isFile && it.extension == "so" } ?: return@runBlocking ""
+                    val result = libFiles.map {
+                        async(Dispatchers.IO) {
+                            val readElf = runCommandWithOutput("echo $(readelf --dyn-syms $it | grep $symbol)")
+                            if (readElf.contains(symbol)) {
+                                val implementsSymbol = !readElf.contains("FUNC GLOBAL DEFAULT UND")
+                                if (implementsSymbol) {
+                                    return@async "${it.path}:"
+                                }
+                            }
+
+                            return@async null
+                        }
+                    }
+
+                    result.firstNotNullOfOrNull { it.await() } ?: ""
+                }
+            }
+
+            if (findingLdPreloadWorkaround) {
+                return "LD_PRELOAD=$driverWorkaroundLdPreload"
+            }
+
+            val savedLdPreload = PrefManager.getString(ADRENOTOOLS_LD_PRELOAD_WORKAROUND, "")
+            if (!savedLdPreload.isNullOrEmpty()) {
+                return "LD_PRELOAD=$savedLdPreload"
+            }
+
+            driverWorkaroundLdPreload.clear()
+
+            findingLdPreloadWorkaround = true
+
+            while (true) {
+                val res = getVulkanDriverInfo("", true)
+                if (res.contains("cannot locate symbol")) {
+                    val symbolName = res.split("\"")[1]
+                    driverWorkaroundLdPreload.append(locateLibraryBySymbol(symbolName))
+                } else if (res.contains("cannot find")) {
+                    val libName = res.split("\"")[1]
+                    driverWorkaroundLdPreload.append("/system/lib64/$libName:")
+                } else {
+                    break
+                }
+            }
+
+            findingLdPreloadWorkaround = false
+
+            PrefManager.putString(ADRENOTOOLS_LD_PRELOAD_WORKAROUND, "$driverWorkaroundLdPreload")
+
+
+            return "LD_PRELOAD=$driverWorkaroundLdPreload"
         }
 
         @Throws(IOException::class)
@@ -497,7 +505,7 @@ object MiceWineUtils {
             "960x540", "1280x720",
             "1366x768", "1600x900",
             "1920x1080", "2560x1440",
-            "3840x2160",
+            "3840x2160", "7680x4320",
         )
 
         val resolutions4_3 = arrayOf(
@@ -524,7 +532,7 @@ object MiceWineUtils {
             val width = resolution[0].toInt() * percent / 100
             val height = resolution[1].toInt() * percent / 100
 
-            return "${width}x$height"
+            return "${width}x${height}"
         }
 
         fun getNativeResolutions(activity: Activity): List<String> {
@@ -572,9 +580,9 @@ object MiceWineUtils {
         const val AXIS_HAT_Y_PLUS_KEY = "axisHatY+"
         const val AXIS_HAT_Y_MINUS_KEY = "axisHatY-"
 
-        const val SELECTED_CONTROLLER_PRESET_KEY = "selectedControllerPreset"
-        const val SELECTED_VIRTUAL_CONTROLLER_PRESET_KEY = "selectedVirtualControllerPreset"
-        const val SELECTED_BOX64_PRESET_KEY = "selectedBox64Preset"
+        const val SELECTED_CONTROLLER_PRESET = "selectedControllerPreset"
+        const val SELECTED_VIRTUAL_CONTROLLER_PRESET = "selectedVirtualControllerPreset"
+        const val SELECTED_BOX64_PRESET = "selectedBox64Preset"
 
         const val ACTION_EDIT_CONTROLLER_MAPPING = "com.micewine.emu.ACTION_EDIT_CONTROLLER_MAPPING"
         const val ACTION_EDIT_BOX64_PRESET = "com.micewine.emu.ACTION_EDIT_BOX64_PRESET"
@@ -1235,7 +1243,7 @@ object MiceWineUtils {
             // recyclerView?.adapter?.notifyItemRemoved(index)
 
             if (index == Preset.selectedPresetId) {
-                PrefManager.putString(PresetManager.SELECTED_BOX64_PRESET_KEY, presetListNames.first().titleSettings)
+                PrefManager.putString(PresetManager.SELECTED_BOX64_PRESET, presetListNames.first().titleSettings)
 
                 // recyclerView?.adapter?.notifyItemChanged(0)
             }
@@ -1357,7 +1365,6 @@ object MiceWineUtils {
     object ControllerPresetManager {
         private val presetListNames: MutableList<Preset.Item> = mutableListOf()
         private var presetList: MutableList<MutableList<String>> = getControllerPresets()
-        private var preferences: SharedPreferences? = null
         private var editShortcut: Boolean = false
 
         private val mappingMap = mapOf(
@@ -1463,7 +1470,7 @@ object MiceWineUtils {
 
         fun addControllerPreset(context: Context, name: String) {
             if (presetListNames.firstOrNull { it.titleSettings == name } != null) {
-                Toast.makeText(context, context.getString(com.micewine.emu.R.string.executable_already_added), Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.executable_already_added), Toast.LENGTH_LONG).show()
                 return
             }
 
@@ -1492,7 +1499,7 @@ object MiceWineUtils {
             // recyclerView?.adapter?.notifyItemRemoved(index)
 
             if (index == Preset.selectedPresetId) {
-                PrefManager.putString(PresetManager.SELECTED_CONTROLLER_PRESET_KEY, presetListNames.first().titleSettings)
+                PrefManager.putString(PresetManager.SELECTED_CONTROLLER_PRESET, presetListNames.first().titleSettings)
                 // recyclerView?.adapter?.notifyItemChanged(0)
             }
 
@@ -1518,7 +1525,7 @@ object MiceWineUtils {
                 activity.runOnUiThread {
                     Toast.makeText(
                         activity,
-                        activity.getString(com.micewine.emu.R.string.invalid_controller_preset_file),
+                        activity.getString(R.string.invalid_controller_preset_file),
                         Toast.LENGTH_LONG,
                     ).show()
                 }
@@ -1557,14 +1564,12 @@ object MiceWineUtils {
         }
 
         private fun saveControllerPresets() {
-            preferences?.edit {
-                putString("controllerPresetList", gson.toJson(presetList))
-                apply()
-            }
+            PrefManager.putString("controllerPresetList", gson.toJson(presetList))
+
         }
 
         fun getControllerPresets(): MutableList<MutableList<String>> {
-            val json = preferences?.getString("controllerPresetList", "")
+            val json = PrefManager.getString("controllerPresetList", "")
             val listType = object : TypeToken<MutableList<List<String>>>() {}.type
 
             return gson.fromJson(json, listType) ?: mutableListOf(
@@ -1582,7 +1587,6 @@ object MiceWineUtils {
     object VirtualControllerPresetManager {
         private val presetListNames: MutableList<Preset.Item> = mutableListOf()
         private var presetList: MutableList<VirtualControllerPreset> = mutableListOf()
-        var preferences: SharedPreferences? = null
         private var editShortcut: Boolean = false
 
         fun initialize(context: Context, boolean: Boolean = false) {
@@ -1651,11 +1655,7 @@ object MiceWineUtils {
             // recyclerView?.adapter?.notifyItemRemoved(index)
 
             if (index == Preset.selectedPresetId) {
-                preferences?.edit {
-                    putString(PresetManager.SELECTED_VIRTUAL_CONTROLLER_PRESET_KEY, presetListNames.first().titleSettings)
-                    apply()
-                }
-
+                PrefManager.putString(PresetManager.SELECTED_VIRTUAL_CONTROLLER_PRESET, presetListNames.first().titleSettings)
                 // recyclerView?.adapter?.notifyItemChanged(0)
             }
 
@@ -1746,14 +1746,12 @@ object MiceWineUtils {
         }
 
         private fun saveVirtualControllerPresets() {
-            preferences?.edit {
-                putString("virtualControllerPresetList", gson.toJson(presetList))
-                apply()
-            }
+            PrefManager.putString("virtualControllerPresetList", gson.toJson(presetList))
+
         }
 
         fun getVirtualControllerPresets(context: Context): MutableList<VirtualControllerPreset> {
-            val json = preferences?.getString("virtualControllerPresetList", "")
+            val json = PrefManager.getString("virtualControllerPresetList", "")
             val listType = object : TypeToken<MutableList<VirtualControllerPreset>>() {}.type
 
             return gson.fromJson(json, listType) ?: mutableListOf(
@@ -1858,5 +1856,121 @@ object MiceWineUtils {
 
         var lastSelectedButton = 0
         var lastSelectedType = BUTTON
+    }
+
+    object WinePrefixManager {
+        private val presetListNames: MutableList<Preset.Item> = mutableListOf()
+        private var presetList: MutableList<String> = mutableListOf()
+
+        fun initialize() {
+            presetList = getWinePrefixes().toMutableList()
+        }
+
+        fun getWinePrefixes(): MutableList<String> {
+            return Main.winePrefixesDir.listFiles()?.map { it.name }?.toMutableList() ?: mutableListOf()
+        }
+
+        fun getWinePrefixFile(name: String): File {
+            return File("${Main.winePrefixesDir}/$name")
+        }
+
+        fun getSelectedWinePrefix(): String {
+            return PrefManager.getString(GeneralSettings.SELECTED_WINE_PREFIX, "default") ?: "default"
+        }
+
+        fun putSelectedWinePrefix(name: String) {
+            PrefManager.putString(GeneralSettings.SELECTED_WINE_PREFIX, name)
+            Main.winePrefix = name
+        }
+
+        fun createWinePrefix(name: String, wineId: String) {
+            val winePrefix = File("${Main.winePrefixesDir}/$name")
+            if (!winePrefix.exists()) {
+                val driveC = File("$winePrefix/drive_c")
+                val wineUtils = File("${Main.appRootDir}/wine-utils")
+                val startMenu = File("$driveC/ProgramData/Microsoft/Windows/Start Menu")
+                val userSharedFolder = File("/storage/emulated/0/MiceWine")
+                val isProton = File("$driveC/users/steamuser").exists()
+
+                val wineUserDir: File = if (isProton) {
+                    File("$driveC/users/steamuser")
+                } else {
+                    File("$driveC/users/${Main.unixUsername}")
+                }
+
+                val localAppData = File("$wineUserDir/AppData")
+                val localSavedGames = File("$wineUserDir/Saved Games")
+                val system32 = File("$driveC/windows/system32")
+                val syswow64 = File("$driveC/windows/syswow64")
+                val winePrefixConfigFile = File("$winePrefix/config")
+                val wineFontsDirs = File("$winePrefix/drive_c/windows/Fonts")
+
+                winePrefix.mkdirs()
+                winePrefixConfigFile.writeText("$wineId\n$isProton\n")
+
+                Main.selectedWine = wineId
+
+                WineWrapper.wine("wineboot -i")
+
+                File("$wineUtils/CoreFonts").copyRecursively(wineFontsDirs, true)
+
+                localAppData.copyRecursively(
+                    File("$userSharedFolder/AppData"), true,
+                )
+                localAppData.deleteRecursively()
+
+                localSavedGames.deleteRecursively()
+
+                File("$userSharedFolder/AppData").mkdirs()
+                File("$userSharedFolder/Saved Games").mkdirs()
+
+                runCommand("ln -sf '$userSharedFolder/AppData' '$localAppData'")
+                runCommand("ln -sf '$userSharedFolder/Saved Games' '$localSavedGames'")
+
+                startMenu.deleteRecursively()
+
+                File("$wineUtils/Start Menu").copyRecursively(File("$startMenu"), true)
+                File("$wineUtils/Addons").copyRecursively(File("$driveC/Addons"), true)
+                File("$wineUtils/Addons/Windows").copyRecursively(File("$driveC/windows"), true)
+                File("$wineUtils/DirectX/x64").copyRecursively(system32, true)
+                File("$wineUtils/DirectX/x32").copyRecursively(syswow64, true)
+                File("$wineUtils/OpenAL/x64").copyRecursively(system32, true)
+                File("$wineUtils/OpenAL/x32").copyRecursively(syswow64, true)
+
+                WineWrapper.wine("regedit '$driveC/Addons/DefaultDLLsOverrides.reg'")
+                WineWrapper.wine("regedit '$driveC/Addons/Themes/DarkBlue/DarkBlue.reg'")
+                WineWrapper.wine("reg add HKCU\\\\Software\\\\Wine\\\\X11\\ Driver /t REG_SZ /v Decorated /d N /f")
+                WineWrapper.wine("reg add HKCU\\\\Software\\\\Wine\\\\X11\\ Driver /t REG_SZ /v Managed /d N /f")
+
+                presetList.add(name)
+                presetListNames.add(
+                    Preset.Item(name, CreatePreset.WINEPREFIX_PRESET, true, true),
+                )
+
+                //  recyclerView?.post {
+                //      recyclerView?.adapter?.notifyItemInserted(presetListNames.size)
+                //  }
+            }
+        }
+
+        fun deleteWinePrefix(name: String) {
+            val index = presetList.indexOfFirst { it == name }
+
+            if (getWinePrefixes().count() == 1) {
+                return
+            }
+
+            runCommand("rm -rf ${Main.winePrefixesDir}/$name")
+
+            presetList.removeAt(index)
+            presetListNames.removeAt(index)
+
+            // recyclerView?.adapter?.notifyItemRemoved(index)
+
+            if (index == Preset.selectedPresetId) {
+                PrefManager.putString(GeneralSettings.SELECTED_WINE_PREFIX, presetListNames.first().titleSettings)
+                //   recyclerView?.adapter?.notifyItemChanged(0)
+            }
+        }
     }
 }

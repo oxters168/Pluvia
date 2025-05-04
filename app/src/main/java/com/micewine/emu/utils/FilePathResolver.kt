@@ -7,9 +7,10 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import androidx.core.net.toUri
+import android.util.Log
 import com.micewine.emu.MiceWineUtils
 import java.io.File
+import androidx.core.net.toUri
 import timber.log.Timber
 
 object FilePathResolver {
@@ -161,7 +162,8 @@ object FilePathResolver {
         val column = "_data"
         val projection = arrayOf(column)
         try {
-            cursor = context.contentResolver.query(uri!!, projection, selection, selectionArgs, null)
+            cursor =
+                context.contentResolver.query(uri!!, projection, selection, selectionArgs, null)
             if (cursor != null && cursor.moveToFirst()) {
                 val index = cursor.getColumnIndexOrThrow(column)
                 return cursor.getString(index)
@@ -178,7 +180,10 @@ object FilePathResolver {
         var cursor: Cursor? = null
         val projection = arrayOf(MediaStore.Files.FileColumns.DISPLAY_NAME)
         try {
-            cursor = context.contentResolver.query(uri!!, projection, null, null, null)
+            cursor = context.contentResolver.query(
+                uri!!, projection, null, null,
+                null,
+            )
             if (cursor != null && cursor.moveToFirst()) {
                 val index = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DISPLAY_NAME)
                 return cursor.getString(index)
