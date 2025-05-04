@@ -180,9 +180,9 @@ dependencies {
     implementation(project(":app:stub"))
     implementation("net.lingala.zip4j:zip4j:2.11.5") // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
     implementation("org.apache.commons:commons-compress:1.26.1")
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.12.1")
     implementation("com.github.vatbub:mslinks:1.0.6.2")
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))

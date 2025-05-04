@@ -5,6 +5,7 @@ import `in`.dragonbra.javasteam.base.ClientMsgProtobuf
 import `in`.dragonbra.javasteam.base.IPacketMsg
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserverFriends.CMsgClientEmoticonList
 import `in`.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg
+import timber.log.Timber
 
 class EmoticonListCallback(packetMsg: IPacketMsg) : CallbackMsg() {
 
@@ -26,5 +27,7 @@ class EmoticonListCallback(packetMsg: IPacketMsg) : CallbackMsg() {
             )
             addAll(resp.body.stickersList.map { Emoticon(name = it.name, appID = it.appid, isSticker = true) })
         }
+
+        Timber.i("EmoticonListCallback with ${emoteList.size} items")
     }
 }

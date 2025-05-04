@@ -95,17 +95,21 @@ object PrefManager {
 
     @Suppress("SameParameterValue")
     private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T = runBlocking {
-        dataStore.data.first()[key] ?: defaultValue
+        val value = dataStore.data.first()[key] ?: defaultValue
+        Timber.d("Getting preference: $key with $value")
+        value
     }
 
     @Suppress("SameParameterValue")
     private fun <T> setPref(key: Preferences.Key<T>, value: T) {
+        Timber.d("Setting preference: $key with $value")
         scope.launch {
             dataStore.edit { pref -> pref[key] = value }
         }
     }
 
     private fun <T> removePref(key: Preferences.Key<T>) {
+        Timber.d("Removing preference: $key")
         scope.launch {
             dataStore.edit { pref -> pref.remove(key) }
         }

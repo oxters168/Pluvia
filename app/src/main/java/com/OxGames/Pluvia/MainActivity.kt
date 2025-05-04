@@ -58,10 +58,12 @@ class MainActivity : ComponentActivity() {
 
     private val inputDeviceListener: InputManager.InputDeviceListener = object : InputManager.InputDeviceListener {
         override fun onInputDeviceAdded(deviceId: Int) {
+            Timber.i("Input device added: $deviceId")
             InputDevice.getDevice(deviceId)
         }
 
         override fun onInputDeviceChanged(deviceId: Int) {
+            Timber.i("Input device changed: $deviceId")
             val inputDevice = InputDevice.getDevice(deviceId) ?: return
 
             if ((inputDevice.sources and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD) ||
@@ -83,6 +85,7 @@ class MainActivity : ComponentActivity() {
         }
 
         override fun onInputDeviceRemoved(deviceId: Int) {
+            Timber.i("Input device removed: $deviceId")
             val index = ControllerUtils.connectedPhysicalControllers.indexOfFirst { it.id == deviceId }
             if (index == -1) return
 
@@ -93,6 +96,7 @@ class MainActivity : ComponentActivity() {
 
     private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            Timber.i("recieved: ${intent.action}")
             when (intent.action) {
                 MiceWineUtils.Main.ACTION_RUN_WINE -> {
                 }
@@ -123,12 +127,19 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
+        Timber.i("onCreate")
+
         /* MiceWine Initialization */
         ControllerUtils.initialize(this@MainActivity)
 
         lifecycleScope.launch {
             ControllerUtils.controllerMouseEmulation()
         }
+
+        MiceWineUtils.Main.setSharedVars(this)
+
+        // MW may do migrations on version upgrades.
+        PrefManager.putString(MiceWineUtils.Main.APP_VERSION, BuildConfig.VERSION_NAME)
 
         inputManager = getSystemService(INPUT_SERVICE) as InputManager
         inputManager?.registerInputDeviceListener(inputDeviceListener, null)
@@ -156,6 +167,7 @@ class MainActivity : ComponentActivity() {
 
                 (application.getSystemService(Context.STORAGE_SERVICE) as StorageManager).storageVolumes.forEach { volume ->
                     if (volume.isRemovable) {
+                        Timber.i("Adding volume: ${volume.directory}")
                         WineWrapper.addDrive("${volume.directory}")
                     }
                 }
@@ -214,14 +226,18 @@ class MainActivity : ComponentActivity() {
         super.onPostCreate(savedInstanceState)
 
         if (!MiceWineUtils.Main.usrDir.exists()) {
+            Timber.i("onPostCreate - usrDir doesn't exist")
             // TODO go back to setup (WelcomeActivity)
         } else {
+            Timber.i("onPostCreate - setup done")
             MiceWineUtils.Main.setupDone = true
         }
     }
 
     override fun onResume() {
         super.onResume()
+
+        Timber.i("onResume")
 
         lifecycleScope.launch { runXServer(":0") }
     }
@@ -236,7 +252,7 @@ class MainActivity : ComponentActivity() {
 
         PluviaApp.events.off<AndroidEvent.EndProcess, Unit>(onEndProcess)
 
-        Timber.d(
+        Timber.i(
             "onDestroy - Connected: %b, Logged-In: %b, Changing-Config: %b",
             SteamService.isConnected,
             SteamService.isLoggedIn,
@@ -256,18 +272,15 @@ class MainActivity : ComponentActivity() {
 
         MiceWineUtils.Main.runningXServer = true
 
+        val classPath = getClassPath()
         ShellLoader.runCommand(
-            "env CLASSPATH=${getClassPath()} /system/bin/app_process / com.micewine.emu.CmdEntryPoint $display &> /dev/null",
+            "env CLASSPATH=$classPath /system/bin/app_process / com.micewine.emu.CmdEntryPoint $display &> /dev/null",
         )
 
         MiceWineUtils.Main.runningXServer = false
     }
 
-    private fun getClassPath(): String {
-        return File(getLibsPath()).parentFile?.parentFile?.absolutePath + "/base.apk"
-    }
+    private fun getClassPath(): String = File(getLibsPath()).parentFile?.parentFile?.absolutePath + "/base.apk"
 
-    private fun getLibsPath(): String {
-        return this@MainActivity.applicationInfo.nativeLibraryDir
-    }
+    private fun getLibsPath(): String = this@MainActivity.applicationInfo.nativeLibraryDir
 }

@@ -2,6 +2,7 @@ package com.OxGames.Pluvia.utils.application
 
 import android.content.Context
 import com.OxGames.Pluvia.PrefManager
+import timber.log.Timber
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -98,6 +99,7 @@ class CrashHandler(
     }
 
     private fun saveCrashToFile(throwable: Throwable) {
+        Timber.e("Crash log saving to file")
         try {
             val stackTrace = StringWriter().apply {
                 val pw = PrintWriter(this)

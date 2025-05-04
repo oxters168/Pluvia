@@ -59,6 +59,7 @@ class MainViewModel @Inject constructor(
     }
 
     private val onBackPressed: (AndroidEvent.BackPressed) -> Unit = {
+        Timber.i("Back pressed")
         viewModelScope.launch {
             _uiEvent.send(MainUiEvent.OnBackPressed)
         }
@@ -88,14 +89,24 @@ class MainViewModel @Inject constructor(
         PluviaApp.events.on<SteamEvent.LogonEnded, Unit>(onLogonEnded)
         PluviaApp.events.on<SteamEvent.LoggedOut, Unit>(onLoggedOut)
 
+        _state.update {
+            it.copy(
+                isSteamConnected = SteamService.isConnected,
+                hasCrashedLastStart = PrefManager.recentlyCrashed,
+                launchedAppId = SteamService.INVALID_APP_ID,
+            )
+        }
+
         viewModelScope.launch {
             launch {
                 appTheme.themeFlow.collect { value ->
+                    Timber.i("Theme changed: $value")
                     _state.update { it.copy(appTheme = value) }
                 }
             }
             launch {
                 appTheme.paletteFlow.collect { value ->
+                    Timber.i("Platte Style changed: $value")
                     _state.update { it.copy(paletteStyle = value) }
                 }
             }
@@ -111,16 +122,6 @@ class MainViewModel @Inject constructor(
         PluviaApp.events.off<SteamEvent.Disconnected, Unit>(onSteamDisconnected)
         PluviaApp.events.off<SteamEvent.LogonEnded, Unit>(onLogonEnded)
         PluviaApp.events.off<SteamEvent.LoggedOut, Unit>(onLoggedOut)
-    }
-
-    init {
-        _state.update {
-            it.copy(
-                isSteamConnected = SteamService.isConnected,
-                hasCrashedLastStart = PrefManager.recentlyCrashed,
-                launchedAppId = SteamService.INVALID_APP_ID,
-            )
-        }
     }
 
     fun setTheme(value: AppTheme) {

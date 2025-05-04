@@ -197,7 +197,7 @@ class SteamUnifiedFriends(
      * Acknowledge the message, this will mark other clients that we have read the message.
      */
     fun ackMessage(friendID: Long) {
-        Timber.d("Ack-ing message for friend: $friendID")
+        Timber.i("Ack-ing message for friend: $friendID")
         val request = SteammessagesFriendmessagesSteamclient.CFriendMessages_AckMessage_Notification.newBuilder().apply {
             steamidPartner = friendID
             timestamp = System.currentTimeMillis().div(1000).toInt()

@@ -2,14 +2,11 @@ package com.OxGames.Pluvia
 
 import android.app.Application
 import android.os.StrictMode
-import androidx.navigation.NavController
 import com.OxGames.Pluvia.events.EventDispatcher
 import com.OxGames.Pluvia.utils.application.CrashHandler
 import com.OxGames.Pluvia.utils.application.ReleaseTree
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
-
-typealias NavChangedListener = NavController.OnDestinationChangedListener
 
 @HiltAndroidApp
 class PluviaApp : Application() {
@@ -18,6 +15,7 @@ class PluviaApp : Application() {
         super.onCreate()
 
         if (BuildConfig.DEBUG) {
+            Timber.d("Debug enabled with StrictMode logging enabled")
             StrictMode.setVmPolicy(
                 StrictMode.VmPolicy.Builder()
                     .detectLeakedClosableObjects() // Detect when Closeable objects are not properly closed
@@ -34,6 +32,7 @@ class PluviaApp : Application() {
 
             Timber.plant(Timber.DebugTree())
         } else {
+            Timber.d("Release logging enabled")
             Timber.plant(ReleaseTree())
         }
 
@@ -46,6 +45,5 @@ class PluviaApp : Application() {
 
     companion object {
         internal val events: EventDispatcher = EventDispatcher()
-        internal var onDestinationChangedListener: NavChangedListener? = null
     }
 }

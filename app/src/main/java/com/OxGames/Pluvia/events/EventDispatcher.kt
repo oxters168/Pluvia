@@ -1,5 +1,6 @@
 package com.OxGames.Pluvia.events
 
+import timber.log.Timber
 import kotlin.reflect.KClass
 
 // written with the help of Claude 3.5
@@ -29,10 +30,13 @@ class EventDispatcher {
         val eventClass = E::class
         val typedListener = Pair(
             listener.toString(),
-            EventListener<Event<T>, T>({ event ->
-                // Log.d("EventDispatcher", "Dispatching event $event to $listener")
-                listener(event as E)
-            }, once),
+            EventListener<Event<T>, T>(
+                { event ->
+                    // Log.d("EventDispatcher", "Dispatching event $event to $listener")
+                    listener(event as E)
+                },
+                once,
+            ),
         )
         // Log.d("EventDispatcher", "Putting $typedListener in $eventClass")
         listeners.getOrPut(eventClass) { mutableListOf() }.add(typedListener as Pair<String, EventListener<Event<*>, *>>)
@@ -54,13 +58,16 @@ class EventDispatcher {
             }
         }
     }
+
     fun clearAllListeners() {
         listeners.clear()
     }
 
     inline fun <reified E : Event<T>, reified T> emit(event: E, noinline resultAggregator: ((Array<T>) -> T)? = null): T? {
         val eventClass = E::class
-        // Log.d("EventDispatcher", "Emitting $eventClass")
+
+        Timber.i("Emitting $eventClass")
+
         return listeners[eventClass]?.let { eventListeners ->
             // Create a new list for iteration to avoid concurrent modification
             val results = eventListeners.toList().map { eventListener ->
