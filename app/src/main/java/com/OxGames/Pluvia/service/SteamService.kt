@@ -238,38 +238,38 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         private var cachedServerListPath: String? = null
         private val serverListPath: String
-            get() {
-                cachedServerListPath?.let { return it }
+            get() = runBlocking(Dispatchers.IO) {
+                cachedServerListPath?.let { return@runBlocking it }
                 val value = Paths.get(instance!!.cacheDir.path, "server_list.bin").pathString
                 cachedServerListPath = value
-                return value
+                value
             }
 
         private var cachedDepotManifestsPath: String? = null
         private val depotManifestsPath: String
-            get() {
-                cachedDepotManifestsPath?.let { return it }
+            get() = runBlocking(Dispatchers.IO) {
+                cachedDepotManifestsPath?.let { return@runBlocking it }
                 val value = Paths.get(instance!!.dataDir.path, "Steam", "depot_manifests.zip").pathString
                 cachedDepotManifestsPath = value
-                return value
+                value
             }
 
         private var cachedDefaultAppInstallPath: String? = null
         val defaultAppInstallPath: String
-            get() {
-                cachedDefaultAppInstallPath?.let { return it }
+            get() = runBlocking(Dispatchers.IO) {
+                cachedDefaultAppInstallPath?.let { return@runBlocking it }
                 val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "common").pathString
                 cachedDefaultAppInstallPath = value
-                return value
+                value
             }
 
         private var cachedDefaultAppStagingPath: String? = null
         val defaultAppStagingPath: String
-            get() {
-                cachedDefaultAppStagingPath?.let { return it }
+            get() = runBlocking(Dispatchers.IO) {
+                cachedDefaultAppStagingPath?.let { return@runBlocking it }
                 val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "staging").pathString
                 cachedDefaultAppStagingPath = value
-                return value
+                value
             }
 
         val userSteamId: SteamID?
@@ -374,9 +374,9 @@ class SteamService : Service(), IChallengeUrlChanged {
             val depot = depotEntry.value
 
             (depot.manifests.isNotEmpty() || depot.sharedInstall) &&
-                (depot.osList.contains(OS.windows) || (!depot.osList.contains(OS.linux) && !depot.osList.contains(OS.macos))) &&
-                (depot.osArch == OSArch.Arch64 || depot.osArch == OSArch.Unknown) &&
-                (depot.dlcAppId == INVALID_APP_ID || getOwnedAppDlc(appId).containsKey(depot.depotId))
+                    (depot.osList.contains(OS.windows) || (!depot.osList.contains(OS.linux) && !depot.osList.contains(OS.macos))) &&
+                    (depot.osArch == OSArch.Arch64 || depot.osArch == OSArch.Unknown) &&
+                    (depot.dlcAppId == INVALID_APP_ID || getOwnedAppDlc(appId).containsKey(depot.depotId))
         }.orEmpty()
 
         fun getAppDirPath(appId: Int): String {
@@ -442,7 +442,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                         SplitInstallSessionStatus.INSTALLING,
                         SplitInstallSessionStatus.DOWNLOADED,
                         SplitInstallSessionStatus.DOWNLOADING,
-                        -> {
+                            -> {
                             if (!isActive) {
                                 Timber.i("ubuntufs module download cancelling due to scope becoming inactive")
                                 splitManager.requestCancelInstall(moduleInstallSessionId)
@@ -495,7 +495,7 @@ class SteamService : Service(), IChallengeUrlChanged {
             Timber.i("Found ${depotIds.size} depot(s) to download: $depotIds")
 
             val needsImageFsDownload = !ImageFs.find(instance!!).rootDir.exists() &&
-                !FileUtils.assetExists(instance!!.assets, "imagefs.txz")
+                    !FileUtils.assetExists(instance!!.assets, "imagefs.txz")
             val indexOffset = if (needsImageFsDownload) 1 else 0
 
             val downloadInfo = DownloadInfo(depotIds.size + indexOffset).also { downloadInfo ->
