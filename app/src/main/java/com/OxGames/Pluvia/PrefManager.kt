@@ -16,7 +16,6 @@ import com.OxGames.Pluvia.enums.AppFilter
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.enums.HomeDestination
 import com.OxGames.Pluvia.enums.Orientation
-import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.utils.application.Crypto
 import com.materialkolor.PaletteStyle
 import `in`.dragonbra.javasteam.enums.EPersonaState
@@ -125,19 +124,8 @@ object PrefManager {
     // endregion
 
     // region Login Info
-    private val APP_INSTALL_PATH = stringPreferencesKey("app_install_path")
-    var appInstallPath: String
-        get() = getPref(APP_INSTALL_PATH, SteamService.defaultAppInstallPath)
-        set(value) {
-            setPref(APP_INSTALL_PATH, value)
-        }
-
-    private val APP_STAGING_PATH = stringPreferencesKey("app_staging_path")
-    var appStagingPath: String
-        get() = getPref(APP_STAGING_PATH, SteamService.defaultAppStagingPath)
-        set(value) {
-            setPref(APP_STAGING_PATH, value)
-        }
+    val APP_INSTALL_PATH = stringPreferencesKey("app_install_path")
+    val APP_STAGING_PATH = stringPreferencesKey("app_staging_path")
 
     // Special: Because null value.
     private val CLIENT_ID = longPreferencesKey("client_id")

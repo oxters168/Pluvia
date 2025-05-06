@@ -9,7 +9,8 @@ object DriveUtils {
 
         fun getWindowsPath(absolute: Boolean = false): String {
             var path = "$letter:$WINDOWS_SEPARATOR" + relativePath.replace(
-                UNIX_SEPARATOR, WINDOWS_SEPARATOR)
+                UNIX_SEPARATOR, WINDOWS_SEPARATOR,
+            )
             if (absolute) {
                 path = drivesBaseDirectory.replace(UNIX_SEPARATOR, WINDOWS_SEPARATOR) + path
             }

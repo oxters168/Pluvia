@@ -10,6 +10,7 @@ import com.OxGames.Pluvia.enums.LoginResult
 import com.OxGames.Pluvia.enums.PathType
 import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.events.SteamEvent
+import com.OxGames.Pluvia.service.ServiceConnectionManager
 import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.screen.PluviaScreen
 import com.OxGames.Pluvia.ui.screen.xserver.Window
@@ -21,6 +22,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,6 +31,7 @@ import timber.log.Timber
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val appTheme: IAppTheme,
+    val service: ServiceConnectionManager,
 ) : ViewModel() {
 
     sealed class MainUiEvent {
@@ -91,13 +94,18 @@ class MainViewModel @Inject constructor(
 
         _state.update {
             it.copy(
-                isSteamConnected = SteamService.isConnected,
                 hasCrashedLastStart = PrefManager.recentlyCrashed,
                 launchedAppId = SteamService.INVALID_APP_ID,
             )
         }
 
         viewModelScope.launch {
+            launch {
+                SteamService.isConnected.collect { value ->
+                    Timber.i("Steam Connected: $value")
+                    _state.update { it.copy(isSteamConnected = value) }
+                }
+            }
             launch {
                 appTheme.themeFlow.collect { value ->
                     Timber.i("Theme changed: $value")
@@ -192,10 +200,10 @@ class MainViewModel @Inject constructor(
 
     fun exitSteamApp(context: Context, appId: Int) {
         viewModelScope.launch {
-            SteamService.notifyRunningProcesses()
-            SteamService.closeApp(appId) { prefix ->
+            service.serviceConnection!!.notifyRunningProcesses()
+            service.serviceConnection!!.closeApp(appId) { prefix ->
                 PathType.from(prefix).toAbsPath(context, appId)
-            }.await()
+            }
         }
     }
 

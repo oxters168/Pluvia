@@ -37,7 +37,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,11 +66,9 @@ import androidx.compose.ui.unit.dp
 import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.Emoticon
-import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
-import timber.log.Timber
 
 /**
  * Heavily referenced from:
@@ -91,6 +88,7 @@ enum class EmojiStickerSelector {
 @Composable
 fun ChatInput(
     modifier: Modifier = Modifier,
+    emotes: List<Emoticon>,
     onMessageSent: (String) -> Unit,
     onTyping: () -> Unit,
     onResetScroll: () -> Unit,
@@ -146,6 +144,7 @@ fun ChatInput(
             )
 
             SelectorExpanded(
+                emotes = emotes,
                 isEmoticonsShowing = isEmoticonsShowing,
                 onTextAdded = { textState = textState.addText(":$it: ") },
                 onStickerAdded = {
@@ -173,6 +172,7 @@ private fun TextFieldValue.addText(newString: String): TextFieldValue {
 
 @Composable
 private fun SelectorExpanded(
+    emotes: List<Emoticon>,
     isEmoticonsShowing: EmojiStickerSelector,
     onTextAdded: (String) -> Unit,
     onStickerAdded: (String) -> Unit,
@@ -189,12 +189,6 @@ private fun SelectorExpanded(
     }
 
     var selected by remember { mutableStateOf(EmojiStickerSelector.EMOJI) }
-
-    var emotes by rememberSaveable { mutableStateOf(listOf<Emoticon>()) }
-    LaunchedEffect(isEmoticonsShowing) {
-        emotes = SteamService.fetchEmoticons()
-        Timber.d("Emote size: ${emotes.size}")
-    }
 
     Surface(tonalElevation = 8.dp) {
         when (isEmoticonsShowing) {
@@ -474,6 +468,13 @@ fun Preview_ChatInput() {
         ) {
             Box(modifier = Modifier.weight(1f))
             ChatInput(
+                emotes = List(10) {
+                    Emoticon(
+                        name = "Emoticon $it",
+                        appID = it,
+                        isSticker = it % 2 == 0,
+                    )
+                },
                 onMessageSent = {},
                 onTyping = {},
                 onResetScroll = {},

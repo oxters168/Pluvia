@@ -1,7 +1,7 @@
 package com.OxGames.Pluvia.events
 
-import timber.log.Timber
 import kotlin.reflect.KClass
+import timber.log.Timber
 
 // written with the help of Claude 3.5
 sealed interface Event<T>

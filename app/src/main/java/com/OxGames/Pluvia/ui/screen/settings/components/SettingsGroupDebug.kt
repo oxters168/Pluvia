@@ -2,7 +2,6 @@ package com.OxGames.Pluvia.ui.screen.settings.components
 
 import android.content.res.Configuration
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.combinedClickable
@@ -32,7 +31,6 @@ import coil.annotation.ExperimentalCoilApi
 import coil.imageLoader
 import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.R
-import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.OxGames.Pluvia.ui.theme.settingsTileColorsDebug
@@ -47,6 +45,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsGroupDebug(
     onShowLog: () -> Unit,
+    onClearPreference: () -> Unit,
+    onClearDatabase: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -109,10 +109,7 @@ fun SettingsGroupDebug(
             content = {
                 SettingsMenuLink(
                     modifier = Modifier.combinedClickable(
-                        onLongClick = {
-                            SteamService.logOut()
-                            (context as ComponentActivity).finishAffinity()
-                        },
+                        onLongClick = onClearPreference,
                         onClick = {
                             Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
                         },
@@ -126,11 +123,7 @@ fun SettingsGroupDebug(
 
                 SettingsMenuLink(
                     modifier = Modifier.combinedClickable(
-                        onLongClick = {
-                            SteamService.stop()
-                            SteamService.clearDatabase()
-                            (context as ComponentActivity).finishAffinity()
-                        },
+                        onLongClick = onClearDatabase,
                         onClick = {
                             Toast.makeText(context, context.getString(R.string.toast_settings_activate), Toast.LENGTH_SHORT).show()
                         },
@@ -202,7 +195,7 @@ fun SettingsGroupDebug(
 private fun Preview_SettingsGroupDebug() {
     PluviaTheme {
         Surface {
-            SettingsGroupDebug(onShowLog = {})
+            SettingsGroupDebug(onShowLog = {}, onClearPreference = {}, onClearDatabase = {})
         }
     }
 }

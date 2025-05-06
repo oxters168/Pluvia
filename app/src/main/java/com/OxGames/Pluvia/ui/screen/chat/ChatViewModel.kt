@@ -9,7 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.OxGames.Pluvia.db.dao.EmoticonDao
 import com.OxGames.Pluvia.db.dao.FriendMessagesDao
 import com.OxGames.Pluvia.db.dao.SteamFriendDao
-import com.OxGames.Pluvia.service.SteamService
+import com.OxGames.Pluvia.service.ServiceConnectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import `in`.dragonbra.javasteam.types.SteamID
 import javax.inject.Inject
@@ -26,6 +26,7 @@ class ChatViewModel @Inject constructor(
     private val friendDao: SteamFriendDao,
     private val messagesDao: FriendMessagesDao,
     private val emoticonDao: EmoticonDao,
+    private val service: ServiceConnectionManager,
 ) : ViewModel() {
 
     private val _chatState = MutableStateFlow(ChatState())
@@ -56,9 +57,7 @@ class ChatViewModel @Inject constructor(
         chatJob = viewModelScope.launch {
             launch {
                 // Since were initiating a chat, refresh our list of emoticons and stickers
-                SteamService.getEmoticonList()
-                SteamService.getRecentMessages(id)
-                SteamService.ackMessage(id)
+                service.serviceConnection!!.initChat(id)
             }
 
             launch {
@@ -93,7 +92,7 @@ class ChatViewModel @Inject constructor(
         if (typingJob == null || now - lastTypingSent > 15000) {
             typingJob?.cancel()
             typingJob = viewModelScope.launch {
-                SteamService.sendTypingMessage(_chatState.value.friend.id)
+                service.serviceConnection!!.sendTypingMessage(_chatState.value.friend.id)
                 lastTypingSent = now
             }
         }
@@ -110,7 +109,7 @@ class ChatViewModel @Inject constructor(
                     return@launch
                 }
 
-                SteamService.sendMessage(id, message)
+                service.serviceConnection!!.sendMessage(id, message)
             }
         }
     }

@@ -45,6 +45,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.LoginResult
@@ -57,7 +58,7 @@ import com.OxGames.Pluvia.ui.theme.PluviaTheme
 
 @Composable
 fun UserLoginScreen(
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     val state by viewModel.loginState.collectAsState()

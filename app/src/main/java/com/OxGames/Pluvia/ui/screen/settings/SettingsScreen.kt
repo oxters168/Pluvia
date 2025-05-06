@@ -1,6 +1,7 @@
 package com.OxGames.Pluvia.ui.screen.settings
 
 import android.content.res.Configuration
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.enums.AppTheme
+import com.OxGames.Pluvia.service.ServiceConnectionManager
 import com.OxGames.Pluvia.ui.component.EmptyScreen
 import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.screen.settings.components.SettingsGroupCredits
@@ -89,18 +91,35 @@ data class SettingsPane(
 
 @Composable
 fun SettingsScreen(
+    service: ServiceConnectionManager,
     appTheme: AppTheme,
     paletteStyle: PaletteStyle,
     onAppTheme: (AppTheme) -> Unit,
     onPaletteStyle: (PaletteStyle) -> Unit,
     onBack: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     SettingsScreenContent(
         appTheme = appTheme,
         paletteStyle = paletteStyle,
         onAppTheme = onAppTheme,
         onPaletteStyle = onPaletteStyle,
         onBack = onBack,
+        onClearPreference = {
+            scope.launch {
+                service.serviceConnection!!.logOut()
+                (context as ComponentActivity).finishAffinity()
+            }
+        },
+        onClearDatabase = {
+            scope.launch {
+                service.serviceConnection!!.stop()
+                service.serviceConnection!!.clearDatabase()
+                (context as ComponentActivity).finishAffinity()
+            }
+        },
     )
 }
 
@@ -112,6 +131,8 @@ private fun SettingsScreenContent(
     onAppTheme: (AppTheme) -> Unit,
     onPaletteStyle: (PaletteStyle) -> Unit,
     onBack: () -> Unit,
+    onClearPreference: () -> Unit,
+    onClearDatabase: () -> Unit,
 ) {
     val navigator = rememberListDetailPaneScaffoldNavigator<Nothing>()
     var currentPane by rememberSaveable(stateSaver = SettingsPane.Saver) { mutableStateOf(SettingsPane()) }
@@ -218,6 +239,8 @@ private fun SettingsScreenContent(
                                         navigator.navigateTo(ListDetailPaneScaffoldRole.Extra)
                                     }
                                 },
+                                onClearPreference = onClearPreference,
+                                onClearDatabase = onClearDatabase,
                             )
 
                             else -> EmptyScreen("Select a setting option.")
@@ -283,6 +306,8 @@ private fun Preview_SettingsScreen() {
                 onAppTheme = { },
                 onPaletteStyle = { },
                 onBack = { },
+                onClearPreference = { },
+                onClearDatabase = { },
             )
         }
     }

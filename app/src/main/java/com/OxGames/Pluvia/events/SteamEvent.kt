@@ -2,6 +2,7 @@ package com.OxGames.Pluvia.events
 
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.enums.LoginResult
+import `in`.dragonbra.javasteam.enums.EPersonaState
 import `in`.dragonbra.javasteam.steam.handlers.steamfriends.callback.ProfileInfoCallback
 
 sealed interface SteamEvent<T> : Event<T> {
@@ -12,6 +13,7 @@ sealed interface SteamEvent<T> : Event<T> {
     data class PersonaStateReceived(val persona: SteamFriend) : SteamEvent<Unit>
     data class QrAuthEnded(val success: Boolean, val message: String? = null) : SteamEvent<Unit>
     data class QrChallengeReceived(val challengeUrl: String) : SteamEvent<Unit>
+    data class PersonaStateChange(val state: EPersonaState) : SteamEvent<Unit>
 
     // data object AppInfoReceived : SteamEvent<Unit>
     data object Disconnected : SteamEvent<Unit>

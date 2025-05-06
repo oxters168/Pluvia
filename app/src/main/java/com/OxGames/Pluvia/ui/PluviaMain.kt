@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +49,7 @@ fun PluviaMain(
     navController: NavHostController = rememberNavController(),
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
 ) {
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
 
@@ -131,7 +133,7 @@ fun PluviaMain(
         }
 
         // Go to the Home screen if we're already logged in.
-        if (SteamService.isLoggedIn && state.currentScreen == PluviaScreen.LoginUser) {
+        if (SteamService.isLoggedIn.value && state.currentScreen == PluviaScreen.LoginUser) {
             navController.navigate(PluviaScreen.Home.route)
         }
     }
@@ -174,7 +176,9 @@ fun PluviaMain(
                             navController.navigate(PluviaScreen.Settings.route)
                         },
                         onLogout = {
-                            SteamService.logOut()
+                            scope.launch {
+                                viewModel.service.serviceConnection!!.logOut()
+                            }
                         },
                     )
                 }
@@ -221,6 +225,7 @@ fun PluviaMain(
                 /** Settings **/
                 composable(route = PluviaScreen.Settings.route) {
                     SettingsScreen(
+                        service = viewModel.service,
                         appTheme = state.appTheme,
                         paletteStyle = state.paletteStyle,
                         onAppTheme = viewModel::setTheme,

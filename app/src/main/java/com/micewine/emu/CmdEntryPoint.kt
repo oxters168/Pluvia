@@ -75,7 +75,8 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                 before running micewine-emu, the initial sendBroadcast had no effect because no one
                 received the intent. To allow the application to reconnect freely, we will listen on
                 port `PORT` and when receiving a magic phrase, we will send another intent.
-             */Log.e("CmdEntryPoint", "Listening port $PORT")
+             */
+            Log.e("CmdEntryPoint", "Listening port $PORT")
             try {
                 ServerSocket(PORT, 0, InetAddress.getByName("127.0.0.1")).use { listeningSocket ->
                     listeningSocket.reuseAddress = true
@@ -119,6 +120,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
         const val ACTION_START: String = "com.micewine.emu.CmdEntryPoint.ACTION_START"
         const val PORT = 7892
         val MAGIC = "0xDEADBEEF".toByteArray()
+
         @JvmField
         val handler: Handler
         var ctx: Context?
@@ -140,15 +142,18 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
             try {
                 ctx!!.sendBroadcast(intent)
             } catch (e: Exception) {
-                if (e is NullPointerException && ctx == null) Log.i(
-                    "Broadcast",
-                    "Context is null, falling back to manual broadcasting"
-                )
-                else Log.e(
-                    "Broadcast",
-                    "Falling back to manual broadcasting, failed to broadcast intent through Context:",
-                    e
-                )
+                if (e is NullPointerException && ctx == null) {
+                    Log.i(
+                        "Broadcast",
+                        "Context is null, falling back to manual broadcasting",
+                    )
+                } else {
+                    Log.e(
+                        "Broadcast",
+                        "Falling back to manual broadcasting, failed to broadcast intent through Context:",
+                        e,
+                    )
+                }
 
                 val packageName: String
                 try {
@@ -173,7 +178,7 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
 
                 val sender = am.getIntentSender(
                     1, packageName, null, null, 0, arrayOf(intent),
-                    null, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_ONE_SHOT, null, 0
+                    null, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_ONE_SHOT, null, 0,
                 )
                 try {
                     IIntentSender::class.java
@@ -185,20 +190,24 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                             IBinder::class.java,
                             IIntentReceiver::class.java,
                             String::class.java,
-                            Bundle::class.java
+                            Bundle::class.java,
                         )
-                        .invoke(sender, 0, intent, null, null, object : IIntentReceiver.Stub() {
-                            override fun performReceive(
-                                i: Intent,
-                                r: Int,
-                                d: String,
-                                e: Bundle,
-                                o: Boolean,
-                                s: Boolean,
-                                a: Int
-                            ) {
-                            }
-                        }, null, null)
+                        .invoke(
+                            sender, 0, intent, null, null,
+                            object : IIntentReceiver.Stub() {
+                                override fun performReceive(
+                                    i: Intent,
+                                    r: Int,
+                                    d: String,
+                                    e: Bundle,
+                                    o: Boolean,
+                                    s: Boolean,
+                                    a: Int,
+                                ) {
+                                }
+                            },
+                            null, null,
+                        )
                 } catch (ex: Exception) {
                     throw RuntimeException(ex)
                 }
@@ -217,16 +226,20 @@ class CmdEntryPoint internal constructor(args: Array<String>?, context: Context)
                 val unsafe = f[null]
                 // Hiding harmless framework errors, like this:
                 // java.io.FileNotFoundException: /data/system/theme_config/theme_compatibility.xml: open failed: ENOENT (No such file or directory)
-                System.setErr(PrintStream(object : OutputStream() {
-                    override fun write(arg0: Int) {}
-                }))
+                System.setErr(
+                    PrintStream(object : OutputStream() {
+                        override fun write(arg0: Int) {}
+                    }),
+                )
                 context = if (System.getenv("OLD_CONTEXT") != null) {
                     ActivityThread.systemMain().systemContext
                 } else {
-                    (Class.forName
-                        ("sun.misc.Unsafe").getMethod
-                        ("allocateInstance", Class::class.java).invoke
-                        (unsafe, ActivityThread::class.java) as ActivityThread)
+                    (
+                        Class.forName
+                            ("sun.misc.Unsafe").getMethod
+                            ("allocateInstance", Class::class.java).invoke
+                            (unsafe, ActivityThread::class.java) as ActivityThread
+                        )
                         .systemContext
                 }
             } catch (e: Exception) {

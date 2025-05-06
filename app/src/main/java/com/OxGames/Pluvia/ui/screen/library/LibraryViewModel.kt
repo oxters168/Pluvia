@@ -11,6 +11,7 @@ import com.OxGames.Pluvia.data.LibraryItem
 import com.OxGames.Pluvia.data.SteamApp
 import com.OxGames.Pluvia.db.dao.SteamAppDao
 import com.OxGames.Pluvia.enums.AppFilter
+import com.OxGames.Pluvia.service.ServiceConnectionManager
 import com.OxGames.Pluvia.service.SteamService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.EnumSet
@@ -26,6 +27,7 @@ import timber.log.Timber
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val steamAppDao: SteamAppDao,
+    val service: ServiceConnectionManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LibraryState())
@@ -127,7 +129,7 @@ class LibraryViewModel @Inject constructor(
                 }
                 .filter { item ->
                     if (currentState.appInfoSortType.contains(AppFilter.INSTALLED)) {
-                        SteamService.isAppInstalled(item.id)
+                        service.serviceConnection!!.isAppInstalled(item.id)
                     } else {
                         true
                     }

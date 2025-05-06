@@ -2,7 +2,6 @@ package com.OxGames.Pluvia.utils.application
 
 import android.content.Context
 import com.OxGames.Pluvia.PrefManager
-import timber.log.Timber
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -11,6 +10,7 @@ import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import timber.log.Timber
 
 /**
  * A local running crash handler.

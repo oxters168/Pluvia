@@ -5,10 +5,7 @@ import android.content.Context
 import android.provider.Settings
 import android.text.Html
 import com.OxGames.Pluvia.Constants
-import com.OxGames.Pluvia.service.SteamService
 import `in`.dragonbra.javasteam.util.HardwareUtils
-import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -54,28 +51,28 @@ object SteamUtils {
      * with our pipe dll stored in assets
      */
     fun replaceSteamApi(context: Context, appId: Int) {
-        val appDirPath = SteamService.getAppDirPath(appId)
-
-        File(appDirPath).walkTopDown().forEach {
-            if (it.name == "steam_api.dll" && it.exists()) {
-                it.delete()
-                it.createNewFile()
-                FileOutputStream(it.absolutePath).use { fos ->
-                    context.assets.open("steampipe/steam_api.dll").use { fs ->
-                        fs.copyTo(fos)
-                    }
-                }
-            }
-            if (it.name == "steam_api64.dll" && it.exists()) {
-                it.delete()
-                it.createNewFile()
-                FileOutputStream(it.absolutePath).use { fos ->
-                    context.assets.open("steampipe/steam_api64.dll").use { fs ->
-                        fs.copyTo(fos)
-                    }
-                }
-            }
-        }
+        // val appDirPath = SteamService.getAppDirPath(appId)
+        //
+        // File(appDirPath).walkTopDown().forEach {
+        //     if (it.name == "steam_api.dll" && it.exists()) {
+        //         it.delete()
+        //         it.createNewFile()
+        //         FileOutputStream(it.absolutePath).use { fos ->
+        //             context.assets.open("steampipe/steam_api.dll").use { fs ->
+        //                 fs.copyTo(fos)
+        //             }
+        //         }
+        //     }
+        //     if (it.name == "steam_api64.dll" && it.exists()) {
+        //         it.delete()
+        //         it.createNewFile()
+        //         FileOutputStream(it.absolutePath).use { fos ->
+        //             context.assets.open("steampipe/steam_api64.dll").use { fs ->
+        //                 fs.copyTo(fos)
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     /**

@@ -6,6 +6,7 @@ import com.OxGames.Pluvia.PrefManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.micewine.emu.MiceWineUtils
+import com.micewine.emu.MiceWineUtils.EnvVarsSettings.ENV_VARS_KEY
 import com.micewine.emu.MiceWineUtils.Main.adrenoToolsDriverFile
 import com.micewine.emu.MiceWineUtils.Main.appLang
 import com.micewine.emu.MiceWineUtils.Main.appRootDir
@@ -48,7 +49,6 @@ import com.micewine.emu.MiceWineUtils.Main.useAdrenoTools
 import com.micewine.emu.MiceWineUtils.Main.usrDir
 import com.micewine.emu.MiceWineUtils.Main.wineESync
 import com.micewine.emu.MiceWineUtils.Main.wineLogLevel
-import com.micewine.emu.MiceWineUtils.EnvVarsSettings.ENV_VARS_KEY
 
 object EnvVars {
 

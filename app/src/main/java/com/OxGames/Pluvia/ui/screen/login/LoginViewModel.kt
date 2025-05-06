@@ -7,9 +7,12 @@ import com.OxGames.Pluvia.enums.LoginResult
 import com.OxGames.Pluvia.enums.LoginScreen
 import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.events.SteamEvent
+import com.OxGames.Pluvia.service.ServiceConnectionManager
 import com.OxGames.Pluvia.service.SteamService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import `in`.dragonbra.javasteam.steam.authentication.IAuthenticator
 import java.util.concurrent.CompletableFuture
+import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +22,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class LoginViewModel : ViewModel() {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val service: ServiceConnectionManager,
+) : ViewModel() {
     private val _loginState = MutableStateFlow(LoginState())
     val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
 
@@ -182,8 +188,8 @@ class LoginViewModel : ViewModel() {
         PluviaApp.events.on<SteamEvent.LoggedOut, Unit>(onLoggedOut)
         PluviaApp.events.on<SteamEvent.RemotelyDisconnected, Unit>(onRemoteDisconnected)
 
-        val isLoggedIn = SteamService.isLoggedIn
-        val isSteamConnected = SteamService.isConnected
+        val isLoggedIn = SteamService.isLoggedIn.value
+        val isSteamConnected = SteamService.isConnected.value
         Timber.d("Logged in? $isLoggedIn")
         if (isLoggedIn) {
             _loginState.update {
@@ -209,7 +215,9 @@ class LoginViewModel : ViewModel() {
         PluviaApp.events.off<SteamEvent.QrAuthEnded, Unit>(onQrAuthEnded)
         PluviaApp.events.off<SteamEvent.LoggedOut, Unit>(onLoggedOut)
 
-        SteamService.stopLoginWithQr()
+        viewModelScope.launch {
+            service.serviceConnection!!.stopLoginWithQr()
+        }
     }
 
     private fun showSnack(message: String) {
@@ -225,7 +233,7 @@ class LoginViewModel : ViewModel() {
             }
 
             viewModelScope.launch {
-                SteamService.startLoginWithCredentials(
+                service.serviceConnection!!.startLoginWithCredentials(
                     username = username,
                     password = password,
                     rememberSession = rememberSession,
@@ -246,13 +254,13 @@ class LoginViewModel : ViewModel() {
     }
 
     fun onQrRetry() {
-        viewModelScope.launch { SteamService.startLoginWithQr() }
+        viewModelScope.launch { service.serviceConnection!!.startLoginWithQr() }
     }
 
     fun onShowLoginScreen(loginScreen: LoginScreen) {
         when (loginScreen) {
-            LoginScreen.CREDENTIAL -> SteamService.stopLoginWithQr()
-            LoginScreen.QR -> viewModelScope.launch { SteamService.startLoginWithQr() }
+            LoginScreen.CREDENTIAL -> viewModelScope.launch { service.serviceConnection!!.stopLoginWithQr() }
+            LoginScreen.QR -> viewModelScope.launch { service.serviceConnection!!.startLoginWithQr() }
             else -> Timber.w("onShowLoginScreen ended up in an unknown state: ${loginScreen.name}")
         }
 

@@ -18,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,18 +27,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,38 +43,23 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
-import androidx.window.core.layout.WindowWidthSizeClass
-import com.OxGames.Pluvia.Constants
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.AppMenuOption
 import com.OxGames.Pluvia.data.SteamApp
 import com.OxGames.Pluvia.enums.AppOptionMenuType
-import com.OxGames.Pluvia.enums.DialogType
 import com.OxGames.Pluvia.service.SteamService
+import com.OxGames.Pluvia.ui.component.EmptyScreen
 import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
-import com.OxGames.Pluvia.ui.component.dialog.ContainerConfigDialog
-import com.OxGames.Pluvia.ui.component.dialog.ContainerData
-import com.OxGames.Pluvia.ui.component.dialog.LoadingDialog
-import com.OxGames.Pluvia.ui.component.dialog.MessageDialog
-import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
-import com.OxGames.Pluvia.ui.component.topbar.BackButton
 import com.OxGames.Pluvia.ui.screen.library.components.GameInfoRow
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
-import com.OxGames.Pluvia.utils.FileUtils
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import timber.log.Timber
 
 // https://partner.steamgames.com/doc/store/assets/libraryassets#4
 
@@ -91,318 +70,320 @@ fun AppScreen(
     onClickPlay: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
-    val context = LocalContext.current
-    var downloadInfo by remember(appId) {
-        mutableStateOf(SteamService.getAppDownloadInfo(appId))
-    }
-    var downloadProgress by remember(appId) {
-        mutableFloatStateOf(downloadInfo?.getProgress() ?: 0f)
-    }
-    var isInstalled by remember(appId) {
-        mutableStateOf(SteamService.isAppInstalled(appId))
-    }
+    EmptyScreen("Screen Not Available")
 
-    val isDownloading: () -> Boolean = { downloadInfo != null && downloadProgress < 1f }
-
-    var loadingDialogVisible by rememberSaveable { mutableStateOf(false) }
-    var loadingProgress by rememberSaveable { mutableFloatStateOf(0f) }
-
-    val appInfo by remember(appId) {
-        mutableStateOf(SteamService.getAppInfoOf(appId)!!)
-    }
-
-    var msgDialogState by rememberSaveable(stateSaver = MessageDialogState.Saver) {
-        mutableStateOf(MessageDialogState(false))
-    }
-
-    var showConfigDialog by rememberSaveable { mutableStateOf(false) }
-
-    var containerData by rememberSaveable(stateSaver = ContainerData.Saver) {
-        mutableStateOf(ContainerData())
-    }
-
-    val showEditConfigDialog: () -> Unit = {
-        TODO()
-        // val container = ContainerUtils.getOrCreateContainer(context, appId)
-        // containerData = ContainerUtils.toContainerData(container)
-        // showConfigDialog = true
-    }
-
-    DisposableEffect(downloadInfo) {
-        val onDownloadProgress: (Float) -> Unit = {
-            if (it >= 1f) {
-                isInstalled = SteamService.isAppInstalled(appId)
-            }
-            downloadProgress = it
-        }
-
-        downloadInfo?.addProgressListener(onDownloadProgress)
-
-        onDispose {
-            downloadInfo?.removeProgressListener(onDownloadProgress)
-        }
-    }
-
-    LaunchedEffect(appId) {
-        Timber.d("Selected app $appId")
-    }
-
-    val windowWidth = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
-
-    val onDismissRequest: (() -> Unit)?
-    val onDismissClick: (() -> Unit)?
-    val onConfirmClick: (() -> Unit)?
-    when (msgDialogState.type) {
-        DialogType.CANCEL_APP_DOWNLOAD -> {
-            onConfirmClick = {
-                downloadInfo?.cancel()
-                SteamService.deleteApp(appId)
-                downloadInfo = null
-                downloadProgress = 0f
-                isInstalled = SteamService.isAppInstalled(appId)
-                msgDialogState = MessageDialogState(false)
-            }
-            onDismissRequest = { msgDialogState = MessageDialogState(false) }
-            onDismissClick = { msgDialogState = MessageDialogState(false) }
-        }
-
-        DialogType.NOT_ENOUGH_SPACE -> {
-            onDismissRequest = { msgDialogState = MessageDialogState(false) }
-            onConfirmClick = { msgDialogState = MessageDialogState(false) }
-            onDismissClick = null
-        }
-
-        DialogType.INSTALL_APP -> {
-            onDismissRequest = { msgDialogState = MessageDialogState(false) }
-            onConfirmClick = {
-                CoroutineScope(Dispatchers.IO).launch {
-                    downloadProgress = 0f
-                    downloadInfo = SteamService.downloadApp(appId)
-                    msgDialogState = MessageDialogState(false)
-                }
-            }
-            onDismissClick = { msgDialogState = MessageDialogState(false) }
-        }
-
-        DialogType.DELETE_APP -> {
-            onConfirmClick = {
-                SteamService.deleteApp(appId)
-                msgDialogState = MessageDialogState(false)
-
-                isInstalled = SteamService.isAppInstalled(appId)
-            }
-            onDismissRequest = { msgDialogState = MessageDialogState(false) }
-            onDismissClick = { msgDialogState = MessageDialogState(false) }
-        }
-
-        DialogType.INSTALL_IMAGEFS -> {
-            onDismissRequest = { msgDialogState = MessageDialogState(false) }
-            onDismissClick = { msgDialogState = MessageDialogState(false) }
-            onConfirmClick = {
-                loadingDialogVisible = true
-                msgDialogState = MessageDialogState(false)
-                CoroutineScope(Dispatchers.IO).launch {
-                    if (!SteamService.isImageFsInstallable(context)) {
-                        SteamService.downloadImageFs(
-                            onDownloadProgress = { loadingProgress = it },
-                            this,
-                        ).await()
-                    }
-                    if (!SteamService.isImageFsInstalled(context)) {
-                        // SplitCompat.install(context)
-                        // ImageFsInstaller.installIfNeededFuture(context, context.assets) {
-                        //     // Log.d("XServerScreen", "$progress")
-                        //     loadingProgress = it / 100f
-                        // }.get()
-                    }
-                    loadingDialogVisible = false
-                    showEditConfigDialog()
-                }
-            }
-        }
-
-        else -> {
-            onDismissRequest = null
-            onDismissClick = null
-            onConfirmClick = null
-        }
-    }
-
-    MessageDialog(
-        visible = msgDialogState.visible,
-        onDismissRequest = onDismissRequest,
-        onConfirmClick = onConfirmClick,
-        confirmBtnText = msgDialogState.confirmBtnText,
-        onDismissClick = onDismissClick,
-        dismissBtnText = msgDialogState.dismissBtnText,
-        icon = msgDialogState.type.icon,
-        title = msgDialogState.title,
-        message = msgDialogState.message,
-    )
-
-    ContainerConfigDialog(
-        visible = showConfigDialog,
-        title = stringResource(R.string.dialog_title_container_config, appInfo.name),
-        initialConfig = containerData,
-        onDismissRequest = { showConfigDialog = false },
-        onSave = {
-            showConfigDialog = false
-            TODO()
-            //  ContainerUtils.applyToContainer(context, appId, it)
-        },
-    )
-
-    LoadingDialog(
-        visible = loadingDialogVisible,
-        progress = loadingProgress,
-    )
-
-    Scaffold(
-        topBar = {
-            // Show Top App Bar when in Compact or Medium screen space.
-            if (windowWidth == WindowWidthSizeClass.COMPACT || windowWidth == WindowWidthSizeClass.MEDIUM) {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = appInfo.name,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    navigationIcon = {
-                        BackButton(onClick = onBack)
-                    },
-                )
-            }
-        },
-    ) { paddingValues ->
-        AppScreenContent(
-            modifier = Modifier.padding(paddingValues),
-            appInfo = appInfo,
-            isInstalled = isInstalled,
-            isDownloading = isDownloading(),
-            downloadProgress = downloadProgress,
-            onDownloadBtnClick = {
-                if (isDownloading()) {
-                    msgDialogState = MessageDialogState(
-                        visible = true,
-                        type = DialogType.CANCEL_APP_DOWNLOAD,
-                        title = R.string.dialog_title_cancel_download,
-                        message = context.getString(R.string.dialog_message_cancel_download),
-                        confirmBtnText = R.string.yes,
-                        dismissBtnText = R.string.no,
-                    )
-                } else if (!isInstalled) {
-                    val depots = SteamService.getDownloadableDepots(appId)
-                    Timber.d("There are ${depots.size} depots belonging to $appId")
-                    // TODO: get space available based on where user wants to install
-                    val availableBytes =
-                        FileUtils.getAvailableSpace(context.filesDir.absolutePath)
-                    val availableSpace = FileUtils.formatBinarySize(availableBytes)
-                    // TODO: un-hardcode "public" branch
-                    val downloadSize = FileUtils.formatBinarySize(
-                        depots.values.sumOf {
-                            it.manifests["public"]?.download ?: 0
-                        },
-                    )
-                    val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
-                    val installSize = FileUtils.formatBinarySize(installBytes)
-                    if (availableBytes < installBytes) {
-                        msgDialogState = MessageDialogState(
-                            visible = true,
-                            type = DialogType.NOT_ENOUGH_SPACE,
-                            title = R.string.dialog_title_no_space,
-                            message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
-                            confirmBtnText = R.string.ok,
-                        )
-                    } else {
-                        msgDialogState = MessageDialogState(
-                            visible = true,
-                            type = DialogType.INSTALL_APP,
-                            title = R.string.dialog_title_download_app,
-                            message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
-                            confirmBtnText = R.string.proceed,
-                            dismissBtnText = R.string.cancel,
-                        )
-                    }
-                } else {
-                    onClickPlay(false)
-                }
-            },
-            optionsMenu = arrayOf(
-                AppMenuOption(
-                    optionType = AppOptionMenuType.StorePage,
-                    onClick = {
-                        // TODO add option to view web page externally or internally
-                        val browserIntent = Intent(
-                            Intent.ACTION_VIEW,
-                            (Constants.Library.STORE_URL + appId).toUri(),
-                        )
-                        context.startActivity(browserIntent)
-                    },
-                ),
-                AppMenuOption(
-                    optionType = AppOptionMenuType.EditContainer,
-                    onClick = {
-                        if (!SteamService.isImageFsInstalled(context)) {
-                            if (!SteamService.isImageFsInstallable(context)) {
-                                msgDialogState = MessageDialogState(
-                                    visible = true,
-                                    type = DialogType.INSTALL_IMAGEFS,
-                                    title = R.string.dialog_title_download_install_fs,
-                                    message = context.getString(R.string.dialog_message_download_install_fs),
-                                    confirmBtnText = R.string.proceed,
-                                    dismissBtnText = R.string.cancel,
-                                )
-                            } else {
-                                msgDialogState = MessageDialogState(
-                                    visible = true,
-                                    type = DialogType.INSTALL_IMAGEFS,
-                                    title = R.string.dialog_title_install_fs,
-                                    message = context.getString(R.string.dialog_message_install_fs),
-                                    confirmBtnText = R.string.proceed,
-                                    dismissBtnText = R.string.cancel,
-                                )
-                            }
-                        } else {
-                            showEditConfigDialog()
-                        }
-                    },
-                ),
-                *(
-                    if (isInstalled) {
-                        arrayOf(
-                            AppMenuOption(
-                                AppOptionMenuType.RunContainer,
-                                onClick = {
-                                    onClickPlay(true)
-                                },
-                            ),
-                            AppMenuOption(
-                                AppOptionMenuType.Uninstall,
-                                onClick = {
-                                    val sizeOnDisk = FileUtils.formatBinarySize(
-                                        FileUtils.getFolderSize(SteamService.getAppDirPath(appId)),
-                                    )
-                                    // TODO: show loading screen of delete progress
-                                    msgDialogState = MessageDialogState(
-                                        visible = true,
-                                        type = DialogType.DELETE_APP,
-                                        title = R.string.dialog_title_delete_app,
-                                        message = context.getString(R.string.dialog_message_delete_app, sizeOnDisk),
-                                        confirmBtnText = R.string.delete,
-                                        dismissBtnText = R.string.cancel,
-                                    )
-                                },
-                            ),
-                        )
-                    } else {
-                        emptyArray()
-                    }
-                    ),
-            ),
-        )
-    }
+//    val context = LocalContext.current
+//    var downloadInfo by remember(appId) {
+//        mutableStateOf(SteamService.getAppDownloadInfo(appId))
+//    }
+//    var downloadProgress by remember(appId) {
+//        mutableFloatStateOf(downloadInfo?.getProgress() ?: 0f)
+//    }
+//    var isInstalled by remember(appId) {
+//        mutableStateOf(SteamService.isAppInstalled(appId))
+//    }
+//
+//    val isDownloading: () -> Boolean = { downloadInfo != null && downloadProgress < 1f }
+//
+//    var loadingDialogVisible by rememberSaveable { mutableStateOf(false) }
+//    var loadingProgress by rememberSaveable { mutableFloatStateOf(0f) }
+//
+//    val appInfo by remember(appId) {
+//        mutableStateOf(SteamService.getAppInfoOf(appId)!!)
+//    }
+//
+//    var msgDialogState by rememberSaveable(stateSaver = MessageDialogState.Saver) {
+//        mutableStateOf(MessageDialogState(false))
+//    }
+//
+//    var showConfigDialog by rememberSaveable { mutableStateOf(false) }
+//
+//    var containerData by rememberSaveable(stateSaver = ContainerData.Saver) {
+//        mutableStateOf(ContainerData())
+//    }
+//
+//    val showEditConfigDialog: () -> Unit = {
+//        TODO()
+//        // val container = ContainerUtils.getOrCreateContainer(context, appId)
+//        // containerData = ContainerUtils.toContainerData(container)
+//        // showConfigDialog = true
+//    }
+//
+//    DisposableEffect(downloadInfo) {
+//        val onDownloadProgress: (Float) -> Unit = {
+//            if (it >= 1f) {
+//                isInstalled = SteamService.isAppInstalled(appId)
+//            }
+//            downloadProgress = it
+//        }
+//
+//        downloadInfo?.addProgressListener(onDownloadProgress)
+//
+//        onDispose {
+//            downloadInfo?.removeProgressListener(onDownloadProgress)
+//        }
+//    }
+//
+//    LaunchedEffect(appId) {
+//        Timber.d("Selected app $appId")
+//    }
+//
+//    val windowWidth = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
+//
+//    val onDismissRequest: (() -> Unit)?
+//    val onDismissClick: (() -> Unit)?
+//    val onConfirmClick: (() -> Unit)?
+//    when (msgDialogState.type) {
+//        DialogType.CANCEL_APP_DOWNLOAD -> {
+//            onConfirmClick = {
+//                downloadInfo?.cancel()
+//                SteamService.deleteApp(appId)
+//                downloadInfo = null
+//                downloadProgress = 0f
+//                isInstalled = SteamService.isAppInstalled(appId)
+//                msgDialogState = MessageDialogState(false)
+//            }
+//            onDismissRequest = { msgDialogState = MessageDialogState(false) }
+//            onDismissClick = { msgDialogState = MessageDialogState(false) }
+//        }
+//
+//        DialogType.NOT_ENOUGH_SPACE -> {
+//            onDismissRequest = { msgDialogState = MessageDialogState(false) }
+//            onConfirmClick = { msgDialogState = MessageDialogState(false) }
+//            onDismissClick = null
+//        }
+//
+//        DialogType.INSTALL_APP -> {
+//            onDismissRequest = { msgDialogState = MessageDialogState(false) }
+//            onConfirmClick = {
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    downloadProgress = 0f
+//                    downloadInfo = SteamService.downloadApp(appId)
+//                    msgDialogState = MessageDialogState(false)
+//                }
+//            }
+//            onDismissClick = { msgDialogState = MessageDialogState(false) }
+//        }
+//
+//        DialogType.DELETE_APP -> {
+//            onConfirmClick = {
+//                SteamService.deleteApp(appId)
+//                msgDialogState = MessageDialogState(false)
+//
+//                isInstalled = SteamService.isAppInstalled(appId)
+//            }
+//            onDismissRequest = { msgDialogState = MessageDialogState(false) }
+//            onDismissClick = { msgDialogState = MessageDialogState(false) }
+//        }
+//
+//        DialogType.INSTALL_IMAGEFS -> {
+//            onDismissRequest = { msgDialogState = MessageDialogState(false) }
+//            onDismissClick = { msgDialogState = MessageDialogState(false) }
+//            onConfirmClick = {
+//                loadingDialogVisible = true
+//                msgDialogState = MessageDialogState(false)
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    if (!SteamService.isImageFsInstallable(context)) {
+//                        SteamService.downloadImageFs(
+//                            onDownloadProgress = { loadingProgress = it },
+//                            this,
+//                        ).await()
+//                    }
+//                    if (!SteamService.isImageFsInstalled(context)) {
+//                        // SplitCompat.install(context)
+//                        // ImageFsInstaller.installIfNeededFuture(context, context.assets) {
+//                        //     // Log.d("XServerScreen", "$progress")
+//                        //     loadingProgress = it / 100f
+//                        // }.get()
+//                    }
+//                    loadingDialogVisible = false
+//                    showEditConfigDialog()
+//                }
+//            }
+//        }
+//
+//        else -> {
+//            onDismissRequest = null
+//            onDismissClick = null
+//            onConfirmClick = null
+//        }
+//    }
+//
+//    MessageDialog(
+//        visible = msgDialogState.visible,
+//        onDismissRequest = onDismissRequest,
+//        onConfirmClick = onConfirmClick,
+//        confirmBtnText = msgDialogState.confirmBtnText,
+//        onDismissClick = onDismissClick,
+//        dismissBtnText = msgDialogState.dismissBtnText,
+//        icon = msgDialogState.type.icon,
+//        title = msgDialogState.title,
+//        message = msgDialogState.message,
+//    )
+//
+//    ContainerConfigDialog(
+//        visible = showConfigDialog,
+//        title = stringResource(R.string.dialog_title_container_config, appInfo.name),
+//        initialConfig = containerData,
+//        onDismissRequest = { showConfigDialog = false },
+//        onSave = {
+//            showConfigDialog = false
+//            TODO()
+//            //  ContainerUtils.applyToContainer(context, appId, it)
+//        },
+//    )
+//
+//    LoadingDialog(
+//        visible = loadingDialogVisible,
+//        progress = loadingProgress,
+//    )
+//
+//    Scaffold(
+//        topBar = {
+//            // Show Top App Bar when in Compact or Medium screen space.
+//            if (windowWidth == WindowWidthSizeClass.COMPACT || windowWidth == WindowWidthSizeClass.MEDIUM) {
+//                CenterAlignedTopAppBar(
+//                    title = {
+//                        Text(
+//                            text = appInfo.name,
+//                            maxLines = 1,
+//                            overflow = TextOverflow.Ellipsis,
+//                        )
+//                    },
+//                    navigationIcon = {
+//                        BackButton(onClick = onBack)
+//                    },
+//                )
+//            }
+//        },
+//    ) { paddingValues ->
+//        AppScreenContent(
+//            modifier = Modifier.padding(paddingValues),
+//            appInfo = appInfo,
+//            isInstalled = isInstalled,
+//            isDownloading = isDownloading(),
+//            downloadProgress = downloadProgress,
+//            onDownloadBtnClick = {
+//                if (isDownloading()) {
+//                    msgDialogState = MessageDialogState(
+//                        visible = true,
+//                        type = DialogType.CANCEL_APP_DOWNLOAD,
+//                        title = R.string.dialog_title_cancel_download,
+//                        message = context.getString(R.string.dialog_message_cancel_download),
+//                        confirmBtnText = R.string.yes,
+//                        dismissBtnText = R.string.no,
+//                    )
+//                } else if (!isInstalled) {
+//                    val depots = SteamService.getDownloadableDepots(appId)
+//                    Timber.d("There are ${depots.size} depots belonging to $appId")
+//                    // TODO: get space available based on where user wants to install
+//                    val availableBytes =
+//                        FileUtils.getAvailableSpace(context.filesDir.absolutePath)
+//                    val availableSpace = FileUtils.formatBinarySize(availableBytes)
+//                    // TODO: un-hardcode "public" branch
+//                    val downloadSize = FileUtils.formatBinarySize(
+//                        depots.values.sumOf {
+//                            it.manifests["public"]?.download ?: 0
+//                        },
+//                    )
+//                    val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
+//                    val installSize = FileUtils.formatBinarySize(installBytes)
+//                    if (availableBytes < installBytes) {
+//                        msgDialogState = MessageDialogState(
+//                            visible = true,
+//                            type = DialogType.NOT_ENOUGH_SPACE,
+//                            title = R.string.dialog_title_no_space,
+//                            message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
+//                            confirmBtnText = R.string.ok,
+//                        )
+//                    } else {
+//                        msgDialogState = MessageDialogState(
+//                            visible = true,
+//                            type = DialogType.INSTALL_APP,
+//                            title = R.string.dialog_title_download_app,
+//                            message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
+//                            confirmBtnText = R.string.proceed,
+//                            dismissBtnText = R.string.cancel,
+//                        )
+//                    }
+//                } else {
+//                    onClickPlay(false)
+//                }
+//            },
+//            optionsMenu = arrayOf(
+//                AppMenuOption(
+//                    optionType = AppOptionMenuType.StorePage,
+//                    onClick = {
+//                        // TODO add option to view web page externally or internally
+//                        val browserIntent = Intent(
+//                            Intent.ACTION_VIEW,
+//                            (Constants.Library.STORE_URL + appId).toUri(),
+//                        )
+//                        context.startActivity(browserIntent)
+//                    },
+//                ),
+//                AppMenuOption(
+//                    optionType = AppOptionMenuType.EditContainer,
+//                    onClick = {
+//                        if (!SteamService.isImageFsInstalled(context)) {
+//                            if (!SteamService.isImageFsInstallable(context)) {
+//                                msgDialogState = MessageDialogState(
+//                                    visible = true,
+//                                    type = DialogType.INSTALL_IMAGEFS,
+//                                    title = R.string.dialog_title_download_install_fs,
+//                                    message = context.getString(R.string.dialog_message_download_install_fs),
+//                                    confirmBtnText = R.string.proceed,
+//                                    dismissBtnText = R.string.cancel,
+//                                )
+//                            } else {
+//                                msgDialogState = MessageDialogState(
+//                                    visible = true,
+//                                    type = DialogType.INSTALL_IMAGEFS,
+//                                    title = R.string.dialog_title_install_fs,
+//                                    message = context.getString(R.string.dialog_message_install_fs),
+//                                    confirmBtnText = R.string.proceed,
+//                                    dismissBtnText = R.string.cancel,
+//                                )
+//                            }
+//                        } else {
+//                            showEditConfigDialog()
+//                        }
+//                    },
+//                ),
+//                *(
+//                    if (isInstalled) {
+//                        arrayOf(
+//                            AppMenuOption(
+//                                AppOptionMenuType.RunContainer,
+//                                onClick = {
+//                                    onClickPlay(true)
+//                                },
+//                            ),
+//                            AppMenuOption(
+//                                AppOptionMenuType.Uninstall,
+//                                onClick = {
+//                                    val sizeOnDisk = FileUtils.formatBinarySize(
+//                                        FileUtils.getFolderSize(SteamService.getAppDirPath(appId)),
+//                                    )
+//                                    // TODO: show loading screen of delete progress
+//                                    msgDialogState = MessageDialogState(
+//                                        visible = true,
+//                                        type = DialogType.DELETE_APP,
+//                                        title = R.string.dialog_title_delete_app,
+//                                        message = context.getString(R.string.dialog_message_delete_app, sizeOnDisk),
+//                                        confirmBtnText = R.string.delete,
+//                                        dismissBtnText = R.string.cancel,
+//                                    )
+//                                },
+//                            ),
+//                        )
+//                    } else {
+//                        emptyArray()
+//                    }
+//                    ),
+//            ),
+//        )
+//    }
 }
 
 @Composable

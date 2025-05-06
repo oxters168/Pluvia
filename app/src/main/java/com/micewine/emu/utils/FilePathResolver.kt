@@ -7,10 +7,9 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import android.util.Log
+import androidx.core.net.toUri
 import com.micewine.emu.MiceWineUtils
 import java.io.File
-import androidx.core.net.toUri
 import timber.log.Timber
 
 object FilePathResolver {

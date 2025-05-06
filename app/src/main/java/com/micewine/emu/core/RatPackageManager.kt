@@ -9,13 +9,13 @@ import com.micewine.emu.MiceWineUtils.GeneralSettings.SELECTED_BOX64
 import com.micewine.emu.MiceWineUtils.GeneralSettings.SELECTED_VULKAN_DRIVER
 import com.micewine.emu.MiceWineUtils.Main.appRootDir
 import com.micewine.emu.MiceWineUtils.Main.ratPackagesDir
-import com.micewine.emu.core.ShellLoader.runCommand
 import com.micewine.emu.MiceWineUtils.Setup.dialogTitleText
 import com.micewine.emu.MiceWineUtils.Setup.progressBarIsIndeterminate
 import com.micewine.emu.MiceWineUtils.Setup.progressBarValue
+import com.micewine.emu.core.ShellLoader.runCommand
+import java.io.File
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.progress.ProgressMonitor
-import java.io.File
 
 object RatPackageManager {
     @SuppressLint("SetTextI18n")

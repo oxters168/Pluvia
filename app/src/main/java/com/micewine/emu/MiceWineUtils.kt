@@ -17,7 +17,6 @@ import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.Toast
-import androidx.core.content.edit
 import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.MainActivity
 import com.OxGames.Pluvia.PrefManager
@@ -443,7 +442,6 @@ object MiceWineUtils {
 
             PrefManager.putString(ADRENOTOOLS_LD_PRELOAD_WORKAROUND, "$driverWorkaroundLdPreload")
 
-
             return "LD_PRELOAD=$driverWorkaroundLdPreload"
         }
 
@@ -532,7 +530,7 @@ object MiceWineUtils {
             val width = resolution[0].toInt() * percent / 100
             val height = resolution[1].toInt() * percent / 100
 
-            return "${width}x${height}"
+            return "${width}x$height"
         }
 
         fun getNativeResolutions(activity: Activity): List<String> {
@@ -1565,7 +1563,6 @@ object MiceWineUtils {
 
         private fun saveControllerPresets() {
             PrefManager.putString("controllerPresetList", gson.toJson(presetList))
-
         }
 
         fun getControllerPresets(): MutableList<MutableList<String>> {
@@ -1747,7 +1744,6 @@ object MiceWineUtils {
 
         private fun saveVirtualControllerPresets() {
             PrefManager.putString("virtualControllerPresetList", gson.toJson(presetList))
-
         }
 
         fun getVirtualControllerPresets(context: Context): MutableList<VirtualControllerPreset> {

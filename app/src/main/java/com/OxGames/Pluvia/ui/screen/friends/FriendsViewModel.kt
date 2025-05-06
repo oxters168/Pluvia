@@ -8,7 +8,7 @@ import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.OwnedGames
 import com.OxGames.Pluvia.db.dao.SteamFriendDao
 import com.OxGames.Pluvia.events.SteamEvent
-import com.OxGames.Pluvia.service.SteamService
+import com.OxGames.Pluvia.service.ServiceConnectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import `in`.dragonbra.javasteam.types.SteamID
 import javax.inject.Inject
@@ -24,6 +24,7 @@ import timber.log.Timber
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
     private val steamFriendDao: SteamFriendDao,
+    private val service: ServiceConnectionManager,
 ) : ViewModel() {
 
     private val _friendsState = MutableStateFlow(FriendsState())
@@ -67,11 +68,11 @@ class FriendsViewModel @Inject constructor(
 
         viewModelScope.launch {
             launch {
-                val resp = SteamService.getProfileInfo(SteamID(friendID))
+                val resp = service.serviceConnection!!.getProfileInfo(SteamID(friendID))
                 _friendsState.update { it.copy(profileFriendInfo = resp) }
             }
             launch {
-                val resp = SteamService.getOwnedGames(friendID).sortedWith(
+                val resp = service.serviceConnection!!.getOwnedGames(friendID).sortedWith(
                     compareBy<OwnedGames> { (it.sortAs ?: it.name).lowercase() }
                         .thenByDescending { it.playtimeTwoWeeks },
                 )
@@ -109,25 +110,25 @@ class FriendsViewModel @Inject constructor(
 
     fun onBlock(friendID: Long) {
         viewModelScope.launch {
-            SteamService.blockFriend(friendID)
+            service.serviceConnection!!.blockFriend(friendID)
         }
     }
 
     fun onRemove(friendID: Long) {
         viewModelScope.launch {
-            SteamService.removeFriend(friendID)
+            service.serviceConnection!!.removeFriend(friendID)
         }
     }
 
     fun onNickName(value: String) {
         viewModelScope.launch {
-            SteamService.setNickName(_friendsState.value.profileFriend!!.id, value)
+            service.serviceConnection!!.setNickName(_friendsState.value.profileFriend!!.id, value)
         }
     }
 
     fun onAlias() {
         viewModelScope.launch {
-            SteamService.requestAliasHistory(_friendsState.value.profileFriend!!.id)
+            service.serviceConnection!!.requestAliasHistory(_friendsState.value.profileFriend!!.id)
         }
     }
 

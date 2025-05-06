@@ -38,7 +38,7 @@ class LorieView : SurfaceView, InputStub {
             surfaceWidth: Int,
             surfaceHeight: Int,
             screenWidth: Int,
-            screenHeight: Int
+            screenHeight: Int,
         )
     }
 
@@ -83,7 +83,7 @@ class LorieView : SurfaceView, InputStub {
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
         context,
         attrs,
-        defStyleAttr
+        defStyleAttr,
     ) {
         init()
     }
@@ -93,7 +93,7 @@ class LorieView : SurfaceView, InputStub {
         context: Context?,
         attrs: AttributeSet?,
         defStyleAttr: Int,
-        defStyleRes: Int
+        defStyleRes: Int,
     ) : super(context, attrs, defStyleAttr, defStyleRes) {
         init()
     }
@@ -140,7 +140,7 @@ class LorieView : SurfaceView, InputStub {
                 holder,
                 PixelFormat.BGRA_8888,
                 r.width(),
-                r.height()
+                r.height(),
             )
         }
     }
@@ -191,11 +191,15 @@ class LorieView : SurfaceView, InputStub {
         var width = measuredWidth
         var height = measuredHeight
 
-        if ((width < height && p.x > p.y) || (width > height && p.x < p.y))
+        if ((width < height && p.x > p.y) || (width > height && p.x < p.y)) {
             p[p.y] = p.x
+        }
 
-        if (width > height * p.x / p.y) width = height * p.x / p.y
-        else height = width * p.y / p.x
+        if (width > height * p.x / p.y) {
+            width = height * p.x / p.y
+        } else {
+            height = width * p.y / p.x
+        }
 
         holder.setFixedSize(p.x, p.y)
         setMeasuredDimension(width, height)
@@ -215,7 +219,9 @@ class LorieView : SurfaceView, InputStub {
         return (a is EmulationActivity) && a.handleKey(event)
     }
 
-    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener = ClipboardManager.OnPrimaryClipChangedListener { this.handleClipboardChange() }
+    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener = ClipboardManager.OnPrimaryClipChangedListener {
+        this.handleClipboardChange()
+    }
 
     fun reloadPreferences() {
         hardwareKbdScancodesWorkaround = false
@@ -257,9 +263,14 @@ class LorieView : SurfaceView, InputStub {
 
     private fun checkForClipboardChange() {
         val desc = clipboard!!.primaryClipDescription
-        if (clipboardSyncEnabled && desc != null && lastClipboardTimestamp < desc.timestamp && desc.mimeTypeCount == 1 &&
-            (desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) ||
-                    desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML))
+        if (clipboardSyncEnabled &&
+            desc != null &&
+            lastClipboardTimestamp < desc.timestamp &&
+            desc.mimeTypeCount == 1 &&
+            (
+                desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) ||
+                    desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML)
+                )
         ) {
             lastClipboardTimestamp = desc.timestamp
             sendClipboardAnnounce()
@@ -276,13 +287,16 @@ class LorieView : SurfaceView, InputStub {
         if (clipboardSyncEnabled && hasFocus) {
             clipboard!!.addPrimaryClipChangedListener(clipboardListener)
             checkForClipboardChange()
-        } else clipboard!!.removePrimaryClipChangedListener(clipboardListener)
+        } else {
+            clipboard!!.removePrimaryClipChangedListener(clipboardListener)
+        }
 
         TouchInputHandler.refreshInputDevices()
     }
 
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
-        outAttrs.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        outAttrs.inputType =
+            InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
 
         // Note that IME_ACTION_NONE cannot be used as that makes it impossible to input newlines using the on-screen
         // keyboard on Android TV (see https://github.com/termux/termux-app/issues/221).
@@ -309,7 +323,7 @@ class LorieView : SurfaceView, InputStub {
         y: Float,
         whichButton: Int,
         buttonDown: Boolean,
-        relative: Boolean
+        relative: Boolean,
     )
 
     @FastNative
@@ -325,7 +339,7 @@ class LorieView : SurfaceView, InputStub {
         orientation: Int,
         buttons: Int,
         eraser: Boolean,
-        mouseMode: Boolean
+        mouseMode: Boolean,
     )
 
     @FastNative

@@ -164,6 +164,7 @@ private fun ChatScreenContent(
                 modifier = Modifier
                     .navigationBarsPadding()
                     .imePadding(),
+                emotes = state.emoticons,
                 onMessageSent = onSendMessage,
                 onTyping = onTyping,
                 onResetScroll = {

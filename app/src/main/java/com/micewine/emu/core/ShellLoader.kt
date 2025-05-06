@@ -5,11 +5,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.micewine.emu.activities.EmulationActivity.Companion.handler
 import com.micewine.emu.activities.EmulationActivity.Companion.sharedLogs
-import timber.log.Timber
 import java.io.BufferedReader
 import java.io.DataOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
+import timber.log.Timber
 
 object ShellLoader {
     fun runCommandWithOutput(cmd: String, enableStdErr: Boolean = false): String {
@@ -90,7 +90,7 @@ object ShellLoader {
             Thread {
                 try {
                     var stdOut: String?
-                    while ( stdout?.readLine().also { stdOut = it } != null) {
+                    while (stdout?.readLine().also { stdOut = it } != null) {
                         sharedLogs?.appendText("$stdOut")
                         Timber.tag("ShellLoader").v("$stdOut")
                     }

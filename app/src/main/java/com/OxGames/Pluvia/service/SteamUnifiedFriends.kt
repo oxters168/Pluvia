@@ -61,8 +61,8 @@ class SteamUnifiedFriends(
 
         friendMessages = unifiedMessages!!.createService(FriendMessages::class.java)
 
-        with(service.callbackManager!!) {
-            with(service.callbackSubscriptions) {
+        with(service.manager!!) {
+            with(service.subscriptions) {
                 add(subscribeServiceNotification<FriendMessagesClient, IncomingMessageNotification>(::onIncomingMessage))
                 add(subscribeServiceNotification<FriendMessages, AckMessageNotification>(::onAckMessage))
                 add(subscribeServiceNotification<PlayerClient, FriendNicknameChanged>(::onNickNameChanged))

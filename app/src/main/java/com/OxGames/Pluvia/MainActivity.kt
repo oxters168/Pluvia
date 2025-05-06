@@ -2,13 +2,16 @@ package com.OxGames.Pluvia
 
 import android.Manifest
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.graphics.Color.TRANSPARENT
 import android.hardware.input.InputManager
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.os.storage.StorageManager
 import android.view.InputDevice
 import androidx.activity.ComponentActivity
@@ -30,7 +33,9 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import com.OxGames.Pluvia.events.AndroidEvent
+import com.OxGames.Pluvia.service.ServiceBinder
 import com.OxGames.Pluvia.service.SteamService
+import com.OxGames.Pluvia.service.SteamServiceInterface
 import com.OxGames.Pluvia.ui.PluviaMain
 import com.OxGames.Pluvia.utils.decoders.AnimatedPngDecoder
 import com.OxGames.Pluvia.utils.decoders.IconDecoder
@@ -49,6 +54,23 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private var service: SteamServiceInterface? = null
+    private var isBound = false
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = (service as ServiceBinder)
+            this@MainActivity.service = binder.service
+            isBound = true
+            Timber.i("Service is bound")
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            service = null
+            isBound = false
+            Timber.i("Service is no longer bound")
+        }
+    }
 
     private val onEndProcess: (AndroidEvent.EndProcess) -> Unit = {
         finishAndRemoveTask()
@@ -261,9 +283,11 @@ class MainActivity : ComponentActivity() {
             isChangingConfigurations,
         )
 
-        if (SteamService.isConnected && !SteamService.isLoggedIn && !isChangingConfigurations) {
+        if (SteamService.isConnected.value && !SteamService.isLoggedIn.value && !isChangingConfigurations) {
             Timber.i("Stopping Steam Service")
-            SteamService.stop()
+            lifecycleScope.launch {
+                service!!.stop()
+            }
         }
     }
 

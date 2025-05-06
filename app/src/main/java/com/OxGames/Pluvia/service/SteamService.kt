@@ -1,24 +1,18 @@
 package com.OxGames.Pluvia.service
 
 import android.app.Service
-import android.content.Context
 import android.content.Intent
+import android.os.Binder
 import android.os.IBinder
 import androidx.room.withTransaction
 import com.OxGames.Pluvia.BuildConfig
 import com.OxGames.Pluvia.PluviaApp
 import com.OxGames.Pluvia.PrefManager
-import com.OxGames.Pluvia.data.DepotInfo
 import com.OxGames.Pluvia.data.DownloadInfo
-import com.OxGames.Pluvia.data.Emoticon
-import com.OxGames.Pluvia.data.GameProcessInfo
-import com.OxGames.Pluvia.data.LaunchInfo
 import com.OxGames.Pluvia.data.OwnedGames
-import com.OxGames.Pluvia.data.PostSyncInfo
 import com.OxGames.Pluvia.data.SteamApp
 import com.OxGames.Pluvia.data.SteamFriend
 import com.OxGames.Pluvia.data.SteamLicense
-import com.OxGames.Pluvia.data.UserFileInfo
 import com.OxGames.Pluvia.db.PluviaDatabase
 import com.OxGames.Pluvia.db.dao.ChangeNumbersDao
 import com.OxGames.Pluvia.db.dao.EmoticonDao
@@ -28,10 +22,6 @@ import com.OxGames.Pluvia.db.dao.SteamAppDao
 import com.OxGames.Pluvia.db.dao.SteamFriendDao
 import com.OxGames.Pluvia.db.dao.SteamLicenseDao
 import com.OxGames.Pluvia.enums.LoginResult
-import com.OxGames.Pluvia.enums.OS
-import com.OxGames.Pluvia.enums.OSArch
-import com.OxGames.Pluvia.enums.SaveLocation
-import com.OxGames.Pluvia.enums.SyncResult
 import com.OxGames.Pluvia.events.AndroidEvent
 import com.OxGames.Pluvia.events.SteamEvent
 import com.OxGames.Pluvia.service.callback.EmoticonListCallback
@@ -42,11 +32,8 @@ import com.OxGames.Pluvia.utils.timeChunked
 import dagger.hilt.android.AndroidEntryPoint
 import `in`.dragonbra.javasteam.enums.EFriendRelationship
 import `in`.dragonbra.javasteam.enums.ELicenseFlags
-import `in`.dragonbra.javasteam.enums.EOSType
-import `in`.dragonbra.javasteam.enums.EPersonaState
 import `in`.dragonbra.javasteam.enums.EResult
 import `in`.dragonbra.javasteam.networking.steam3.ProtocolTypes
-import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientObjects.ECloudPendingRemoteOperation
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesFamilygroupsSteamclient
 import `in`.dragonbra.javasteam.rpc.service.FamilyGroups
 import `in`.dragonbra.javasteam.steam.authentication.AuthPollResult
@@ -58,7 +45,6 @@ import `in`.dragonbra.javasteam.steam.authentication.QrAuthSession
 import `in`.dragonbra.javasteam.steam.contentdownloader.FileManifestProvider
 import `in`.dragonbra.javasteam.steam.discovery.FileServerListProvider
 import `in`.dragonbra.javasteam.steam.discovery.ServerQuality
-import `in`.dragonbra.javasteam.steam.handlers.steamapps.GamePlayedInfo
 import `in`.dragonbra.javasteam.steam.handlers.steamapps.PICSRequest
 import `in`.dragonbra.javasteam.steam.handlers.steamapps.SteamApps
 import `in`.dragonbra.javasteam.steam.handlers.steamapps.callback.LicenseListCallback
@@ -99,21 +85,22 @@ import java.util.Collections
 import java.util.EnumSet
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flowOf
@@ -121,11 +108,35 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+interface SteamServiceInterface {
+    suspend fun stop()
+    suspend fun logOut()
+    suspend fun clearDatabase()
+    suspend fun startLoginWithQr()
+    suspend fun stopLoginWithQr()
+    suspend fun getProfileInfo(steamid: SteamID): ProfileInfoCallback
+    suspend fun getOwnedGames(steamid: Long): List<OwnedGames>
+    suspend fun initChat(steamid: Long)
+    suspend fun sendTypingMessage(steamid: Long)
+    suspend fun sendMessage(steamid: Long, value: String)
+    suspend fun blockFriend(steamid: Long)
+    suspend fun removeFriend(steamid: Long)
+    suspend fun requestAliasHistory(steamid: Long)
+    suspend fun setNickName(steamid: Long, value: String)
+    suspend fun startLoginWithCredentials(username: String, password: String, rememberSession: Boolean, authenticator: IAuthenticator)
+    suspend fun notifyRunningProcesses()
+    suspend fun closeApp(id: Int, prefixToPath: (String) -> String)
+    fun isAppInstalled(appId: Int): Boolean
+}
+
+class ServiceBinder(service: SteamService) : Binder() {
+    val service: SteamServiceInterface = service
+}
+
 @AndroidEntryPoint
-class SteamService : Service(), IChallengeUrlChanged {
+class SteamService : Service(), SteamServiceInterface, IChallengeUrlChanged {
 
     @Inject
     lateinit var db: PluviaDatabase
@@ -151,889 +162,58 @@ class SteamService : Service(), IChallengeUrlChanged {
     @Inject
     lateinit var fileChangeListsDao: FileChangeListsDao
 
-    private lateinit var notificationHelper: NotificationHelper
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    internal var callbackManager: CallbackManager? = null
+    /* Steam */
     internal var steamClient: SteamClient? = null
-    internal val callbackSubscriptions: ArrayList<Closeable> = ArrayList()
+    internal var manager: CallbackManager? = null
+    internal var steamUser: SteamUser? = null
+    internal var steamApps: SteamApps? = null
+    internal var steamFriends: SteamFriends? = null
+    internal var steamCloud: SteamCloud? = null
+    internal var unifiedFriends: SteamUnifiedFriends? = null
+    internal var familyGroups: FamilyGroups? = null
+    internal val subscriptions: ArrayList<Closeable> = ArrayList()
 
-    private var _unifiedFriends: SteamUnifiedFriends? = null
-    private var _steamUser: SteamUser? = null
-    private var _steamApps: SteamApps? = null
-    private var _steamFriends: SteamFriends? = null
-    private var _steamCloud: SteamCloud? = null
-    private var _steamFamilyGroups: FamilyGroups? = null
-
-    private var _loginResult: LoginResult = LoginResult.Failed
-
-    private var retryAttempt = 0
+    private lateinit var notificationHelper: NotificationHelper
 
     private val appIdFlowSender: MutableSharedFlow<Int> = MutableSharedFlow()
     private val appIdFlowReceiver = appIdFlowSender.asSharedFlow()
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val appCache = ConcurrentHashMap<Int, Pair<String, Boolean>>()
+    private val downloadJobs = ConcurrentHashMap<Int, DownloadInfo>()
+
+    private val serverListPath: String by lazy {
+        Paths.get(this.cacheDir.path, "server_list.bin").pathString
+    }
+
+    private val depotManifestsPath: String by lazy {
+        Paths.get(this.dataDir.path, "Steam", "depot_manifests.zip").pathString
+    }
 
     private val onEndProcess: (AndroidEvent.EndProcess) -> Unit = {
-        SteamService.stop()
-    }
-
-    // The current shared family group the logged in user is joined to.
-    private var familyGroupMembers: ArrayList<Int> = arrayListOf()
-
-    companion object {
-        private val PICS_CHANGE_CHECK_DELAY = 60.seconds
-
-        const val MAX_SIMULTANEOUS_PICS_REQUESTS = 50
-        const val MAX_RETRY_ATTEMPTS = 20
-
-        const val INVALID_APP_ID: Int = Int.MAX_VALUE
-        const val INVALID_PKG_ID: Int = Int.MAX_VALUE
-
-        /**
-         * Default timeout to use when making requests
-         */
-        var requestTimeout = 10.seconds
-
-        /**
-         * Default timeout to use when reading the response body
-         */
-        var responseTimeout = 60.seconds
-
-        private val PROTOCOL_TYPES = EnumSet.of(ProtocolTypes.WEB_SOCKET)
-
-        private var instance: SteamService? = null
-
-        private val downloadJobs = ConcurrentHashMap<Int, DownloadInfo>()
-
-        private var syncInProgress: Boolean = false
-
-        private val appCache = ConcurrentHashMap<Int, Pair<String, Boolean>>()
-
-        var isStopping: Boolean = false
-            private set
-        var isConnected: Boolean = false
-            private set
-        var isRunning: Boolean = false
-            private set
-        var isLoggingOut: Boolean = false
-            private set
-        val isLoggedIn: Boolean
-            get() = instance?.steamClient?.steamID?.isValid == true
-        var isWaitingForQRAuth: Boolean = false
-            private set
-
-        // 'cached' variables are a hack to fix 'DiskReadViolation'
-
-        private var cachedServerListPath: String? = null
-        private val serverListPath: String
-            get() {
-                cachedServerListPath?.let { return it }
-                val value = Paths.get(instance!!.cacheDir.path, "server_list.bin").pathString
-                cachedServerListPath = value
-                return value
-            }
-
-        private var cachedDepotManifestsPath: String? = null
-        private val depotManifestsPath: String
-            get() {
-                cachedDepotManifestsPath?.let { return it }
-                val value = Paths.get(instance!!.dataDir.path, "Steam", "depot_manifests.zip").pathString
-                cachedDepotManifestsPath = value
-                return value
-            }
-
-        private var cachedDefaultAppInstallPath: String? = null
-        val defaultAppInstallPath: String
-            get() {
-                cachedDefaultAppInstallPath?.let { return it }
-                val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "common").pathString
-                cachedDefaultAppInstallPath = value
-                return value
-            }
-
-        private var cachedDefaultAppStagingPath: String? = null
-        val defaultAppStagingPath: String
-            get() {
-                cachedDefaultAppStagingPath?.let { return it }
-                val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "staging").pathString
-                cachedDefaultAppStagingPath = value
-                return value
-            }
-
-        val userSteamId: SteamID?
-            get() = instance?.steamClient?.steamID
-
-        val familyMembers: List<Int>
-            get() = instance!!.familyGroupMembers
-
-        suspend fun setPersonaState(state: EPersonaState) = withContext(Dispatchers.IO) {
-            PrefManager.personaState = state
-            instance?._steamFriends?.setPersonaState(state)
-        }
-
-        suspend fun requestUserPersona() = withContext(Dispatchers.IO) {
-            // in order to get user avatar url and other info
-            userSteamId?.let { instance?._steamFriends?.requestFriendInfo(it) }
-        }
-
-        suspend fun getPersonaStateOf(steamId: SteamID): SteamFriend? = withContext(Dispatchers.IO) {
-            instance!!.db.steamFriendDao().findFriend(steamId.convertToUInt64())
-        }
-
-        fun getPkgInfoOf(appId: Int): SteamLicense? {
-            return runBlocking(Dispatchers.IO) {
-                instance?.licenseDao?.findLicense(
-                    instance?.appDao?.findApp(appId)?.packageId ?: INVALID_PKG_ID,
-                )
-            }
-        }
-
-        fun getAppInfoOf(appId: Int): SteamApp? {
-            return runBlocking(Dispatchers.IO) { instance?.appDao?.findApp(appId) }
-        }
-
-        fun queueAppPICSRequests(apps: List<Int>) {
-            if (apps.isEmpty()) {
-                return
-            }
-
-            instance?.let { steamInstance ->
-                steamInstance.scope.launch {
-                    val flow = flowOf(*apps.toTypedArray())
-                    steamInstance.appIdFlowSender.emitAll(flow)
-                }
-            }
-        }
-
-        fun getAppDownloadInfo(appId: Int): DownloadInfo? {
-            return downloadJobs[appId]
-        }
-
-        fun isAppInstalled(appId: Int): Boolean {
-            val appDownloadInfo = getAppDownloadInfo(appId)
-            val isNotDownloading = appDownloadInfo == null || appDownloadInfo.getProgress() >= 1f
-
-            if (!isNotDownloading) {
-                return false
-            }
-
-            appCache[appId]?.let { cacheEntry ->
-                if (cacheEntry.second) {
-                    return true
-                }
-
-                val isNowInstalled = runBlocking(Dispatchers.IO) {
-                    Files.exists(Paths.get(cacheEntry.first))
-                }
-
-                if (isNowInstalled) {
-                    appCache[appId] = Pair(cacheEntry.first, true)
-                }
-
-                return isNowInstalled
-            }
-
-            val path = getAppDirPath(appId)
-
-            val isInstalled = runBlocking(Dispatchers.IO) {
-                Files.exists(Paths.get(path))
-            }
-
-            appCache[appId] = Pair(path, isInstalled)
-
-            return isInstalled
-        }
-
-        fun getAppDlc(appId: Int): Map<Int, DepotInfo> {
-            return getAppInfoOf(appId)?.let {
-                it.depots.filter { it.value.dlcAppId != INVALID_APP_ID }
-            }.orEmpty()
-        }
-
-        fun getOwnedAppDlc(appId: Int): Map<Int, DepotInfo> = getAppDlc(appId).filter {
-            getPkgInfoOf(it.value.dlcAppId)?.let { pkg ->
-                instance?.steamClient?.let { steamClient ->
-                    pkg.ownerAccountId.contains(steamClient.steamID.accountID.toInt())
-                }
-            } == true
-        }
-
-        fun getDownloadableDepots(appId: Int): Map<Int, DepotInfo> = getAppInfoOf(appId)?.depots?.filter { depotEntry ->
-            val depot = depotEntry.value
-
-            (depot.manifests.isNotEmpty() || depot.sharedInstall) &&
-                (depot.osList.contains(OS.windows) || (!depot.osList.contains(OS.linux) && !depot.osList.contains(OS.macos))) &&
-                (depot.osArch == OSArch.Arch64 || depot.osArch == OSArch.Unknown) &&
-                (depot.dlcAppId == INVALID_APP_ID || getOwnedAppDlc(appId).containsKey(depot.depotId))
-        }.orEmpty()
-
-        fun getAppDirPath(appId: Int): String {
-            var appName = getAppInfoOf(appId)?.config?.installDir.orEmpty()
-
-            if (appName.isEmpty()) {
-                appName = getAppInfoOf(appId)?.name.orEmpty()
-            }
-
-            return Paths.get(PrefManager.appInstallPath, appName).pathString
-        }
-
-        fun deleteApp(appId: Int): Boolean {
-            with(instance!!) {
-                scope.launch {
-                    db.withTransaction {
-                        changeNumbersDao.deleteByAppId(appId)
-                        fileChangeListsDao.deleteByAppId(appId)
-                    }
-                }
-            }
-
-            val appDirPath = getAppDirPath(appId)
-
-            appCache.remove(appId)
-
-            return File(appDirPath).deleteRecursively()
-        }
-
-        fun downloadApp(appId: Int): DownloadInfo? {
-            return getAppInfoOf(appId)?.let { appInfo ->
-                Timber.i("App contains ${appInfo.depots.size} depot(s): ${appInfo.depots.keys}")
-                downloadApp(appId, getDownloadableDepots(appId).keys.toList(), "public")
-            }
-        }
-
-        fun isImageFsInstalled(context: Context): Boolean {
-            TODO()
-            // return ImageFs.find(context).rootDir.exists()
-        }
-
-        fun isImageFsInstallable(context: Context): Boolean {
-            TODO()
-//            val splitManager = SplitInstallManagerFactory.create(context)
-//            return splitManager.installedModules.contains("ubuntufs") // || FileUtils.assetExists(context.assets, "imagefs.txz")
-        }
-
-        fun downloadImageFs(
-            onDownloadProgress: (Float) -> Unit,
-            parentScope: CoroutineScope = CoroutineScope(Dispatchers.IO),
-        ) = parentScope.async {
-            TODO()
-//            if (!isImageFsInstalled(instance!!) && !isImageFsInstallable(instance!!)) {
-//                Timber.i("imagefs.txz will be downloaded")
-//                val splitManager = SplitInstallManagerFactory.create(instance!!)
-//                // if (!splitManager.installedModules.contains("ubuntufs")) {
-//                val moduleInstallSessionId = splitManager.requestInstall(listOf("ubuntufs"))
-//                var isInstalling = true
-//                // try {
-//                do {
-//                    val sessionState = splitManager.requestSessionState(moduleInstallSessionId)
-//                    // logD("imagefs.txz session state status: ${sessionState.status}")
-//                    when (sessionState.status) {
-//                        SplitInstallSessionStatus.INSTALLED -> isInstalling = false
-//                        SplitInstallSessionStatus.PENDING,
-//                        SplitInstallSessionStatus.INSTALLING,
-//                        SplitInstallSessionStatus.DOWNLOADED,
-//                        SplitInstallSessionStatus.DOWNLOADING,
-//                        -> {
-//                            if (!isActive) {
-//                                Timber.i("ubuntufs module download cancelling due to scope becoming inactive")
-//                                splitManager.requestCancelInstall(moduleInstallSessionId)
-//                                break
-//                            }
-//                            val downloadPercent =
-//                                sessionState.bytesDownloaded.toFloat() / sessionState.totalBytesToDownload
-//                            // logD("imagefs.txz download percent: $downloadPercent")
-//                            // downloadInfo.setProgress(downloadPercent, 0)
-//                            onDownloadProgress(downloadPercent)
-//                            delay(100)
-//                        }
-//
-//                        else -> {
-//                            cancel("Failed to install ubuntufs module: ${sessionState.status}")
-//                        }
-//                    }
-//                } while (isInstalling)
-//                // } catch (e: Exception) {
-//                //     if (moduleInstallSessionId != -1) {
-//                //         val splitManager = SplitInstallManagerFactory.create(instance!!)
-//                //         val sessionState = splitManager.requestSessionState(moduleInstallSessionId)
-//                //         if (sessionState.status == SplitInstallSessionStatus.DOWNLOADING ||
-//                //             sessionState.status == SplitInstallSessionStatus.DOWNLOADED ||
-//                //             sessionState.status == SplitInstallSessionStatus.INSTALLING
-//                //         ) {
-//                //             splitManager.requestCancelInstall(moduleInstallSessionId)
-//                //         }
-//                //     }
-//                // }
-//                val installedProperly = splitManager.installedModules.contains("ubuntufs")
-//                Timber.i("imagefs.txz module installed properly: $installedProperly")
-//                // }
-//            } else {
-//                Timber.i("ubuntufs module already installed, skipping download")
-//            }
-        }
-
-        fun downloadApp(appId: Int, depotIds: List<Int>, branch: String): DownloadInfo? {
-            TODO()
-//            if (downloadJobs.contains(appId)) {
-//                Timber.w("Could not start new download job for $appId since one already exists")
-//                return getAppDownloadInfo(appId)
-//            }
-//
-//            if (depotIds.isEmpty()) {
-//                Timber.w("No depots to download for $appId")
-//                return null
-//            }
-//
-//            Timber.i("Found ${depotIds.size} depot(s) to download: $depotIds")
-//
-//            val needsImageFsDownload = !ImageFs.find(instance!!).rootDir.exists() &&
-//                !FileUtils.assetExists(instance!!.assets, "imagefs.txz")
-//            val indexOffset = if (needsImageFsDownload) 1 else 0
-//
-//            val downloadInfo = DownloadInfo(depotIds.size + indexOffset).also { downloadInfo ->
-//                downloadInfo.setDownloadJob(
-//                    CoroutineScope(Dispatchers.IO).launch {
-//                        // TODO: change downloads to be one item/depot per job and connect them to the game requesting to download them
-//                        try {
-//                            downloadImageFs(
-//                                onDownloadProgress = { downloadInfo.setProgress(it, 0) },
-//                                parentScope = this,
-//                            ).await()
-//
-//                            depotIds.forEachIndexed { jobIndex, depotId ->
-//                                // TODO: download shared install depots to a common location
-//                                ContentDownloader(instance!!.steamClient!!).downloadApp(
-//                                    appId = appId,
-//                                    depotId = depotId,
-//                                    installPath = PrefManager.appInstallPath,
-//                                    stagingPath = PrefManager.appStagingPath,
-//                                    branch = branch,
-//                                    // maxDownloads = 1,
-//                                    onDownloadProgress = { downloadInfo.setProgress(it, jobIndex + indexOffset) },
-//                                    parentScope = coroutineContext.job as CoroutineScope,
-//                                ).await()
-//                            }
-//                        } catch (e: Exception) {
-//                            Timber.e(e, "Download failed")
-//                        }
-//
-//                        downloadJobs.remove(appId)
-//                    },
-//                )
-//            }
-//
-//            downloadJobs[appId] = downloadInfo
-//
-//            return downloadInfo
-        }
-
-        fun getWindowsLaunchInfos(appId: Int): List<LaunchInfo> {
-            return getAppInfoOf(appId)?.let { appInfo ->
-                appInfo.config.launch.filter { launchInfo ->
-                    // since configOS was unreliable and configArch was even more unreliable
-                    launchInfo.executable.endsWith(".exe")
-                }
-            }.orEmpty()
-        }
-
-        suspend fun notifyRunningProcesses(vararg gameProcesses: GameProcessInfo) = withContext(Dispatchers.IO) {
-            instance?.let { steamInstance ->
-                val gamesPlayed = gameProcesses.mapNotNull { gameProcess ->
-                    getAppInfoOf(gameProcess.appId)?.let { appInfo ->
-                        getPkgInfoOf(gameProcess.appId)?.let { pkgInfo ->
-                            appInfo.branches[gameProcess.branch]?.let { branch ->
-                                val processId = gameProcess.processes
-                                    .firstOrNull { it.parentIsSteam }
-                                    ?.processId
-                                    ?: gameProcess.processes.firstOrNull()?.processId
-                                    ?: 0
-
-                                val userAccountId = userSteamId!!.accountID.toInt()
-                                GamePlayedInfo(
-                                    gameId = gameProcess.appId.toLong(),
-                                    processId = processId,
-                                    ownerId = if (pkgInfo.ownerAccountId.contains(userAccountId)) {
-                                        userAccountId
-                                    } else {
-                                        pkgInfo.ownerAccountId.first()
-                                    },
-                                    // TODO: figure out what this is and un-hardcode
-                                    launchSource = 100,
-                                    gameBuildId = branch.buildId.toInt(),
-                                    processIdList = gameProcess.processes,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Timber.i(
-                    "GameProcessInfo:%s",
-                    gamesPlayed.joinToString("\n") { game ->
-                        """
-                        |   processId: ${game.processId}
-                        |   gameId: ${game.gameId}
-                        |   processes: ${
-                            game.processIdList.joinToString("\n") { process ->
-                                """
-                                |   processId: ${process.processId}
-                                |   processIdParent: ${process.processIdParent}
-                                |   parentIsSteam: ${process.parentIsSteam}
-                                """.trimMargin()
-                            }
-                        }
-                        """.trimMargin()
-                    },
-                )
-
-                steamInstance._steamApps?.notifyGamesPlayed(
-                    gamesPlayed = gamesPlayed,
-                    clientOsType = EOSType.AndroidUnknown,
-                )
-            }
-        }
-
-        fun beginLaunchApp(
-            appId: Int,
-            parentScope: CoroutineScope = CoroutineScope(Dispatchers.IO),
-            ignorePendingOperations: Boolean = false,
-            preferredSave: SaveLocation = SaveLocation.None,
-            prefixToPath: (String) -> String,
-        ): Deferred<PostSyncInfo> = parentScope.async {
-            if (syncInProgress) {
-                Timber.w("Cannot launch app when sync already in progress")
-                return@async PostSyncInfo(SyncResult.InProgress)
-            }
-
-            syncInProgress = true
-
-            var syncResult = PostSyncInfo(SyncResult.UnknownFail)
-
-            PrefManager.clientId?.let { clientId ->
-                instance?.let { steamInstance ->
-                    getAppInfoOf(appId)?.let { appInfo ->
-                        steamInstance._steamCloud?.let { steamCloud ->
-                            val postSyncInfo = SteamAutoCloud.syncUserFiles(
-                                appInfo = appInfo,
-                                clientId = clientId,
-                                steamInstance = steamInstance,
-                                steamCloud = steamCloud,
-                                preferredSave = preferredSave,
-                                parentScope = parentScope,
-                                prefixToPath = prefixToPath,
-                            ).await()
-
-                            postSyncInfo?.let { info ->
-                                syncResult = info
-
-                                if (info.syncResult == SyncResult.Success || info.syncResult == SyncResult.UpToDate) {
-                                    Timber.i(
-                                        "Signaling app launch:\n\tappId: %d\n\tclientId: %s\n\tosType: %s",
-                                        appId,
-                                        PrefManager.clientId,
-                                        EOSType.AndroidUnknown,
-                                    )
-
-                                    val pendingRemoteOperations = steamCloud.signalAppLaunchIntent(
-                                        appId = appId,
-                                        clientId = clientId,
-                                        machineName = SteamUtils.getMachineName(steamInstance),
-                                        ignorePendingOperations = ignorePendingOperations,
-                                        osType = EOSType.AndroidUnknown,
-                                    ).await()
-
-                                    if (pendingRemoteOperations.isNotEmpty() && !ignorePendingOperations) {
-                                        syncResult = PostSyncInfo(
-                                            syncResult = SyncResult.PendingOperations,
-                                            pendingRemoteOperations = pendingRemoteOperations,
-                                        )
-                                    } else if (ignorePendingOperations &&
-                                        pendingRemoteOperations.any {
-                                            it.operation == ECloudPendingRemoteOperation.k_ECloudPendingRemoteOperationAppSessionActive
-                                        }
-                                    ) {
-                                        steamInstance._steamUser!!.kickPlayingSession()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            syncInProgress = false
-
-            return@async syncResult
-        }
-
-        suspend fun closeApp(appId: Int, prefixToPath: (String) -> String) = withContext(Dispatchers.IO) {
-            async {
-                if (syncInProgress) {
-                    Timber.w("Cannot close app when sync already in progress")
-                    return@async
-                }
-
-                syncInProgress = true
-
-                PrefManager.clientId?.let { clientId ->
-                    instance?.let { steamInstance ->
-                        getAppInfoOf(appId)?.let { appInfo ->
-                            steamInstance._steamCloud?.let { steamCloud ->
-                                val postSyncInfo = SteamAutoCloud.syncUserFiles(
-                                    appInfo = appInfo,
-                                    clientId = clientId,
-                                    steamInstance = steamInstance,
-                                    steamCloud = steamCloud,
-                                    parentScope = this,
-                                    prefixToPath = prefixToPath,
-                                ).await()
-
-                                steamCloud.signalAppExitSyncDone(
-                                    appId = appId,
-                                    clientId = clientId,
-                                    uploadsCompleted = postSyncInfo?.uploadsCompleted == true,
-                                    uploadsRequired = postSyncInfo?.uploadsRequired == false,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                syncInProgress = false
-            }
-        }
-
-        data class FileChanges(
-            val filesDeleted: List<UserFileInfo>,
-            val filesModified: List<UserFileInfo>,
-            val filesCreated: List<UserFileInfo>,
-        )
-
-        private fun login(
-            username: String,
-            accessToken: String? = null,
-            refreshToken: String? = null,
-            password: String? = null,
-            rememberSession: Boolean = false,
-            twoFactorAuth: String? = null,
-            emailAuth: String? = null,
-            clientId: Long? = null,
-        ) {
-            val steamUser = instance!!._steamUser!!
-
-            // Sensitive info, only print in DEBUG build.
-            if (BuildConfig.DEBUG) {
-                Timber.d(
-                    """
-                    Login Information:
-                     Username: $username
-                     AccessToken: $accessToken
-                     RefreshToken: $refreshToken
-                     Password: $password
-                     Remember Session: $rememberSession
-                     TwoFactorAuth: $twoFactorAuth
-                     EmailAuth: $emailAuth
-                    """.trimIndent(),
-                )
-            }
-
-            PrefManager.username = username
-
-            if ((password != null && rememberSession) || refreshToken != null) {
-                if (accessToken != null) {
-                    PrefManager.accessToken = accessToken
-                }
-
-                if (refreshToken != null) {
-                    PrefManager.refreshToken = refreshToken
-                }
-
-                if (clientId != null) {
-                    PrefManager.clientId = clientId
-                }
-            }
-
-            val event = SteamEvent.LogonStarted(username)
-            PluviaApp.events.emit(event)
-
-            steamUser.logOn(
-                LogOnDetails(
-                    username = SteamUtils.removeSpecialChars(username).trim(),
-                    password = password?.let { SteamUtils.removeSpecialChars(it).trim() },
-                    shouldRememberPassword = rememberSession,
-                    twoFactorCode = twoFactorAuth,
-                    authCode = emailAuth,
-                    accessToken = refreshToken,
-                    loginID = SteamUtils.getUniqueDeviceId(instance!!),
-                    machineName = SteamUtils.getMachineName(instance!!),
-                    chatMode = ChatMode.NEW_STEAM_CHAT,
-                ),
-            )
-        }
-
-        suspend fun startLoginWithCredentials(
-            username: String,
-            password: String,
-            rememberSession: Boolean,
-            authenticator: IAuthenticator,
-        ) = withContext(Dispatchers.IO) {
-            try {
-                Timber.i("Logging in via credentials.")
-
-                instance!!.steamClient?.let { steamClient ->
-                    val authDetails = AuthSessionDetails().apply {
-                        this.username = username.trim()
-                        this.password = password.trim()
-                        this.persistentSession = rememberSession
-                        this.authenticator = authenticator
-                        this.deviceFriendlyName = SteamUtils.getMachineName(instance!!)
-                    }
-
-                    val event = SteamEvent.LogonStarted(username)
-                    PluviaApp.events.emit(event)
-
-                    val authSession = steamClient.authentication.beginAuthSessionViaCredentials(authDetails).await()
-
-                    val pollResult = authSession.pollingWaitForResult().await()
-
-                    if (pollResult.accountName.isEmpty() && pollResult.refreshToken.isEmpty()) {
-                        throw Exception("No account name or refresh token received.")
-                    }
-
-                    login(
-                        clientId = authSession.clientID,
-                        username = pollResult.accountName,
-                        accessToken = pollResult.accessToken,
-                        refreshToken = pollResult.refreshToken,
-                        rememberSession = rememberSession,
-                    )
-                } ?: run {
-                    Timber.e("Could not logon: Failed to connect to Steam")
-
-                    val event = SteamEvent.LogonEnded(username, LoginResult.Failed, "No connection to Steam")
-                    PluviaApp.events.emit(event)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Login failed")
-
-                val message = when (e) {
-                    is CancellationException -> "Unknown cancellation"
-                    is AuthenticationException -> e.result?.name ?: e.message
-                    else -> e.message ?: e.javaClass.name
-                }
-
-                val event = SteamEvent.LogonEnded(username, LoginResult.Failed, message)
-                PluviaApp.events.emit(event)
-            }
-        }
-
-        suspend fun startLoginWithQr() = withContext(Dispatchers.IO) {
-            try {
-                Timber.i("Logging in via QR.")
-
-                instance!!.steamClient?.let { steamClient ->
-                    isWaitingForQRAuth = true
-
-                    val authDetails = AuthSessionDetails().apply {
-                        deviceFriendlyName = SteamUtils.getMachineName(instance!!)
-                    }
-
-                    val authSession = steamClient.authentication.beginAuthSessionViaQR(authDetails).await()
-
-                    // Steam will periodically refresh the challenge url, this callback allows you to draw a new qr code.
-                    authSession.challengeUrlChanged = instance
-
-                    val qrEvent = SteamEvent.QrChallengeReceived(authSession.challengeUrl)
-                    PluviaApp.events.emit(qrEvent)
-
-                    Timber.d("PollingInterval: ${authSession.pollingInterval.toLong()}")
-
-                    var authPollResult: AuthPollResult? = null
-
-                    while (isWaitingForQRAuth && authPollResult == null) {
-                        try {
-                            authPollResult = authSession.pollAuthSessionStatus().await()
-                        } catch (e: Exception) {
-                            Timber.e(e, "Poll auth session status error")
-                            throw e
-                        }
-
-                        // Sensitive info, only print in DEBUG build.
-                        if (BuildConfig.DEBUG && authPollResult != null) {
-                            Timber.d(
-                                "AccessToken: %s\nAccountName: %s\nRefreshToken: %s\nNewGuardData: %s",
-                                authPollResult.accessToken,
-                                authPollResult.accountName,
-                                authPollResult.refreshToken,
-                                authPollResult.newGuardData ?: "No new guard data",
-                            )
-                        }
-
-                        delay(authSession.pollingInterval.toLong())
-                    }
-
-                    isWaitingForQRAuth = false
-
-                    val event = SteamEvent.QrAuthEnded(authPollResult != null)
-                    PluviaApp.events.emit(event)
-
-                    // there is a chance qr got cancelled and there is no authPollResult
-                    if (authPollResult == null) {
-                        Timber.e("Got no auth poll result")
-                        throw Exception("Got no auth poll result")
-                    }
-
-                    login(
-                        clientId = authSession.clientID,
-                        username = authPollResult.accountName,
-                        accessToken = authPollResult.accessToken,
-                        refreshToken = authPollResult.refreshToken,
-                    )
-                } ?: run {
-                    Timber.e("Could not start QR logon: Failed to connect to Steam")
-
-                    val event = SteamEvent.QrAuthEnded(success = false, message = "No connection to Steam")
-                    PluviaApp.events.emit(event)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "QR failed")
-
-                val message = when (e) {
-                    is CancellationException -> "QR Session timed out"
-                    is AuthenticationException -> e.result?.name ?: e.message
-                    else -> e.message ?: e.javaClass.name
-                }
-
-                val event = SteamEvent.QrAuthEnded(success = false, message = message)
-                PluviaApp.events.emit(event)
-            }
-        }
-
-        fun stopLoginWithQr() {
-            Timber.i("Stopping QR polling")
-
-            isWaitingForQRAuth = false
-        }
-
-        fun stop() {
-            instance?.let { steamInstance ->
-                steamInstance.scope.launch {
-                    steamInstance.stop()
-                }
-            }
-        }
-
-        fun logOut() {
-            CoroutineScope(Dispatchers.Default).launch {
-                // isConnected = false
-
-                isLoggingOut = true
-
-                performLogOffDuties()
-
-                val steamUser = instance!!._steamUser!!
-                steamUser.logOff()
-            }
-        }
-
-        private fun clearUserData() {
-            PrefManager.clearPreferences()
-
-            clearDatabase()
-        }
-
-        fun clearDatabase() {
-            with(instance!!) {
-                scope.launch {
-                    db.withTransaction {
-                        db.emoticonDao().deleteAll()
-                        db.friendMessagesDao().deleteAllMessages()
-                        appDao.deleteAll()
-                        changeNumbersDao.deleteAll()
-                        fileChangeListsDao.deleteAll()
-                        friendDao.deleteAll()
-                        licenseDao.deleteAll()
-                    }
-                }
-            }
-        }
-
-        private fun performLogOffDuties() {
-            val username = PrefManager.username
-
-            clearUserData()
-
-            val event = SteamEvent.LoggedOut(username)
-            PluviaApp.events.emit(event)
-        }
-
-        suspend fun getEmoticonList() = withContext(Dispatchers.IO) {
-            instance?.steamClient!!.getHandler<PluviaHandler>()!!.getEmoticonList()
-        }
-
-        suspend fun fetchEmoticons(): List<Emoticon> = withContext(Dispatchers.IO) {
-            instance?.emoticonDao!!.getAllAsList()
-        }
-
-        suspend fun getProfileInfo(friendID: SteamID): ProfileInfoCallback = withContext(Dispatchers.IO) {
-            instance?._steamFriends!!.requestProfileInfo(friendID).await()
-        }
-
-        suspend fun getOwnedGames(friendID: Long): List<OwnedGames> = withContext(Dispatchers.IO) {
-            instance?._unifiedFriends!!.getOwnedGames(friendID)
-        }
-
-        suspend fun getRecentMessages(friendID: Long) = withContext(Dispatchers.IO) {
-            instance?._unifiedFriends!!.getRecentMessages(friendID)
-        }
-
-        suspend fun ackMessage(friendID: Long) = withContext(Dispatchers.IO) {
-            instance?._unifiedFriends!!.ackMessage(friendID)
-        }
-
-        suspend fun requestAliasHistory(friendID: Long) = withContext(Dispatchers.IO) {
-            instance?.steamClient!!.getHandler<SteamFriends>()?.requestAliasHistory(SteamID(friendID))
-        }
-
-        suspend fun sendTypingMessage(friendID: Long) = withContext(Dispatchers.IO) {
-            instance?._unifiedFriends!!.setIsTyping(friendID)
-        }
-
-        suspend fun sendMessage(friendID: Long, message: String) = withContext(Dispatchers.IO) {
-            instance?._unifiedFriends!!.sendMessage(friendID, message)
-        }
-
-        suspend fun blockFriend(friendID: Long) = withContext(Dispatchers.IO) {
-            val friend = SteamID(friendID)
-            val result = instance?._steamFriends!!.ignoreFriend(friend).await()
-
-            if (result.result == EResult.OK) {
-                val blockedFriend = instance!!.friendDao.findFriend(friendID)
-                blockedFriend?.let {
-                    instance?.friendDao!!.update(it.copy(relation = EFriendRelationship.Blocked))
-                }
-            }
-        }
-
-        suspend fun removeFriend(friendID: Long) = withContext(Dispatchers.IO) {
-            val friend = SteamID(friendID)
-            instance?._steamFriends!!.removeFriend(friend)
-            instance?.friendDao!!.remove(friendID)
-        }
-
-        suspend fun setNickName(friendID: Long, value: String) = withContext(Dispatchers.IO) {
-            val friend = SteamID(friendID)
-            instance?._steamFriends!!.setFriendNickname(friend, value)
+        scope.launch {
+            stop()
         }
     }
+
+    private val onPersonaStateChange: (SteamEvent.PersonaStateChange) -> Unit = {
+        scope.launch {
+            PrefManager.personaState = it.state
+            steamFriends!!.setPersonaState(it.state)
+        }
+    }
+
+    override fun onBind(intent: Intent?): IBinder = ServiceBinder(this)
 
     override fun onCreate() {
         super.onCreate()
-        instance = this
+        Timber.i("onCreate")
 
         PluviaApp.events.on<AndroidEvent.EndProcess, Unit>(onEndProcess)
+        PluviaApp.events.on<SteamEvent.PersonaStateChange, Unit>(onPersonaStateChange)
 
-        notificationHelper = NotificationHelper(applicationContext)
+        notificationHelper = NotificationHelper(this)
 
         // To view log messages in android logcat properly
         val logger = object : LogListener {
@@ -1051,6 +231,8 @@ class SteamService : Service(), IChallengeUrlChanged {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Timber.i("onStartCommand")
+
         // Notification intents
         when (intent?.action) {
             NotificationHelper.ACTION_EXIT -> {
@@ -1063,11 +245,11 @@ class SteamService : Service(), IChallengeUrlChanged {
             }
         }
 
-        if (!isRunning) {
+        if (!isRunning.value) {
             Timber.i("Using server list path: $serverListPath")
 
             val configuration = SteamConfiguration.create {
-                it.withProtocolTypes(PROTOCOL_TYPES)
+                it.withProtocolTypes(EnumSet.of(ProtocolTypes.WEB_SOCKET, ProtocolTypes.TCP))
                 it.withCellID(PrefManager.cellId)
                 it.withServerListProvider(FileServerListProvider(File(serverListPath)))
                 it.withManifestProvider(FileManifestProvider(File(depotManifestsPath)))
@@ -1086,20 +268,18 @@ class SteamService : Service(), IChallengeUrlChanged {
             }
 
             // create the callback manager which will route callbacks to function calls
-            callbackManager = CallbackManager(steamClient!!)
+            manager = CallbackManager(steamClient!!)
 
             // get the different handlers to be used throughout the service
-            _steamUser = steamClient!!.getHandler(SteamUser::class.java)
-            _steamApps = steamClient!!.getHandler(SteamApps::class.java)
-            _steamFriends = steamClient!!.getHandler(SteamFriends::class.java)
-            _steamCloud = steamClient!!.getHandler(SteamCloud::class.java)
+            steamUser = steamClient!!.getHandler(SteamUser::class.java)
+            steamApps = steamClient!!.getHandler(SteamApps::class.java)
+            steamFriends = steamClient!!.getHandler(SteamFriends::class.java)
+            steamCloud = steamClient!!.getHandler(SteamCloud::class.java)
+            unifiedFriends = SteamUnifiedFriends(this)
+            familyGroups = steamClient!!.getHandler<SteamUnifiedMessages>()!!.createService<FamilyGroups>()
 
-            _unifiedFriends = SteamUnifiedFriends(this)
-            _steamFamilyGroups = steamClient!!.getHandler<SteamUnifiedMessages>()!!.createService<FamilyGroups>()
-
-            // subscribe to the callbacks we are interested in
-            with(callbackSubscriptions) {
-                with(callbackManager!!) {
+            with(subscriptions) {
+                with(manager!!) {
                     add(subscribe(ConnectedCallback::class.java, ::onConnected))
                     add(subscribe(DisconnectedCallback::class.java, ::onDisconnected))
                     add(subscribe(LoggedOnCallback::class.java, ::onLoggedOn))
@@ -1115,7 +295,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                 }
             }
 
-            isRunning = true
+            _isRunning.value = true
 
             // we should use Dispatchers.IO here since we are running a sleeping/blocking function
             // "The idea is that the IO dispatcher spends a lot of time waiting (IO blocked),
@@ -1123,11 +303,11 @@ class SteamService : Service(), IChallengeUrlChanged {
             // is little or no sleep."
             // source: https://stackoverflow.com/a/59040920
             scope.launch {
-                while (isRunning) {
+                while (isRunning.value) {
                     // logD("runWaitCallbacks")
 
                     try {
-                        callbackManager!!.runWaitCallbacks(1000L)
+                        manager!!.runWaitCallbacks(1.seconds.inWholeMilliseconds)
                     } catch (e: Exception) {
                         Timber.e("runWaitCallbacks failed: $e")
                     }
@@ -1152,7 +332,23 @@ class SteamService : Service(), IChallengeUrlChanged {
         scope.launch { stop() }
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override suspend fun stop() {
+        Timber.i("Stopping Steam service")
+        if (steamClient != null && steamClient!!.isConnected) {
+            _isRunning.value = true
+
+            steamClient!!.disconnect()
+
+            while (isStopping.value) {
+                delay(200L)
+            }
+
+            // the reason we don't clearValues() here is because the onDisconnect
+            // callback does it for us
+        } else {
+            clearValues()
+        }
+    }
 
     private fun connectToSteam() {
         CoroutineScope(Dispatchers.Default).launch {
@@ -1161,11 +357,15 @@ class SteamService : Service(), IChallengeUrlChanged {
 
             delay(5000)
 
-            if (!isConnected) {
+            if (!isConnected.value) {
                 Timber.w("Failed to connect to Steam, marking endpoint bad and force disconnecting")
 
                 try {
-                    steamClient!!.servers.tryMark(steamClient!!.currentEndpoint, PROTOCOL_TYPES, ServerQuality.BAD)
+                    steamClient!!.servers.tryMark(
+                        endPoint = steamClient!!.currentEndpoint,
+                        protocolTypes = EnumSet.of(ProtocolTypes.WEB_SOCKET, ProtocolTypes.TCP),
+                        quality = ServerQuality.BAD,
+                    )
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to mark endpoint as bad:")
                 }
@@ -1179,58 +379,38 @@ class SteamService : Service(), IChallengeUrlChanged {
         }
     }
 
-    private suspend fun stop() {
-        Timber.i("Stopping Steam service")
-        if (steamClient != null && steamClient!!.isConnected) {
-            isStopping = true
-
-            steamClient!!.disconnect()
-
-            while (isStopping) {
-                delay(200L)
-            }
-
-            // the reason we don't clearValues() here is because the onDisconnect
-            // callback does it for us
-        } else {
-            clearValues()
-        }
-    }
-
     private fun clearValues() {
-        _loginResult = LoginResult.Failed
-        isRunning = false
-        isConnected = false
-        isLoggingOut = false
-        isWaitingForQRAuth = false
-
-        PrefManager.appInstallPath = defaultAppInstallPath
-        PrefManager.appStagingPath = defaultAppStagingPath
+        _loginResult.value = LoginResult.Failed
+        _isRunning.value = false
+        _isConnected.value = false
+        _isLoggingOut.value = false
+        _isWaitingForQRAuth.value = false
 
         steamClient = null
-        _steamUser = null
-        _steamApps = null
-        _steamFriends = null
-        _steamCloud = null
+        steamUser = null
+        steamApps = null
+        steamFriends = null
+        steamCloud = null
 
-        callbackSubscriptions.forEach { it.close() }
-        callbackSubscriptions.clear()
-        callbackManager = null
+        subscriptions.forEach { it.close() }
+        subscriptions.clear()
+        manager = null
 
-        _unifiedFriends?.close()
-        _unifiedFriends = null
+        unifiedFriends?.close()
+        unifiedFriends = null
 
-        isStopping = false
-        retryAttempt = 0
+        _isStopping.value = false
+        retryAttempt.set(0)
 
         PluviaApp.events.off<AndroidEvent.EndProcess, Unit>(onEndProcess)
+        PluviaApp.events.off<SteamEvent.PersonaStateChange, Unit>(onPersonaStateChange)
         PluviaApp.events.clearAllListenersOf<SteamEvent<Any>>()
     }
 
     private fun reconnect() {
         notificationHelper.notify("Retrying...")
 
-        isConnected = false
+        _isConnected.value = false
 
         val event = SteamEvent.Disconnected
         PluviaApp.events.emit(event)
@@ -1238,13 +418,370 @@ class SteamService : Service(), IChallengeUrlChanged {
         steamClient!!.disconnect()
     }
 
+    private suspend fun getAppDirPath(appId: Int): String {
+        val app = appDao.findApp(appId)
+        var appName = app?.config?.installDir.orEmpty()
+
+        if (appName.isEmpty()) {
+            appName = app?.name.orEmpty()
+        }
+
+        // TODO
+        val default = Paths.get(dataDir.path, "Steam", "steamapps", "common").pathString
+        val appInstallPath = PrefManager.getString("app_install_path", default)
+        return Paths.get(appInstallPath, appName).pathString
+    }
+
+    override suspend fun initChat(steamid: Long) {
+        scope.launch {
+            steamClient!!.getHandler<PluviaHandler>()!!.getEmoticonList()
+            unifiedFriends!!.getRecentMessages(steamid)
+            unifiedFriends!!.ackMessage(steamid)
+        }
+    }
+
+    override fun isAppInstalled(appId: Int): Boolean = runBlocking(Dispatchers.IO) {
+        val appDownloadInfo = downloadJobs[appId]
+        val isNotDownloading = appDownloadInfo == null || appDownloadInfo.getProgress() >= 1f
+
+        if (!isNotDownloading) {
+            return@runBlocking false
+        }
+
+        appCache[appId]?.let { cacheEntry ->
+            if (cacheEntry.second) {
+                return@runBlocking true
+            }
+
+            val isNowInstalled = runBlocking(Dispatchers.IO) {
+                Files.exists(Paths.get(cacheEntry.first))
+            }
+
+            if (isNowInstalled) {
+                appCache[appId] = Pair(cacheEntry.first, true)
+            }
+
+            return@runBlocking isNowInstalled
+        }
+
+        val path = getAppDirPath(appId)
+
+        val isInstalled = runBlocking(Dispatchers.IO) {
+            Files.exists(Paths.get(path))
+        }
+
+        appCache[appId] = Pair(path, isInstalled)
+
+        return@runBlocking isInstalled
+    }
+
+    override suspend fun closeApp(id: Int, prefixToPath: (String) -> String) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun notifyRunningProcesses() {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun startLoginWithCredentials(
+        username: String,
+        password: String,
+        rememberSession: Boolean,
+        authenticator: IAuthenticator,
+    ) {
+        try {
+            Timber.i("Logging in via credentials.")
+
+            steamClient?.let { steamClient ->
+                val authDetails = AuthSessionDetails().apply {
+                    this.username = username.trim()
+                    this.password = password.trim()
+                    this.persistentSession = rememberSession
+                    this.authenticator = authenticator
+                    this.deviceFriendlyName = SteamUtils.getMachineName(this@SteamService)
+                }
+
+                val event = SteamEvent.LogonStarted(username)
+                PluviaApp.events.emit(event)
+
+                val authSession = steamClient.authentication.beginAuthSessionViaCredentials(authDetails).await()
+
+                val pollResult = authSession.pollingWaitForResult().await()
+
+                if (pollResult.accountName.isEmpty() && pollResult.refreshToken.isEmpty()) {
+                    throw Exception("No account name or refresh token received.")
+                }
+
+                login(
+                    clientId = authSession.clientID,
+                    username = pollResult.accountName,
+                    accessToken = pollResult.accessToken,
+                    refreshToken = pollResult.refreshToken,
+                    rememberSession = rememberSession,
+                )
+            } ?: run {
+                Timber.e("Could not logon: Failed to connect to Steam")
+
+                val event = SteamEvent.LogonEnded(username, LoginResult.Failed, "No connection to Steam")
+                PluviaApp.events.emit(event)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Login failed")
+
+            val message = when (e) {
+                is CancellationException -> "Unknown cancellation"
+                is AuthenticationException -> e.result?.name ?: e.message
+                else -> e.message ?: e.javaClass.name
+            }
+
+            val event = SteamEvent.LogonEnded(username, LoginResult.Failed, message)
+            PluviaApp.events.emit(event)
+        }
+    }
+
+    override suspend fun setNickName(steamid: Long, value: String) {
+        val friend = SteamID(steamid)
+        steamFriends!!.setFriendNickname(friend, value)
+    }
+
+    override suspend fun requestAliasHistory(steamid: Long) {
+        steamClient!!.getHandler<SteamFriends>()?.requestAliasHistory(SteamID(steamid))
+    }
+
+    override suspend fun removeFriend(steamid: Long) {
+        val friend = SteamID(steamid)
+        steamFriends!!.removeFriend(friend)
+        friendDao.remove(steamid)
+    }
+
+    override suspend fun blockFriend(steamid: Long) {
+        val friend = SteamID(steamid)
+        val result = steamFriends!!.ignoreFriend(friend).await()
+        if (result.result == EResult.OK) {
+            val blockedFriend = friendDao.findFriend(steamid)
+            blockedFriend?.let {
+                friendDao.update(it.copy(relation = EFriendRelationship.Blocked))
+            }
+        }
+    }
+
+    override suspend fun sendMessage(steamid: Long, value: String) {
+        unifiedFriends!!.sendMessage(steamid, value)
+    }
+
+    override suspend fun sendTypingMessage(steamid: Long) {
+        unifiedFriends!!.setIsTyping(steamid)
+    }
+
+    override suspend fun getOwnedGames(steamid: Long): List<OwnedGames> {
+        return unifiedFriends!!.getOwnedGames(steamid)
+    }
+
+    override suspend fun getProfileInfo(steamid: SteamID): ProfileInfoCallback {
+        return steamFriends!!.requestProfileInfo(steamid).await()
+    }
+
+    override suspend fun stopLoginWithQr() {
+        Timber.i("Stopping QR polling")
+        _isWaitingForQRAuth.value = false
+    }
+
+    override suspend fun startLoginWithQr() {
+        try {
+            Timber.i("Logging in via QR.")
+
+            steamClient?.let { steamClient ->
+                _isWaitingForQRAuth.value = true
+
+                val authDetails = AuthSessionDetails().apply {
+                    deviceFriendlyName = SteamUtils.getMachineName(this@SteamService)
+                }
+
+                val authSession = steamClient.authentication.beginAuthSessionViaQR(authDetails).await()
+
+                // Steam will periodically refresh the challenge url, this callback allows you to draw a new qr code.
+                authSession.challengeUrlChanged = this@SteamService
+
+                val qrEvent = SteamEvent.QrChallengeReceived(authSession.challengeUrl)
+                PluviaApp.events.emit(qrEvent)
+
+                Timber.d("PollingInterval: ${authSession.pollingInterval.toLong()}")
+
+                var authPollResult: AuthPollResult? = null
+
+                while (isWaitingForQRAuth.value && authPollResult == null) {
+                    try {
+                        authPollResult = authSession.pollAuthSessionStatus().await()
+                    } catch (e: Exception) {
+                        Timber.e(e, "Poll auth session status error")
+                        throw e
+                    }
+
+                    // Sensitive info, only print in DEBUG build.
+                    if (BuildConfig.DEBUG && authPollResult != null) {
+                        Timber.d(
+                            "AccessToken: %s\nAccountName: %s\nRefreshToken: %s\nNewGuardData: %s",
+                            authPollResult.accessToken,
+                            authPollResult.accountName,
+                            authPollResult.refreshToken,
+                            authPollResult.newGuardData ?: "No new guard data",
+                        )
+                    }
+
+                    delay(authSession.pollingInterval.toLong())
+                }
+
+                _isWaitingForQRAuth.value = false
+
+                val event = SteamEvent.QrAuthEnded(authPollResult != null)
+                PluviaApp.events.emit(event)
+
+                // there is a chance qr got cancelled and there is no authPollResult
+                if (authPollResult == null) {
+                    Timber.e("Got no auth poll result")
+                    throw Exception("Got no auth poll result")
+                }
+
+                login(
+                    clientId = authSession.clientID,
+                    username = authPollResult.accountName,
+                    accessToken = authPollResult.accessToken,
+                    refreshToken = authPollResult.refreshToken,
+                )
+            } ?: run {
+                Timber.e("Could not start QR logon: Failed to connect to Steam")
+
+                val event = SteamEvent.QrAuthEnded(success = false, message = "No connection to Steam")
+                PluviaApp.events.emit(event)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "QR failed")
+
+            val message = when (e) {
+                is CancellationException -> "QR Session timed out"
+                is AuthenticationException -> e.result?.name ?: e.message
+                else -> e.message ?: e.javaClass.name
+            }
+
+            val event = SteamEvent.QrAuthEnded(success = false, message = message)
+            PluviaApp.events.emit(event)
+        }
+    }
+
+    override suspend fun clearDatabase() {
+        db.withTransaction {
+            db.emoticonDao().deleteAll()
+            db.friendMessagesDao().deleteAllMessages()
+            appDao.deleteAll()
+            changeNumbersDao.deleteAll()
+            fileChangeListsDao.deleteAll()
+            friendDao.deleteAll()
+            licenseDao.deleteAll()
+        }
+    }
+
+    override suspend fun logOut() {
+        _isLoggingOut.value = true
+
+        performLogOffDuties()
+
+        steamUser!!.logOff()
+    }
+
+    private fun queueAppPICSRequests(apps: List<Int>) {
+        if (apps.isEmpty()) {
+            return
+        }
+
+        scope.launch {
+            val flow = flowOf(*apps.toTypedArray())
+            appIdFlowSender.emitAll(flow)
+        }
+    }
+
+    private fun login(
+        username: String,
+        accessToken: String? = null,
+        refreshToken: String? = null,
+        password: String? = null,
+        rememberSession: Boolean = false,
+        twoFactorAuth: String? = null,
+        emailAuth: String? = null,
+        clientId: Long? = null,
+    ) {
+        // Sensitive info, only print in DEBUG build.
+        if (BuildConfig.DEBUG) {
+            Timber.d(
+                """
+                    Login Information:
+                     Username: $username
+                     AccessToken: $accessToken
+                     RefreshToken: $refreshToken
+                     Password: $password
+                     Remember Session: $rememberSession
+                     TwoFactorAuth: $twoFactorAuth
+                     EmailAuth: $emailAuth
+                """.trimIndent(),
+            )
+        }
+
+        PrefManager.username = username
+
+        if ((password != null && rememberSession) || refreshToken != null) {
+            if (accessToken != null) {
+                PrefManager.accessToken = accessToken
+            }
+
+            if (refreshToken != null) {
+                PrefManager.refreshToken = refreshToken
+            }
+
+            if (clientId != null) {
+                PrefManager.clientId = clientId
+            }
+        }
+
+        val event = SteamEvent.LogonStarted(username)
+        PluviaApp.events.emit(event)
+
+        steamUser!!.logOn(
+            LogOnDetails(
+                username = SteamUtils.removeSpecialChars(username).trim(),
+                password = password?.let { SteamUtils.removeSpecialChars(it).trim() },
+                shouldRememberPassword = rememberSession,
+                twoFactorCode = twoFactorAuth,
+                authCode = emailAuth,
+                accessToken = refreshToken,
+                loginID = SteamUtils.getUniqueDeviceId(this),
+                machineName = SteamUtils.getMachineName(this),
+                chatMode = ChatMode.NEW_STEAM_CHAT,
+            ),
+        )
+    }
+
+    private fun performLogOffDuties() {
+        val username = PrefManager.username
+
+        clearUserData()
+
+        val event = SteamEvent.LoggedOut(username)
+        PluviaApp.events.emit(event)
+    }
+
+    private fun clearUserData() {
+        scope.launch {
+            PrefManager.clearPreferences()
+            clearDatabase()
+        }
+    }
+
     // region [REGION] callbacks
     @Suppress("UNUSED_PARAMETER", "unused")
     private fun onConnected(callback: ConnectedCallback) {
         Timber.i("Connected to Steam")
 
-        retryAttempt = 0
-        isConnected = true
+        retryAttempt.set(0)
+        _isConnected.value = true
 
         var isAutoLoggingIn = false
 
@@ -1265,10 +802,10 @@ class SteamService : Service(), IChallengeUrlChanged {
     private fun onDisconnected(callback: DisconnectedCallback) {
         Timber.i("Disconnected from Steam. User initiated: ${callback.isUserInitiated}")
 
-        isConnected = false
+        _isConnected.value = false
 
-        if (!isStopping && retryAttempt < MAX_RETRY_ATTEMPTS) {
-            retryAttempt++
+        if (!isStopping.value && retryAttempt.get() < MAX_RETRY_ATTEMPTS) {
+            retryAttempt.incrementAndGet()
 
             Timber.w("Attempting to reconnect (retry $retryAttempt)")
 
@@ -1293,7 +830,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         when (callback.result) {
             EResult.TryAnotherCM -> {
-                _loginResult = LoginResult.Failed
+                _loginResult.value = LoginResult.Failed
                 reconnect()
             }
 
@@ -1302,8 +839,13 @@ class SteamService : Service(), IChallengeUrlChanged {
                 // servers from the Steam Directory.
                 PrefManager.cellId = callback.cellID
 
+                // Immediately set our steam id.
+                userSteamId = steamClient!!.steamID
+
                 // retrieve persona data of logged in user
-                scope.launch { requestUserPersona() }
+                scope.launch {
+                    steamFriends?.requestFriendInfo(userSteamId!!)
+                }
 
                 // Request family share info if we have a familyGroupId.
                 if (callback.familyGroupId != 0L) {
@@ -1312,7 +854,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                             familyGroupid = callback.familyGroupId
                         }.build()
 
-                        _steamFamilyGroups!!.getFamilyGroup(request).await().let {
+                        familyGroups!!.getFamilyGroup(request).await().let {
                             if (it.result != EResult.OK) {
                                 Timber.w("An error occurred loading family group info.")
                                 return@launch
@@ -1322,10 +864,12 @@ class SteamService : Service(), IChallengeUrlChanged {
 
                             Timber.i("Found family share: ${response.name}, with ${response.membersCount} members.")
 
+                            val members = mutableListOf<Int>()
                             response.membersList.forEach { member ->
                                 val accountID = SteamID(member.steamid).accountID.toInt()
-                                familyGroupMembers.add(accountID)
+                                members.add(accountID)
                             }
+                            familyMembers = members
                         }
                     }
                 }
@@ -1340,23 +884,23 @@ class SteamService : Service(), IChallengeUrlChanged {
                 continuousFriendChecker()
 
                 // Tell steam we're online, this allows friends to update.
-                _steamFriends?.setPersonaState(PrefManager.personaState)
+                steamFriends?.setPersonaState(PrefManager.personaState)
 
                 notificationHelper.notify("Connected")
 
-                _loginResult = LoginResult.Success
+                _loginResult.value = LoginResult.Success
             }
 
             else -> {
                 clearUserData()
 
-                _loginResult = LoginResult.Failed
+                _loginResult.value = LoginResult.Failed
 
                 reconnect()
             }
         }
 
-        val event = SteamEvent.LogonEnded(PrefManager.username, _loginResult)
+        val event = SteamEvent.LogonEnded(PrefManager.username, loginResult.value)
         PluviaApp.events.emit(event)
     }
 
@@ -1365,7 +909,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         notificationHelper.notify("Disconnected...")
 
-        if (isLoggingOut || callback.result == EResult.LogonSessionReplaced) {
+        if (isLoggingOut.value || callback.result == EResult.LogonSessionReplaced) {
             performLogOffDuties()
 
             scope.launch { stop() }
@@ -1428,7 +972,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
             // NOTE: Our UI could load too quickly on fresh database, our icon will be "?"
             //  unless relaunched or we nav to a new screen.
-            _unifiedFriends?.refreshPersonaStates()
+            unifiedFriends?.refreshPersonaStates()
         }
     }
 
@@ -1497,8 +1041,7 @@ class SteamService : Service(), IChallengeUrlChanged {
                 // Send off an event if we change states.
                 if (callback.friendID == steamClient!!.steamID) {
                     friendDao.findFriend(id)?.let { account ->
-                        val event = SteamEvent.PersonaStateReceived(account)
-                        PluviaApp.events.emit(event)
+                        _personaState.value = account
                     }
                 }
             }
@@ -1564,7 +1107,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
             // Get PICS information with the current license database.
             val picsRequests = licenseDao.getAllLicenses().map { PICSRequest(it.packageId, it.accessToken) }
-            _steamApps!!.picsGetProductInfo(apps = emptyList(), packages = picsRequests)
+            steamApps!!.picsGetProductInfo(apps = emptyList(), packages = picsRequests)
         }
     }
 
@@ -1606,10 +1149,10 @@ class SteamService : Service(), IChallengeUrlChanged {
                     changeData.changeNumber != pkg.lastChangeNumber
                 }
             val pkgsForAccessTokens = pkgsWithChanges.filter { it.isNeedsToken }.map { it.id }
-            val accessTokens = _steamApps?.picsGetAccessTokens(emptyList(), pkgsForAccessTokens)?.await()?.packageTokens ?: emptyMap()
+            val accessTokens = steamApps?.picsGetAccessTokens(emptyList(), pkgsForAccessTokens)?.await()?.packageTokens ?: emptyMap()
             val picsRequest = pkgsWithChanges.map { PICSRequest(it.id, accessTokens[it.id] ?: 0) }
             Timber.d("onPicsChanges: Queueing ${picsRequest.size} package requests")
-            _steamApps!!.picsGetProductInfo(apps = emptyList(), packages = picsRequest)
+            steamApps!!.picsGetProductInfo(apps = emptyList(), packages = picsRequest)
         }
     }
 
@@ -1688,11 +1231,8 @@ class SteamService : Service(), IChallengeUrlChanged {
     }
 
     override fun onChanged(qrAuthSession: QrAuthSession?) {
+        Timber.i("onChanged (QR)")
         qrAuthSession?.let { qr ->
-            if (!BuildConfig.DEBUG) {
-                Timber.d("QR code changed -> ${qr.challengeUrl}")
-            }
-
             val event = SteamEvent.QrChallengeReceived(qr.challengeUrl)
             PluviaApp.events.emit(event)
         } ?: run { Timber.w("QR challenge url was null") }
@@ -1705,8 +1245,8 @@ class SteamService : Service(), IChallengeUrlChanged {
      * Results are returned in a [PICSChangesCallback]
      */
     private fun continuousPICSChangesChecker() = scope.launch {
-        while (isActive && isLoggedIn) {
-            _steamApps?.picsGetChangesSince(
+        while (isActive && isLoggedIn.value) {
+            steamApps!!.picsGetChangesSince(
                 lastChangeNumber = PrefManager.lastPICSChangeNumber,
                 sendAppChangeList = true,
                 sendPackageChangelist = true,
@@ -1720,7 +1260,7 @@ class SteamService : Service(), IChallengeUrlChanged {
      * Continuously check for friends playing games and query for pics if its a game we don't have in the database.
      */
     private fun continuousFriendChecker() = scope.launch {
-        while (isActive && isLoggedIn) {
+        while (isActive && isLoggedIn.value) {
             // Initial delay before each check
             delay(20.seconds)
 
@@ -1746,10 +1286,51 @@ class SteamService : Service(), IChallengeUrlChanged {
             .buffer(Channel.RENDEZVOUS)
             .collect { appIds ->
                 Timber.d("Collected ${appIds.size} app(s) to query PICS")
-                _steamApps?.picsGetProductInfo(
+                steamApps!!.picsGetProductInfo(
                     apps = appIds.map { PICSRequest(id = it) },
                     packages = emptyList(),
                 )
             }
+    }
+
+    companion object {
+        private val PICS_CHANGE_CHECK_DELAY = 60.seconds
+
+        const val MAX_SIMULTANEOUS_PICS_REQUESTS = 50
+        const val MAX_RETRY_ATTEMPTS = 20
+        const val INVALID_APP_ID: Int = Int.MAX_VALUE
+        const val INVALID_PKG_ID: Int = Int.MAX_VALUE
+
+        var userSteamId: SteamID? = null
+            private set
+
+        var familyMembers: List<Int> = listOf()
+            private set
+
+        private val _personaState = MutableStateFlow<SteamFriend?>(null)
+        val personaState = _personaState.asStateFlow()
+
+        private val _isRunning = MutableStateFlow(false)
+        val isRunning = _isRunning.asStateFlow()
+
+        private val _isConnected = MutableStateFlow(false)
+        val isConnected = _isConnected.asStateFlow()
+
+        private val _isLoggedIn = MutableStateFlow(false)
+        val isLoggedIn = _isLoggedIn.asStateFlow()
+
+        private val _isStopping = MutableStateFlow(false)
+        val isStopping = _isStopping.asStateFlow()
+
+        private val _isLoggingOut = MutableStateFlow(false)
+        val isLoggingOut = _isLoggingOut.asStateFlow()
+
+        private val _isWaitingForQRAuth = MutableStateFlow(false)
+        val isWaitingForQRAuth = _isWaitingForQRAuth.asStateFlow()
+
+        private val _loginResult = MutableStateFlow(LoginResult.Failed)
+        val loginResult = _loginResult.asStateFlow()
+
+        val retryAttempt = AtomicInteger(0)
     }
 }
