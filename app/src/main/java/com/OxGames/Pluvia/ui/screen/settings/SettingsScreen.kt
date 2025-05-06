@@ -252,8 +252,10 @@ private fun SettingsScreenContent(
                                 "mw_general_driver_info" -> SettingsMiceWineDriverInfo(onBack = onNavBack)
                                 "mw_general_environment" -> SettingsMiceWineEnvVariables(onBack = onNavBack)
                                 "mw_controller_mapper" -> EmptyScreen("Feature Not Implemented") // TODO
+                                "mw_controller_test" -> EmptyScreen("Feature Not Implemented") // TODO
                                 "mw_controller_virtual_mapper" -> EmptyScreen("Feature Not Implemented") // TODO
                                 "mw_box64_preset" -> EmptyScreen("Feature Not Implemented") // TODO
+                                "mw_wine_preset" -> EmptyScreen("Feature Not Implemented") // TODO
                                 "mw_rat_package_manager" -> EmptyScreen("Feature Not Implemented") // TODO
                                 "mw_rat_package_downloader" -> EmptyScreen("Feature Not Implemented") // TODO
                             }

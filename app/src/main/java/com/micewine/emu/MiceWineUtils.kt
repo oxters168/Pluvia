@@ -1148,7 +1148,7 @@ object MiceWineUtils {
 
     object Box64PresetManager {
         private val presetListNames: MutableList<Preset.Item> = mutableListOf()
-        private var presetList: MutableList<MutableList<String>> = getBox64Presets()
+        private var presetList: MutableList<MutableList<String>> = mutableListOf()
 
         private val mappingMap = mapOf(
             GeneralSettings.BOX64_MMAP32 to 1,
@@ -1364,7 +1364,7 @@ object MiceWineUtils {
 
     object ControllerPresetManager {
         private val presetListNames: MutableList<Preset.Item> = mutableListOf()
-        private var presetList: MutableList<MutableList<String>> = getControllerPresets()
+        private var presetList: MutableList<MutableList<String>> = mutableListOf()
         private var editShortcut: Boolean = false
 
         private val mappingMap = mapOf(

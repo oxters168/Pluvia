@@ -137,6 +137,8 @@ class MainActivity : ComponentActivity() {
         }
 
         MiceWineUtils.Main.setSharedVars(this)
+        MiceWineUtils.Box64PresetManager.initialize()
+        MiceWineUtils.ControllerPresetManager.initialize()
 
         // MW may do migrations on version upgrades.
         PrefManager.putString(MiceWineUtils.Main.APP_VERSION, BuildConfig.VERSION_NAME)

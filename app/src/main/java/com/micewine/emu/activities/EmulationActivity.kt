@@ -27,6 +27,10 @@ class EmulationActivity : ComponentActivity() {
         // lorieView!!.requestFocus()
     }
 
+    fun clientConnectedStateChanged() {
+        // TODO
+    }
+
     companion object {
         const val KEY_BACK = 158
 

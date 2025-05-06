@@ -8,15 +8,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PestControlRodent
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.VideogameAsset
+import androidx.compose.material.icons.filled.WineBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -26,6 +31,7 @@ import com.OxGames.Pluvia.ui.theme.PluviaTheme
 import com.OxGames.Pluvia.ui.theme.settingsTileColors
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import com.micewine.emu.MiceWineUtils
 
 // TODO strings
 
@@ -34,6 +40,11 @@ fun SettingsGroupEmulation(
     onClick: (String) -> Unit,
 ) {
     val view = LocalView.current
+
+    val deviceArch by remember {
+        val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.Main.deviceArch
+        mutableStateOf(value)
+    }
 
     Column(
         modifier = Modifier
@@ -78,6 +89,22 @@ fun SettingsGroupEmulation(
                     icon = { Icon(imageVector = Icons.Default.Public, null) },
                     onClick = { onClick("mw_general_environment") },
                 )
+                if (deviceArch != "x86_64") {
+                    SettingsMenuLink(
+                        colors = settingsTileColors(),
+                        icon = { Icon(imageVector = Icons.Default.Computer, contentDescription = null) },
+                        title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
+                        subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
+                        onClick = { onClick("mw_box64_preset") },
+                    )
+                }
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    icon = { Icon(imageVector = Icons.Default.WineBar, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.wine_prefix_manager_title)) },
+                    subtitle = { Text(text = stringResource(R.string.wine_prefix_manager_description)) },
+                    onClick = { onClick("mw_wine_preset") },
+                )
             },
         )
 
@@ -98,29 +125,15 @@ fun SettingsGroupEmulation(
                     subtitle = { Text(text = stringResource(R.string.controller_virtual_mapper_description)) },
                     onClick = { onClick("mw_controller_virtual_mapper") },
                 )
+                SettingsMenuLink(
+                    colors = settingsTileColors(),
+                    icon = { Icon(imageVector = Icons.Default.VideogameAsset, contentDescription = null) },
+                    title = { Text(text = stringResource(R.string.controller_view_title)) },
+                    subtitle = { Text(text = stringResource(R.string.null_description)) },
+                    onClick = { onClick("mw_controller_test") },
+                )
             },
         )
-
-        // TODO Implement once stable
-//        val deviceArch by remember {
-//            with(Dispatchers.IO) {
-//                val value = if (view.isInEditMode) "aarch64" else MiceWineUtils.deviceArch
-//                mutableStateOf(value)
-//            }
-//        }
-//        if (deviceArch != "x86_64") {
-//            SettingsGroup(
-//                title = { Text(text = "Box64") },
-//                content = {
-//                    SettingsMenuLink(
-//                        colors = settingsTileColors(),
-//                        title = { Text(text = stringResource(R.string.box64_preset_manager_title)) },
-//                        subtitle = { Text(text = stringResource(R.string.box64_preset_manager_description)) },
-//                        onClick = { onClick("mw_box64_preset") },
-//                    )
-//                },
-//            )
-//        }
 
         SettingsGroup(
             title = { Text(text = "Rat Package") },

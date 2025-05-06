@@ -507,6 +507,7 @@
     <string name="controller_mapper_title">Controller Mapper</string>
     <string name="controller_preset_create_text">Type a Name</string>
     <string name="controller_settings">Controller Settings</string>
+    <string name="controller_view_title">Test Controller</string>
     <string name="controller_virtual_mapper_description">Configure On-Screen Controllers</string>
     <string name="cpu_affinity_title">CPU Affinity</string>
     <string name="create_lnk">Create .lnk file</string>
@@ -553,8 +554,10 @@
     <string name="env_settings_title">Environment Settings</string>
     <string name="env_value">Value</string>
     <string name="error_install_rootfs_file_manager">You cannot install RootFS after installation.</string>
+    <string name="exe_path">Executable Path</string>
     <string name="executable_already_added">Executable Already Added</string>
     <string name="execute_exe">Execute</string>
+    <string name="export_log">Export Log</string>
     <string name="export_preset">Export Preset</string>
     <string name="extracted_resources_text">Extraction Done!</string>
     <string name="extracting_from_assets">Extracting From Assets…</string>
@@ -647,6 +650,8 @@
     <string name="wine_log_level_title">Wine Log Level</string>
     <string name="wine_manager_description">Manage Wine Versions</string>
     <string name="wine_manager_title">Wine Manager</string>
+    <string name="wine_prefix_manager_description">Manage Wine Prefixes</string>
+    <string name="wine_prefix_manager_title">Wine Prefix Manager</string>
     <string name="wine_settings_description">Configure Wine</string>
     <string name="wine_settings_title">Wine Settings</string>
     <string name="wine_version">Wine Version</string>
