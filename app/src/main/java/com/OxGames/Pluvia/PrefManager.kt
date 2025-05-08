@@ -89,20 +89,39 @@ object PrefManager {
         getPref(stringPreferencesKey(key), defaultValue)
 
     @Suppress("SameParameterValue")
-    private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T = runBlocking {
-        dataStore.data.first()[key] ?: defaultValue
+    private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T = runBlocking(Dispatchers.IO) {
+        val result = dataStore.data.first()[key] ?: defaultValue
+
+        val blacklist = listOf(
+            CLIENT_ID.name, USER_NAME.name, ACCESS_TOKEN_ENC.name, REFRESH_TOKEN_ENC.name,
+            "access_token", "refresh_token", "password", // Legacy keys
+        )
+        if (key.name !in blacklist) {
+            Timber.i("Getting preference: ${key.name} with value: $result")
+        }
+
+        result
     }
 
     @Suppress("SameParameterValue")
     private fun <T> setPref(key: Preferences.Key<T>, value: T) {
         scope.launch {
             dataStore.edit { pref -> pref[key] = value }
+
+            val blacklist = listOf(
+                CLIENT_ID.name, USER_NAME.name, ACCESS_TOKEN_ENC.name, REFRESH_TOKEN_ENC.name,
+                "access_token", "refresh_token", "password", // Legacy keys
+            )
+            if (key.name !in blacklist) {
+                Timber.i("Setting preference: ${key.name} with value: $value")
+            }
         }
     }
 
     private fun <T> removePref(key: Preferences.Key<T>) {
         scope.launch {
             dataStore.edit { pref -> pref.remove(key) }
+            Timber.i("Removing preference: ${key.name}")
         }
     }
 

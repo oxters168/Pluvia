@@ -242,7 +242,7 @@ object ContainerUtils {
             val appDirPath = SteamService.getAppDirPath(appId)
             val drive: Char = Container.getNextAvailableDriveLetter(defaultDrives)
             val drives = "$defaultDrives$drive:$appDirPath"
-            Timber.d("Prepared container drives: $drives")
+            Timber.i("Prepared container drives: $drives")
 
             val data = JSONObject()
             data.put("name", "container_$containerId")

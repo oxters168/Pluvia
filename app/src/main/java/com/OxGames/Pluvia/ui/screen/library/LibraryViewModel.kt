@@ -94,10 +94,11 @@ class LibraryViewModel @Inject constructor(
     }
 
     private fun onFilterApps() {
-        Timber.tag("LibraryViewModel").d("onFilterApps")
         viewModelScope.launch {
             val currentState = _state.value
             val currentFilter = AppFilter.getAppType(currentState.appInfoSortType)
+
+            Timber.tag("LibraryViewModel").i("Current Filter is: $currentFilter")
 
             val filteredList = appList
                 .asSequence()
