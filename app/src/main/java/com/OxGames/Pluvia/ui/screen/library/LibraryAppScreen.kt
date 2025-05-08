@@ -295,7 +295,7 @@ fun AppScreen(
                     )
                 } else if (!isInstalled) {
                     val depots = SteamService.getDownloadableDepots(appId)
-                    Timber.d("There are ${depots.size} depots belonging to $appId")
+                    Timber.i("There are ${depots.size} depots belonging to $appId")
                     // TODO: get space available based on where user wants to install
                     val availableBytes =
                         FileUtils.getAvailableSpace(context.filesDir.absolutePath)

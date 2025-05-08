@@ -51,22 +51,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private val onSetSystemUi: (AndroidEvent.SetSystemUIVisibility) -> Unit = {
+        Timber.i("onSetSystemUi: ${it.visible}")
         AppUtils.hideSystemUI(this, !it.visible)
     }
 
     private val onSetAllowedOrientation: (AndroidEvent.SetAllowedOrientation) -> Unit = {
-        // Log.d("MainActivity", "Requested allowed orientations of $it")
+        Timber.i("onSetAllowedOrientation called: $it")
         availableOrientations = it.orientations
         setOrientationTo(currentOrientationChangeValue, availableOrientations)
     }
 
     private val onStartOrientator: (AndroidEvent.StartOrientator) -> Unit = {
+        Timber.i("onStartOrientator called")
         // TODO: When rotating the device on login screen:
         //  StrictMode policy violation: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released. See java.io.Closeable for information on avoiding resource leaks.
         startOrientator()
     }
 
     private val onEndProcess: (AndroidEvent.EndProcess) -> Unit = {
+        Timber.i("onEndProcess called")
         finishAndRemoveTask()
     }
 
@@ -87,6 +90,7 @@ class MainActivity : ComponentActivity() {
             val permissionLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.RequestPermission(),
             ) { isGranted ->
+                Timber.i("Notification permission was granted: $isGranted")
                 hasNotificationPermission = isGranted
             }
 
@@ -139,7 +143,7 @@ class MainActivity : ComponentActivity() {
         PluviaApp.events.off<AndroidEvent.SetAllowedOrientation, Unit>(onSetAllowedOrientation)
         PluviaApp.events.off<AndroidEvent.EndProcess, Unit>(onEndProcess)
 
-        Timber.d(
+        Timber.i(
             "onDestroy - Index: %d, Connected: %b, Logged-In: %b, Changing-Config: %b",
             index,
             SteamService.isConnected,

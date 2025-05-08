@@ -564,7 +564,7 @@ class XServerViewModel @Inject constructor(
         // val dxwrapper = this.dxwrapper
         if (state.value.dxwrapper == "dxvk") {
             val dxvkVersion = state.value.dxwrapperConfig?.get("version")
-            Timber.d("DXVK version: $dxvkVersion")
+            Timber.i("DXVK version: $dxvkVersion")
             _state.update { it.copy(dxwrapper = "dxvk-$dxvkVersion") }
         }
 
