@@ -39,8 +39,9 @@ android {
     defaultConfig {
         applicationId = "com.OxGames.Pluvia"
 
-        minSdk = 29
-        targetSdk = 34
+        minSdk = 28
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk = 28
 
         versionCode = 7
         versionName = "1.3.2"
