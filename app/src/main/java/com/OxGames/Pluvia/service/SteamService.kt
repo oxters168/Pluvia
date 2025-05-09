@@ -1136,6 +1136,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    // TODO this gets called to fast (and too many times) when there is no WIFI connection?
     private fun connectToSteam() {
         CoroutineScope(Dispatchers.Default).launch {
             // this call errors out if run on the main thread
