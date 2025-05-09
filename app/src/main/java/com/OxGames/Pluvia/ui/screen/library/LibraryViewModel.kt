@@ -15,10 +15,10 @@ import com.OxGames.Pluvia.service.SteamService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.EnumSet
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -28,7 +28,7 @@ class LibraryViewModel @Inject constructor(
     private val steamAppDao: SteamAppDao,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(LibraryState())
+    private val _state: MutableStateFlow<LibraryState> = MutableStateFlow(LibraryState())
     val state: StateFlow<LibraryState> = _state.asStateFlow()
 
     // Keep the library scroll state. This will last longer as the VM will stay alive.
@@ -40,10 +40,8 @@ class LibraryViewModel @Inject constructor(
     init {
         Timber.d("Initializing")
 
-        viewModelScope.launch(Dispatchers.IO) {
-            steamAppDao.getAllOwnedApps(
-                // ownerIds = SteamService.familyMembers.ifEmpty { listOf(SteamService.userSteamId!!.accountID.toInt()) },
-            ).collect { apps ->
+        viewModelScope.launch {
+            steamAppDao.getAllOwnedApps().distinctUntilChanged().collect { apps ->
                 Timber.tag("LibraryViewModel").d("Collecting ${apps.size} apps")
 
                 appList = apps
@@ -64,7 +62,7 @@ class LibraryViewModel @Inject constructor(
 
     fun onIsSearching(value: Boolean) {
         _state.update { it.copy(isSearching = value) }
-        if (!value) {
+        if (!value && _state.value.searchQuery.isNotEmpty()) {
             onSearchQuery("")
         }
     }
@@ -77,7 +75,7 @@ class LibraryViewModel @Inject constructor(
     // TODO: include other sort types
     fun onFilterChanged(value: AppFilter) {
         _state.update { currentState ->
-            val updatedFilter = EnumSet.copyOf(currentState.appInfoSortType)
+            val updatedFilter = currentState.appInfoSortType.clone() as EnumSet<AppFilter>
 
             if (updatedFilter.contains(value)) {
                 updatedFilter.remove(value)
@@ -94,44 +92,29 @@ class LibraryViewModel @Inject constructor(
     }
 
     private fun onFilterApps() {
+        if (_state.value.isLoading) return
+
         viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+
             val currentState = _state.value
-            val currentFilter = AppFilter.getAppType(currentState.appInfoSortType)
+            val query = currentState.searchQuery
+            val filters = currentState.appInfoSortType
 
-            Timber.tag("LibraryViewModel").i("Current Filter is: $currentFilter")
+            val userAccountId = SteamService.userSteamId!!.accountID.toInt()
+            val familyMembersList = SteamService.familyMembers.ifEmpty { listOf(userAccountId) }
+            val currentFilter = AppFilter.getAppType(filters)
 
-            val filteredList = appList
+            Timber.tag("LibraryViewModel").d("Applying filter: $currentFilter")
+
+            val result = appList
                 .asSequence()
-                .filter { item ->
-                    SteamService.familyMembers.ifEmpty {
-                        listOf(SteamService.userSteamId!!.accountID.toInt())
-                    }.map {
-                        item.ownerAccountId.contains(it)
-                    }.any()
-                }
-                .filter { item ->
-                    currentFilter.any { item.type == it }
-                }
-                .filter { item ->
-                    if (currentState.appInfoSortType.contains(AppFilter.SHARED)) {
-                        true
-                    } else {
-                        item.ownerAccountId.contains(SteamService.userSteamId!!.accountID.toInt())
-                    }
-                }
-                .filter { item ->
-                    if (currentState.searchQuery.isNotEmpty()) {
-                        item.name.contains(currentState.searchQuery, ignoreCase = true)
-                    } else {
-                        true
-                    }
-                }
-                .filter { item ->
-                    if (currentState.appInfoSortType.contains(AppFilter.INSTALLED)) {
-                        SteamService.isAppInstalled(item.id)
-                    } else {
-                        true
-                    }
+                .filter { app ->
+                    familyMembersList.any { app.ownerAccountId.contains(it) } &&
+                        currentFilter.any { app.type == it } &&
+                        (filters.contains(AppFilter.SHARED) || app.ownerAccountId.contains(userAccountId)) &&
+                        (query.isEmpty() || app.name.contains(query, ignoreCase = true)) &&
+                        (!filters.contains(AppFilter.INSTALLED) || SteamService.isAppInstalled(app.id))
                 }
                 .mapIndexed { idx, item ->
                     LibraryItem(
@@ -139,13 +122,14 @@ class LibraryViewModel @Inject constructor(
                         appId = item.id,
                         name = item.name,
                         iconHash = item.clientIconHash,
-                        isShared = !item.ownerAccountId.contains(SteamService.userSteamId!!.accountID.toInt()),
+                        isShared = !item.ownerAccountId.contains(userAccountId),
                     )
                 }
                 .toList()
 
-            Timber.tag("LibraryViewModel").d("Filtered list size: ${filteredList.size}")
-            _state.update { it.copy(appInfoList = filteredList) }
+            Timber.tag("LibraryViewModel").d("Filtered list size: ${result.size}")
+
+            _state.update { it.copy(appInfoList = result, isLoading = false) }
         }
     }
 }

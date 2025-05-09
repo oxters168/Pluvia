@@ -2,6 +2,7 @@ package com.OxGames.Pluvia.ui.screen.library.components
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -41,6 +42,7 @@ import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
 import com.OxGames.Pluvia.enums.AppFilter
+import com.OxGames.Pluvia.ui.component.LoadingScreen
 import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.screen.library.LibraryState
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
@@ -101,14 +103,22 @@ internal fun LibraryListPane(
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
-            LibraryList(
-                list = state.appInfoList,
-                listState = listState,
-                contentPaddingValues = PaddingValues(
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = 72.dp,
-                ),
-                onItemClick = onNavigate,
+            Crossfade(
+                targetState = state.isLoading,
+                content = { isLoading ->
+                    when (isLoading) {
+                        true -> LoadingScreen()
+                        false -> LibraryList(
+                            list = state.appInfoList,
+                            listState = listState,
+                            contentPaddingValues = PaddingValues(
+                                top = paddingValues.calculateTopPadding(),
+                                bottom = 72.dp,
+                            ),
+                            onItemClick = onNavigate,
+                        )
+                    }
+                },
             )
             if (state.modalBottomSheet) {
                 ModalBottomSheet(
