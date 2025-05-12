@@ -213,7 +213,6 @@ fun AppScreen(
                     )
                 }
             } else {
-                // Snack bar this?
                 scope.launch {
                     val result = snackBarHost.showSnackbar(
                         message = context.getString(R.string.snack_permissions_needed),
