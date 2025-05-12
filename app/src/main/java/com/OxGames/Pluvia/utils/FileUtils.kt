@@ -185,7 +185,7 @@ object FileUtils {
     suspend fun moveGamesFromOldPath(
         sourceDir: String,
         targetDir: String,
-        onProgressUpdate: (currentFile: String, fileProgress: Float, movedFiles: Int, totalFiles: Int) -> Unit,
+        onProgressUpdate: (currentFile: String, movedFiles: Int, totalFiles: Int) -> Unit,
         onComplete: () -> Unit,
     ) = withContext(Dispatchers.IO) {
         try {
@@ -217,25 +217,22 @@ object FileUtils {
             val totalFiles = allFiles.size
             var filesMoved = 0
 
-            for (sourcePath in allFiles) {
-                val relativePath = sourcePath.subpath(Paths.get(sourceDir).nameCount, sourcePath.nameCount)
+            for (file in allFiles) {
+                val relativePath = file.subpath(Paths.get(sourceDir).nameCount, file.nameCount)
                 val targetFilePath = Paths.get(targetDir, relativePath.toString())
 
                 Files.createDirectories(targetFilePath.parent)
 
-                // val fileName = sourcePath.fileName.toString()
-
                 try {
-                    Files.move(sourcePath, targetFilePath, StandardCopyOption.ATOMIC_MOVE)
+                    Files.move(file, targetFilePath, StandardCopyOption.ATOMIC_MOVE)
 
                     withContext(Dispatchers.Main) {
-                        onProgressUpdate(relativePath.toString(), 1f, filesMoved++, totalFiles)
+                        onProgressUpdate(relativePath.toString(), filesMoved++, totalFiles)
                     }
                 } catch (e: Exception) {
-                    val fileSize = Files.size(sourcePath)
                     var bytesCopied = 0L
 
-                    FileChannel.open(sourcePath, StandardOpenOption.READ).use { sourceChannel ->
+                    FileChannel.open(file, StandardOpenOption.READ).use { sourceChannel ->
                         FileChannel.open(
                             targetFilePath,
                             StandardOpenOption.CREATE,
@@ -252,14 +249,8 @@ object FileUtils {
 
                                 bytesCopied += bytesRead
 
-                                val fileProgress = if (fileSize > 0) {
-                                    bytesCopied.toFloat() / fileSize
-                                } else {
-                                    1f
-                                }
-
                                 withContext(Dispatchers.Main) {
-                                    onProgressUpdate(relativePath.toString(), fileProgress, filesMoved, totalFiles)
+                                    onProgressUpdate(relativePath.toString(), filesMoved, totalFiles)
                                 }
                             }
 
@@ -267,9 +258,9 @@ object FileUtils {
                         }
                     }
 
-                    Files.delete(sourcePath)
+                    Files.delete(file)
                     withContext(Dispatchers.Main) {
-                        onProgressUpdate(relativePath.toString(), 1f, filesMoved++, totalFiles)
+                        onProgressUpdate(relativePath.toString(), filesMoved++, totalFiles)
                     }
                 }
             }

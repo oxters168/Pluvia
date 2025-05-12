@@ -86,7 +86,6 @@ fun HomeLibraryScreen(
         mutableStateOf(path)
     }
     var showMoveDialog by remember { mutableStateOf(false) }
-    var progress by remember { mutableFloatStateOf(0f) }
     var current by remember { mutableStateOf("") }
     var total by remember { mutableIntStateOf(0) }
     var moved by remember { mutableIntStateOf(0) }
@@ -118,9 +117,8 @@ fun HomeLibraryScreen(
                 FileUtils.moveGamesFromOldPath(
                     oldGamesDirectory.pathString,
                     SteamService.steamPath.pathString,
-                    onProgressUpdate = { currentFile, fileProgress, movedFiles, totalFiles ->
+                    onProgressUpdate = { currentFile, movedFiles, totalFiles ->
                         current = currentFile
-                        progress = fileProgress
                         moved = movedFiles
                         total = totalFiles
                     },
@@ -134,7 +132,6 @@ fun HomeLibraryScreen(
 
     if (showMoveDialog) {
         GameMigrationDialog(
-            progress = progress,
             currentFile = current,
             movedFiles = moved,
             totalFiles = total,
@@ -257,7 +254,6 @@ private fun LibraryScreenContent(
 
 @Composable
 private fun GameMigrationDialog(
-    progress: Float,
     currentFile: String,
     movedFiles: Int,
     totalFiles: Int,
@@ -269,6 +265,9 @@ private fun GameMigrationDialog(
         icon = { Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null) },
         title = { Text(text = "Moving Files") },
         text = {
+            val currentProgress by remember(movedFiles, totalFiles) {
+                mutableFloatStateOf(movedFiles.toFloat() / totalFiles)
+            }
             Column(
                 modifier = Modifier
                     .padding(16.dp)
@@ -292,13 +291,13 @@ private fun GameMigrationDialog(
 
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
-                    progress = { progress },
+                    progress = { currentProgress },
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "${(progress * 100).roundToInt()}%",
+                    text = "${(currentProgress * 100).roundToInt()}%",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -316,10 +315,9 @@ private fun GameMigrationDialog(
 private fun Preview_GameMigrationDialog() {
     PluviaTheme {
         GameMigrationDialog(
-            progress = .45f,
-            currentFile = "Pluvia",
-            movedFiles = 16,
-            totalFiles = 64,
+            currentFile = "Pluvia.txt",
+            movedFiles = 75,
+            totalFiles = 100,
         )
     }
 }
