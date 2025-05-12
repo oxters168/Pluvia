@@ -51,6 +51,7 @@ import com.OxGames.Pluvia.ui.theme.PluviaTheme
 @Composable
 internal fun LibraryListPane(
     state: LibraryState,
+    snackBarHost: SnackbarHostState,
     listState: LazyListState,
     sheetState: SheetState,
     onFilterChanged: (AppFilter) -> Unit,
@@ -62,7 +63,6 @@ internal fun LibraryListPane(
     onSettings: () -> Unit,
 ) {
     val expandedFab by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
-    val snackBarHost = remember { SnackbarHostState() }
 
     // Determine the orientation to add additional scaffold padding.
     val configuration = LocalConfiguration.current
@@ -168,6 +168,7 @@ private fun Preview_LibraryListPane() {
             LibraryListPane(
                 listState = LazyListState(2, 64),
                 state = state,
+                snackBarHost = SnackbarHostState(),
                 sheetState = sheetState,
                 onFilterChanged = { },
                 onModalBottomSheet = {

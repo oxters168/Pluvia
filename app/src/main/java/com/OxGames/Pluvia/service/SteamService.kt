@@ -198,7 +198,7 @@ class SteamService : Service(), IChallengeUrlChanged {
         /* Main File Location */
         private val baseDir by lazy { Environment.getExternalStorageDirectory().absolutePath }
         private val pluviaPath by lazy { Paths.get(baseDir, "Pluvia") } // Yes, this is hardcoded for now.
-        private val steamPath by lazy { pluviaPath.resolve("Steam") }
+        val steamPath by lazy { pluviaPath.resolve("Steam") }
         private val depotManifestsPath by lazy { steamPath.resolve("depot_manifests.zip") }
         private val defaultAppInstallPath by lazy { steamPath.resolve("steamapps/common") }
         private val defaultAppStagingPath by lazy { steamPath.resolve("steamapps/staging") }
