@@ -93,8 +93,6 @@ import timber.log.Timber
 
 // https://partner.steamgames.com/doc/store/assets/libraryassets#4
 
-// TODO: How to deal with games in data/data location. Wipe or Move?
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScreen(
