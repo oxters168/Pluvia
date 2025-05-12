@@ -57,6 +57,7 @@ import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryDetailPane
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryListPane
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import com.OxGames.Pluvia.utils.ContainerUtils
 import com.OxGames.Pluvia.utils.FileUtils
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -123,7 +124,10 @@ fun HomeLibraryScreen(
                         total = totalFiles
                     },
                     onComplete = {
-                        showMoveDialog = false
+                        scope.launch {
+                            ContainerUtils.migrateDefaultDrives(context)
+                            showMoveDialog = false
+                        }
                     },
                 )
             }
@@ -266,7 +270,7 @@ private fun GameMigrationDialog(
         title = { Text(text = "Moving Files") },
         text = {
             val currentProgress by remember(movedFiles, totalFiles) {
-                mutableFloatStateOf(movedFiles.toFloat() / totalFiles)
+                mutableFloatStateOf(movedFiles.plus(1).toFloat() / totalFiles)
             }
             Column(
                 modifier = Modifier

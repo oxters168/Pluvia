@@ -11,6 +11,8 @@ import com.winlator.core.WineRegistryEditor
 import com.winlator.core.WineThemeManager
 import java.io.File
 import kotlin.Boolean
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
@@ -36,6 +38,20 @@ object ContainerUtils {
                 ),
             )
         }.toMap()
+    }
+
+    suspend fun migrateDefaultDrives(context: Context) = withContext(Dispatchers.IO) {
+        ContainerManager(context).containers.forEach { container ->
+            container.drives = "" // Clear it out
+
+            val defaultDrives = PrefManager.drives
+            val appDirPath = SteamService.getAppDirPath(container.id)
+            val drive = Container.getNextAvailableDriveLetter(defaultDrives)
+
+            container.drives = "$defaultDrives$drive:$appDirPath"
+
+            container.saveData()
+        }
     }
 
     fun getDefaultContainerData(): ContainerData {
@@ -140,7 +156,7 @@ object ContainerUtils {
             cpuList = container.cpuList,
             cpuListWoW64 = container.cpuListWoW64,
             wow64Mode = container.isWoW64Mode,
-            startupSelection = container.startupSelection.toByte(),
+            startupSelection = container.startupSelection,
             box86Version = container.box86Version,
             box64Version = container.box64Version,
             box86Preset = container.box86Preset,
