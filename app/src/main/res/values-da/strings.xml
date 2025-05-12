@@ -273,6 +273,9 @@
     <string name="toast_failed_log_save">Kunne ikke gemme logcat på destinationen</string>
     <string name="toast_settings_activate">Lang klik for at aktivere</string>
 
+    <!-- Snack -->
+    <string name="snack_permissions_needed">Tilladelse er nødvendig for at få adgang til eksternt lager</string>
+
     <!-- Settings -->
     <string name="settings_allowed_orientations_subtitle">Vælg, hvilke retninger der kan roteres til, når du er i spillet</string>
     <string name="settings_allowed_orientations_title">Tilladte orienteringer</string>

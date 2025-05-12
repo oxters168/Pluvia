@@ -284,6 +284,9 @@
     <string name="toast_failed_log_save">Impossibile salvare il logcat nella destinazione</string>
     <string name="toast_settings_activate">Tieni premuto per attivare</string>
 
+    <!-- Snack -->
+    <string name="snack_permissions_needed">È necessario il permesso per accedere alla memoria esterna</string>
+
     <!-- Settings -->
     <string name="settings_allowed_orientations_subtitle">Scegli quali orientazioni possono essere ruotate durante il gioco</string>
     <string name="settings_allowed_orientations_title">Orientamenti consentiti</string>

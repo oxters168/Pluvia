@@ -1,19 +1,32 @@
 package com.OxGames.Pluvia.utils
 
+import android.content.Context
+import android.content.Intent
 import android.content.res.AssetManager
+import android.net.Uri
 import android.os.StatFs
+import android.provider.Settings
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileReader
 import java.io.IOException
 import java.io.OutputStreamWriter
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.stream.Stream
-import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 object FileUtils {
@@ -153,6 +166,153 @@ object FileUtils {
         } catch (e: IOException) {
             // Timber.e(e)
             false
+        }
+    }
+
+    fun openAppSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }
+
+    /**
+     * Move games from internal only storage to user storage.
+     * This should be removed after a few versions and just
+     * remove the old path to free up space.
+     */
+    suspend fun moveGamesFromOldPath(
+        sourceDir: String,
+        targetDir: String,
+        onProgressUpdate: (currentFile: String, movedFiles: Int, totalFiles: Int) -> Unit,
+        onComplete: () -> Unit,
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val sourcePath = Paths.get(sourceDir)
+            val targetPath = Paths.get(targetDir)
+
+            if (!Files.exists(targetPath)) {
+                Files.createDirectories(targetPath)
+            }
+
+            val allFiles = mutableListOf<Path>()
+            Files.walkFileTree(
+                sourcePath,
+                object : SimpleFileVisitor<Path>() {
+                    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                        if (Files.isRegularFile(file)) {
+                            allFiles.add(file)
+                        }
+                        return FileVisitResult.CONTINUE
+                    }
+
+                    override fun visitFileFailed(file: Path, exc: IOException): FileVisitResult {
+                        Timber.e(exc, "Failed to visit file: $file")
+                        return FileVisitResult.CONTINUE
+                    }
+                },
+            )
+
+            val totalFiles = allFiles.size
+            var filesMoved = 0
+
+            for (file in allFiles) {
+                val relativePath = file.subpath(Paths.get(sourceDir).nameCount, file.nameCount)
+                val targetFilePath = Paths.get(targetDir, relativePath.toString())
+
+                Files.createDirectories(targetFilePath.parent)
+
+                try {
+                    Files.move(file, targetFilePath, StandardCopyOption.ATOMIC_MOVE)
+
+                    withContext(Dispatchers.Main) {
+                        onProgressUpdate(relativePath.toString(), filesMoved++, totalFiles)
+                    }
+                } catch (e: Exception) {
+                    var bytesCopied = 0L
+
+                    FileChannel.open(file, StandardOpenOption.READ).use { sourceChannel ->
+                        FileChannel.open(
+                            targetFilePath,
+                            StandardOpenOption.CREATE,
+                            StandardOpenOption.WRITE,
+                            StandardOpenOption.TRUNCATE_EXISTING,
+                        ).use { targetChannel ->
+                            val buffer = ByteBuffer.allocateDirect(8 * 1024 * 1024)
+                            var bytesRead: Int
+
+                            while (sourceChannel.read(buffer).also { bytesRead = it } > 0) {
+                                buffer.flip()
+                                targetChannel.write(buffer)
+                                buffer.compact()
+
+                                bytesCopied += bytesRead
+
+                                withContext(Dispatchers.Main) {
+                                    onProgressUpdate(relativePath.toString(), filesMoved, totalFiles)
+                                }
+                            }
+
+                            targetChannel.force(true)
+                        }
+                    }
+
+                    Files.delete(file)
+                    withContext(Dispatchers.Main) {
+                        onProgressUpdate(relativePath.toString(), filesMoved++, totalFiles)
+                    }
+                }
+            }
+
+            Files.walkFileTree(
+                sourcePath,
+                object : SimpleFileVisitor<Path>() {
+                    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+                        if (exc == null) {
+                            try {
+                                var isEmpty = true
+                                Files.newDirectoryStream(dir).use { stream ->
+                                    if (stream.iterator().hasNext()) {
+                                        isEmpty = false
+                                    }
+                                }
+
+                                if (isEmpty && (dir != sourcePath)) {
+                                    Files.delete(dir)
+                                }
+                            } catch (e: Exception) {
+                                Timber.e(e, "Failed to delete directory: $dir")
+                            }
+                        }
+                        return FileVisitResult.CONTINUE
+                    }
+                },
+            )
+
+            try {
+                var isEmpty = true
+                Files.newDirectoryStream(sourcePath).use { stream ->
+                    if (stream.iterator().hasNext()) {
+                        isEmpty = false
+                    }
+                }
+
+                if (isEmpty) {
+                    Files.delete(sourcePath)
+                }
+            } catch (e: Exception) {
+                Timber.e(e)
+            }
+
+            withContext(Dispatchers.Main) {
+                onComplete()
+            }
+        } catch (e: Exception) {
+            Timber.e(e)
+            withContext(Dispatchers.Main) {
+                onComplete()
+            }
         }
     }
 }

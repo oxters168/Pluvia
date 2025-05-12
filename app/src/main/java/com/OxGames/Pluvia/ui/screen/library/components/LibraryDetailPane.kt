@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +22,7 @@ import com.OxGames.Pluvia.ui.theme.PluviaTheme
 @Composable
 internal fun LibraryDetailPane(
     appId: Int,
+    snackBarHost: SnackbarHostState,
     onClickPlay: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -30,6 +32,7 @@ internal fun LibraryDetailPane(
         } else {
             AppScreen(
                 appId = appId,
+                snackBarHost = snackBarHost,
                 onClickPlay = onClickPlay,
                 onBack = onBack,
             )
@@ -64,6 +67,7 @@ private fun Preview_LibraryDetailPane() {
     PluviaTheme {
         LibraryDetailPane(
             appId = Int.MAX_VALUE,
+            snackBarHost = SnackbarHostState(),
             onClickPlay = { },
             onBack = { },
         )

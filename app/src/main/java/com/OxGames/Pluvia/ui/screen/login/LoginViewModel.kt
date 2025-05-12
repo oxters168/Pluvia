@@ -44,7 +44,7 @@ class LoginViewModel : ViewModel() {
         }
 
         override fun getDeviceCode(previousCodeWasIncorrect: Boolean): CompletableFuture<String> {
-            Timber.d("Two-Factor, device code")
+            Timber.i("Two-Factor, device code")
 
             _loginState.update { currentState ->
                 currentState.copy(
@@ -67,7 +67,7 @@ class LoginViewModel : ViewModel() {
             email: String?,
             previousCodeWasIncorrect: Boolean,
         ): CompletableFuture<String> {
-            Timber.d("Two-Factor, asking for email code")
+            Timber.i("Two-Factor, asking for email code")
 
             _loginState.update { currentState ->
                 currentState.copy(
@@ -89,7 +89,7 @@ class LoginViewModel : ViewModel() {
     }
 
     private val onSteamConnected: (SteamEvent.Connected) -> Unit = {
-        Timber.i("Received is connected")
+        Timber.i("Received is connected. isAutoLoggingIn: ${it.isAutoLoggingIn}")
 
         _loginState.update { currentState ->
             currentState.copy(
@@ -112,6 +112,7 @@ class LoginViewModel : ViewModel() {
     }
 
     private val onLogonStarted: (SteamEvent.LogonStarted) -> Unit = {
+        Timber.i("Login Started")
         _loginState.update { currentState ->
             currentState.copy(isLoggingIn = true)
         }
@@ -143,12 +144,14 @@ class LoginViewModel : ViewModel() {
     }
 
     private val onQrChallengeReceived: (SteamEvent.QrChallengeReceived) -> Unit = {
+        // No need to log here since its logged in the service.
         _loginState.update { currentState ->
             currentState.copy(isQrFailed = false, qrCode = it.challengeUrl)
         }
     }
 
     private val onQrAuthEnded: (SteamEvent.QrAuthEnded) -> Unit = {
+        Timber.i("QR auth ended - success: ${it.success}")
         _loginState.update { currentState ->
             currentState.copy(isQrFailed = !it.success, qrCode = null)
         }
@@ -184,7 +187,6 @@ class LoginViewModel : ViewModel() {
 
         val isLoggedIn = SteamService.isLoggedIn
         val isSteamConnected = SteamService.isConnected
-        Timber.d("Logged in? $isLoggedIn")
         if (isLoggedIn) {
             _loginState.update {
                 it.copy(isSteamConnected = isSteamConnected, isLoggingIn = true, isQrFailed = false, loginResult = LoginResult.Success)
@@ -194,6 +196,8 @@ class LoginViewModel : ViewModel() {
                 it.copy(isSteamConnected = isSteamConnected, isLoggingIn = false, isQrFailed = false, loginResult = LoginResult.Failed)
             }
         }
+
+        Timber.i("Logged in: $isLoggedIn")
     }
 
     override fun onCleared() {
@@ -213,14 +217,18 @@ class LoginViewModel : ViewModel() {
     }
 
     private fun showSnack(message: String) {
+        Timber.i("Snack message: $message")
         viewModelScope.launch {
             _snackEvents.send(message)
         }
     }
 
     fun onCredentialLogin() {
+        Timber.i("onCredentialLogin")
+
         with(_loginState.value) {
             if (username.isEmpty() && password.isEmpty()) {
+                Timber.w("onCredentialLogin, credentials were empty")
                 return@with
             }
 
@@ -236,6 +244,7 @@ class LoginViewModel : ViewModel() {
     }
 
     fun submit() {
+        Timber.i("Submitting TFA code, trying to log in")
         viewModelScope.launch {
             submitChannel.send(_loginState.value.twoFactorCode)
 
@@ -246,10 +255,13 @@ class LoginViewModel : ViewModel() {
     }
 
     fun onQrRetry() {
+        Timber.i("Retrying QR Auth")
         viewModelScope.launch { SteamService.startLoginWithQr() }
     }
 
     fun onShowLoginScreen(loginScreen: LoginScreen) {
+        Timber.i("onShowLoginScreen: ${loginScreen.name}")
+
         when (loginScreen) {
             LoginScreen.CREDENTIAL -> SteamService.stopLoginWithQr()
             LoginScreen.QR -> viewModelScope.launch { SteamService.startLoginWithQr() }
