@@ -1,7 +1,10 @@
 package com.OxGames.Pluvia.ui.screen.library
 
 import android.Manifest
+import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
 import com.OxGames.Pluvia.enums.AppFilter
 import com.OxGames.Pluvia.service.SteamService
@@ -92,7 +96,30 @@ fun HomeLibraryScreen(
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
-        onResult = { permission ->
+        onResult = { permissions ->
+            val writePermissionGranted = permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] ?: false
+            val readPermissionGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
+            if (!writePermissionGranted && !readPermissionGranted) {
+                scope.launch {
+                    val result = snackBarHost.showSnackbar(
+                        message = "Storage permission is needed to move and download games",
+                        actionLabel = context.getString(R.string.ok),
+                    )
+
+                    when (result) {
+                        SnackbarResult.Dismissed -> Unit
+                        SnackbarResult.ActionPerformed -> {
+                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", context.packageName, null)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(intent)
+                        }
+                    }
+                }
+                return@rememberLauncherForActivityResult
+            }
+
             scope.launch {
                 showMoveDialog = true
                 FileUtils.moveGamesFromOldPath(
