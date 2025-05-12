@@ -1,10 +1,7 @@
 package com.OxGames.Pluvia.ui.screen.library
 
 import android.Manifest
-import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -102,18 +99,14 @@ fun HomeLibraryScreen(
             if (!writePermissionGranted && !readPermissionGranted) {
                 scope.launch {
                     val result = snackBarHost.showSnackbar(
-                        message = "Storage permission is needed to move and download games",
-                        actionLabel = context.getString(R.string.ok),
+                        message = context.getString(R.string.snack_permissions_needed),
+                        actionLabel = context.getString(R.string.settings),
                     )
 
                     when (result) {
                         SnackbarResult.Dismissed -> Unit
                         SnackbarResult.ActionPerformed -> {
-                            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", context.packageName, null)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
-                            context.startActivity(intent)
+                            FileUtils.openAppSettings(context)
                         }
                     }
                 }
@@ -248,6 +241,7 @@ private fun LibraryScreenContent(
             AnimatedPane {
                 LibraryDetailPane(
                     appId = appId,
+                    snackBarHost = snackBarHost,
                     onBack = {
                         // We're still in Adaptive navigation.
                         scope.launch {

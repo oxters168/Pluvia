@@ -1,7 +1,11 @@
 package com.OxGames.Pluvia.utils
 
+import android.content.Context
+import android.content.Intent
 import android.content.res.AssetManager
+import android.net.Uri
 import android.os.StatFs
+import android.provider.Settings
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
@@ -163,6 +167,14 @@ object FileUtils {
             // Timber.e(e)
             false
         }
+    }
+
+    fun openAppSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
     }
 
     /**
