@@ -99,6 +99,7 @@ class XServerViewModel @Inject constructor(
 
     sealed class XServerUiEvent {
         data object OnExit : XServerUiEvent()
+        data object OnKeyboard : XServerUiEvent()
         data object OnNavigateBack : XServerUiEvent()
     }
 

@@ -18,6 +18,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,6 +52,7 @@ fun XServerScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val keyboard = LocalSoftwareKeyboardController.current
 
     val xServerState by viewModel.state.collectAsStateWithLifecycle()
 
@@ -59,6 +61,7 @@ fun XServerScreen(
             when (event) {
                 XServerViewModel.XServerUiEvent.OnExit -> onExit()
                 XServerViewModel.XServerUiEvent.OnNavigateBack -> navigateBack()
+                XServerViewModel.XServerUiEvent.OnKeyboard -> keyboard?.show()
             }
         }
     }
@@ -70,8 +73,8 @@ fun XServerScreen(
         onConfirmClick = {
             scope.launch {
                 viewModel.exit()
+                exitDialogVisible = false
             }
-            exitDialogVisible = false
         },
         onDismissClick = { exitDialogVisible = false },
         confirmBtnText = R.string.close,
@@ -96,6 +99,8 @@ fun XServerScreen(
         }
     }
 
+    // TODO IME onKeyEvent or onPreviewKeyEvent ?
+    // TODO Hamburger menu or option to invoke keyboard in "quit" dialog.
     AndroidView(
         modifier = Modifier
             .fillMaxSize()
