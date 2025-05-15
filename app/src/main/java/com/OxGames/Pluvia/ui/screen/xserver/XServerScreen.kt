@@ -293,10 +293,21 @@ private fun XServerDrawer(
                 Text(
                     text = stringResource(id = R.string.app_name),
                     fontSize = 32.sp,
+                    style = MaterialTheme.typography.bodyLarge,
                 )
+                if (state.gameName.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.friend_playing_game, state.gameName),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.surfaceTint,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
                 Text(
                     text = DateUtils.formatDateTime(LocalContext.current, state.currentTime, DateUtils.FORMAT_SHOW_TIME),
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.surfaceTint,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
@@ -323,7 +334,7 @@ private fun Preview_XServerDrawer() {
     PluviaTheme {
         Surface {
             XServerDrawer(
-                state = XServerState(),
+                state = XServerState(gameName = "The Game"),
                 onKeyboard = {},
                 onExit = {},
             )
