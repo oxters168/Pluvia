@@ -365,7 +365,7 @@ class SteamService : Service(), IChallengeUrlChanged {
         fun getOwnedAppDlc(appId: Int): Map<Int, DepotInfo> = getAppDlc(appId).filter {
             getPkgInfoOf(it.value.dlcAppId)?.let { pkg ->
                 instance?.steamClient?.let { steamClient ->
-                    pkg.ownerAccountId.contains(steamClient.steamID.accountID.toInt())
+                    pkg.ownerAccountId.contains(steamClient.steamID!!.accountID.toInt())
                 }
             } == true
         }
