@@ -13,6 +13,8 @@ data class XServerState(
     val graphicsDriver: String = Container.DEFAULT_GRAPHICS_DRIVER,
     val audioDriver: String = Container.DEFAULT_AUDIO_DRIVER,
 
+    val currentTime: Long = 0L,
+
     val gameName: String = "",
     val appId: Int = -1,
     var firstTimeBoot: Boolean = false,

@@ -156,7 +156,7 @@
     <string name="dialog_message_delete_app">Er du sikker på, at du vil slette denne app?\n\n\tStørrelse på disk: %1$s</string>
     <string name="dialog_message_download_app">Den app, der installeres, har følgende pladskrav. Vil du fortsætte?\nDownloadstørrelse: %1$s\nStørrelse på disk: %2$s\nTilgængelig plads: %3$s</string>
     <string name="dialog_message_download_install_fs">Ubuntu Isoen skal downloades og installeres, før du kan redigere konfigurationen. Denne handling kan tage et par minutter. Vil du fortsætte?</string>
-    <string name="dialog_message_exit_game">"Er du sikker på, at du vil lukke spillet "</string>
+    <string name="dialog_message_exit_game">"Er du sikker på, at du vil lukke spillet  %1$s?"</string>
     <string name="dialog_message_friend_block">Er du sikker på, at du vil blokere %1$s?</string>
     <string name="dialog_message_friend_favorite">Er du sikker på, at du vil sætte %1$s som favorit?</string>
     <string name="dialog_message_friend_no_past_aliases">Ingen tidligere aliaser fundet</string>
