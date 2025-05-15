@@ -123,11 +123,15 @@ class XServerViewModel @Inject constructor(
         var handled = false
         if (isGamepad) {
             handled = xServerView!!.xServer.winHandler.onKeyEvent(it.event)
+            Timber.d("Gamepad Handled: $handled")
             // handled = ExternalController.onKeyEvent(xServer.winHandler, it.event)
         }
         if (!handled && isKeyboard) {
             handled = keyboard?.onKeyEvent(it.event) == true
+            Timber.d("Keyboard Handled: $handled")
         }
+
+        Timber.d("isKeyboard: $isKeyboard, isGamepad: $isGamepad \n Handled KeyEvent in XServer: (${it.event.keyCode}) with $handled")
 
         handled
     }
