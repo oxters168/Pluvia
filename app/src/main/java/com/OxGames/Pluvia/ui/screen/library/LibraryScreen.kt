@@ -242,7 +242,6 @@ private fun LibraryScreenContent(
             AnimatedPane {
                 LibraryDetailPane(
                     appId = appId,
-                    snackBarHost = snackBarHost,
                     onBack = {
                         // We're still in Adaptive navigation.
                         scope.launch {

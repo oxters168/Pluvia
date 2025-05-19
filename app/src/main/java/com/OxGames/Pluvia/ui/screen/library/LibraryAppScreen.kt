@@ -2,7 +2,6 @@ package com.OxGames.Pluvia.ui.screen.library
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
@@ -59,7 +59,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.window.core.layout.WindowWidthSizeClass
 import com.OxGames.Pluvia.Constants
@@ -99,12 +98,12 @@ import timber.log.Timber
 @Composable
 fun AppScreen(
     appId: Int,
-    snackBarHost: SnackbarHostState,
     onClickPlay: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackBarHost = remember { SnackbarHostState() }
 
     var downloadInfo by remember(appId) {
         mutableStateOf(SteamService.getAppDownloadInfo(appId))
@@ -163,16 +162,6 @@ fun AppScreen(
 
     val windowWidth = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
 
-    /** Storage Permission **/
-    var hasStoragePermission by remember(appId) {
-        val result = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        ) == PackageManager.PERMISSION_GRANTED
-
-        mutableStateOf(result)
-    }
-
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { permissions ->
@@ -180,38 +169,40 @@ fun AppScreen(
             val readPermissionGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
 
             if (writePermissionGranted && readPermissionGranted) {
-                hasStoragePermission = true
-
-                val depots = SteamService.getDownloadableDepots(appId)
-                Timber.i("There are ${depots.size} depots belonging to $appId")
-                // TODO: get space available based on where user wants to install
-                val availableBytes = FileUtils.getAvailableSpace(context.filesDir.absolutePath)
-                val availableSpace = FileUtils.formatBinarySize(availableBytes)
-                // TODO: un-hardcode "public" branch
-                val downloadSize = FileUtils.formatBinarySize(
-                    depots.values.sumOf {
-                        it.manifests["public"]?.download ?: 0
-                    },
-                )
-                val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
-                val installSize = FileUtils.formatBinarySize(installBytes)
-                if (availableBytes < installBytes) {
-                    msgDialogState = MessageDialogState(
-                        visible = true,
-                        type = DialogType.NOT_ENOUGH_SPACE,
-                        title = R.string.dialog_title_no_space,
-                        message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
-                        confirmBtnText = R.string.ok,
+                if (!isInstalled) {
+                    val depots = SteamService.getDownloadableDepots(appId)
+                    Timber.i("There are ${depots.size} depots belonging to $appId")
+                    // TODO: get space available based on where user wants to install
+                    val availableBytes = FileUtils.getAvailableSpace(context.filesDir.absolutePath)
+                    val availableSpace = FileUtils.formatBinarySize(availableBytes)
+                    // TODO: un-hardcode "public" branch
+                    val downloadSize = FileUtils.formatBinarySize(
+                        depots.values.sumOf {
+                            it.manifests["public"]?.download ?: 0
+                        },
                     )
+                    val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
+                    val installSize = FileUtils.formatBinarySize(installBytes)
+                    if (availableBytes < installBytes) {
+                        msgDialogState = MessageDialogState(
+                            visible = true,
+                            type = DialogType.NOT_ENOUGH_SPACE,
+                            title = R.string.dialog_title_no_space,
+                            message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
+                            confirmBtnText = R.string.ok,
+                        )
+                    } else {
+                        msgDialogState = MessageDialogState(
+                            visible = true,
+                            type = DialogType.INSTALL_APP,
+                            title = R.string.dialog_title_download_app,
+                            message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
+                            confirmBtnText = R.string.proceed,
+                            dismissBtnText = R.string.cancel,
+                        )
+                    }
                 } else {
-                    msgDialogState = MessageDialogState(
-                        visible = true,
-                        type = DialogType.INSTALL_APP,
-                        title = R.string.dialog_title_download_app,
-                        message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
-                        confirmBtnText = R.string.proceed,
-                        dismissBtnText = R.string.cancel,
-                    )
+                    onClickPlay(false)
                 }
             } else {
                 scope.launch {
@@ -350,6 +341,7 @@ fun AppScreen(
 
     /** UI **/
     Scaffold(
+        snackbarHost = { SnackbarHost(snackBarHost) },
         topBar = {
             // Show Top App Bar when in Compact or Medium screen space.
             if (windowWidth == WindowWidthSizeClass.COMPACT || windowWidth == WindowWidthSizeClass.MEDIUM) {
@@ -384,15 +376,13 @@ fun AppScreen(
                         confirmBtnText = R.string.yes,
                         dismissBtnText = R.string.no,
                     )
-                } else if (!isInstalled) {
+                } else {
                     permissionLauncher.launch(
                         arrayOf(
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         ),
                     )
-                } else {
-                    onClickPlay(false)
                 }
             },
             optionsMenu = arrayOf(
