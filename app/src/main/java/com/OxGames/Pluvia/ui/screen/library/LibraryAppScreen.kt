@@ -1,7 +1,10 @@
 package com.OxGames.Pluvia.ui.screen.library
 
+import android.Manifest
 import android.content.Intent
 import android.content.res.Configuration
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +32,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -39,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -95,6 +102,9 @@ fun AppScreen(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackBarHost = remember { SnackbarHostState() }
+
     var downloadInfo by remember(appId) {
         mutableStateOf(SteamService.getAppDownloadInfo(appId))
     }
@@ -106,6 +116,7 @@ fun AppScreen(
     }
 
     val isDownloading: () -> Boolean = { downloadInfo != null && downloadProgress < 1f }
+    var isUninstalling by remember(appId) { mutableStateOf(false) }
 
     var loadingDialogVisible by rememberSaveable { mutableStateOf(false) }
     var loadingProgress by rememberSaveable { mutableFloatStateOf(0f) }
@@ -151,18 +162,80 @@ fun AppScreen(
 
     val windowWidth = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            val writePermissionGranted = permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] ?: false
+            val readPermissionGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
+
+            if (writePermissionGranted && readPermissionGranted) {
+                if (!isInstalled) {
+                    val depots = SteamService.getDownloadableDepots(appId)
+                    Timber.i("There are ${depots.size} depots belonging to $appId")
+                    // TODO: get space available based on where user wants to install
+                    val availableBytes = FileUtils.getAvailableSpace(context.filesDir.absolutePath)
+                    val availableSpace = FileUtils.formatBinarySize(availableBytes)
+                    // TODO: un-hardcode "public" branch
+                    val downloadSize = FileUtils.formatBinarySize(
+                        depots.values.sumOf {
+                            it.manifests["public"]?.download ?: 0
+                        },
+                    )
+                    val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
+                    val installSize = FileUtils.formatBinarySize(installBytes)
+                    if (availableBytes < installBytes) {
+                        msgDialogState = MessageDialogState(
+                            visible = true,
+                            type = DialogType.NOT_ENOUGH_SPACE,
+                            title = R.string.dialog_title_no_space,
+                            message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
+                            confirmBtnText = R.string.ok,
+                        )
+                    } else {
+                        msgDialogState = MessageDialogState(
+                            visible = true,
+                            type = DialogType.INSTALL_APP,
+                            title = R.string.dialog_title_download_app,
+                            message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
+                            confirmBtnText = R.string.proceed,
+                            dismissBtnText = R.string.cancel,
+                        )
+                    }
+                } else {
+                    onClickPlay(false)
+                }
+            } else {
+                scope.launch {
+                    val result = snackBarHost.showSnackbar(
+                        message = context.getString(R.string.snack_permissions_needed),
+                        actionLabel = context.getString(R.string.settings),
+                    )
+                    when (result) {
+                        SnackbarResult.Dismissed -> Unit
+                        SnackbarResult.ActionPerformed -> {
+                            FileUtils.openAppSettings(context)
+                        }
+                    }
+                }
+            }
+        },
+    )
+
+    /** Dialog **/
     val onDismissRequest: (() -> Unit)?
     val onDismissClick: (() -> Unit)?
     val onConfirmClick: (() -> Unit)?
     when (msgDialogState.type) {
         DialogType.CANCEL_APP_DOWNLOAD -> {
             onConfirmClick = {
-                downloadInfo?.cancel()
-                SteamService.deleteApp(appId)
-                downloadInfo = null
-                downloadProgress = 0f
-                isInstalled = SteamService.isAppInstalled(appId)
-                msgDialogState = MessageDialogState(false)
+                scope.launch {
+                    downloadInfo?.cancel()
+                    SteamService.deleteApp(appId = appId, isUninstalling = { isUninstalling = it })
+                    downloadInfo = null
+                    downloadProgress = 0f
+                    isInstalled = SteamService.isAppInstalled(appId)
+                    msgDialogState = MessageDialogState(false)
+                }
             }
             onDismissRequest = { msgDialogState = MessageDialogState(false) }
             onDismissClick = { msgDialogState = MessageDialogState(false) }
@@ -188,10 +261,12 @@ fun AppScreen(
 
         DialogType.DELETE_APP -> {
             onConfirmClick = {
-                SteamService.deleteApp(appId)
-                msgDialogState = MessageDialogState(false)
+                scope.launch {
+                    SteamService.deleteApp(appId = appId, isUninstalling = { isUninstalling = it })
+                    msgDialogState = MessageDialogState(false)
 
-                isInstalled = SteamService.isAppInstalled(appId)
+                    isInstalled = SteamService.isAppInstalled(appId)
+                }
             }
             onDismissRequest = { msgDialogState = MessageDialogState(false) }
             onDismissClick = { msgDialogState = MessageDialogState(false) }
@@ -254,11 +329,19 @@ fun AppScreen(
     )
 
     LoadingDialog(
+        visible = isUninstalling,
+        progress = -1f,
+        message = R.string.uninstalling,
+    )
+
+    LoadingDialog(
         visible = loadingDialogVisible,
         progress = loadingProgress,
     )
 
+    /** UI **/
     Scaffold(
+        snackbarHost = { SnackbarHost(snackBarHost) },
         topBar = {
             // Show Top App Bar when in Compact or Medium screen space.
             if (windowWidth == WindowWidthSizeClass.COMPACT || windowWidth == WindowWidthSizeClass.MEDIUM) {
@@ -293,41 +376,13 @@ fun AppScreen(
                         confirmBtnText = R.string.yes,
                         dismissBtnText = R.string.no,
                     )
-                } else if (!isInstalled) {
-                    val depots = SteamService.getDownloadableDepots(appId)
-                    Timber.d("There are ${depots.size} depots belonging to $appId")
-                    // TODO: get space available based on where user wants to install
-                    val availableBytes =
-                        FileUtils.getAvailableSpace(context.filesDir.absolutePath)
-                    val availableSpace = FileUtils.formatBinarySize(availableBytes)
-                    // TODO: un-hardcode "public" branch
-                    val downloadSize = FileUtils.formatBinarySize(
-                        depots.values.sumOf {
-                            it.manifests["public"]?.download ?: 0
-                        },
-                    )
-                    val installBytes = depots.values.sumOf { it.manifests["public"]?.size ?: 0 }
-                    val installSize = FileUtils.formatBinarySize(installBytes)
-                    if (availableBytes < installBytes) {
-                        msgDialogState = MessageDialogState(
-                            visible = true,
-                            type = DialogType.NOT_ENOUGH_SPACE,
-                            title = R.string.dialog_title_no_space,
-                            message = context.getString(R.string.dialog_message_no_space, installSize, availableSpace),
-                            confirmBtnText = R.string.ok,
-                        )
-                    } else {
-                        msgDialogState = MessageDialogState(
-                            visible = true,
-                            type = DialogType.INSTALL_APP,
-                            title = R.string.dialog_title_download_app,
-                            message = context.getString(R.string.dialog_message_download_app, downloadSize, installSize, availableSpace),
-                            confirmBtnText = R.string.proceed,
-                            dismissBtnText = R.string.cancel,
-                        )
-                    }
                 } else {
-                    onClickPlay(false)
+                    permissionLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        ),
+                    )
                 }
             },
             optionsMenu = arrayOf(
@@ -385,7 +440,6 @@ fun AppScreen(
                                     val sizeOnDisk = FileUtils.formatBinarySize(
                                         FileUtils.getFolderSize(SteamService.getAppDirPath(appId)),
                                     )
-                                    // TODO: show loading screen of delete progress
                                     msgDialogState = MessageDialogState(
                                         visible = true,
                                         type = DialogType.DELETE_APP,

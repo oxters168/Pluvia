@@ -94,6 +94,7 @@
     <string name="value">Value</string>
     <string name="width">Width</string>
     <string name="yes">Yes</string>
+    <string name="uninstalling">Uninstalling…</string>
 
     <!-- Box 86 || Box 64 -->
     <string name="box64_name_label">Preset name</string>
@@ -282,6 +283,9 @@
     <string name="toast_failed_crash_save">Failed to save crash log to destination</string>
     <string name="toast_failed_log_save">Failed to save logcat to destination</string>
     <string name="toast_settings_activate">Long click to activate</string>
+
+    <!-- Snack -->
+    <string name="snack_permissions_needed">Permission is needed access external storage</string>
 
     <!-- Settings -->
     <string name="settings_allowed_orientations_subtitle">Choose which orientations can be rotated to when in-game</string>

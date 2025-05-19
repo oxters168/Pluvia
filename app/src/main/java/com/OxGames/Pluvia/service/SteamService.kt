@@ -3,6 +3,7 @@ package com.OxGames.Pluvia.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Environment
 import android.os.IBinder
 import androidx.room.withTransaction
 import com.OxGames.Pluvia.BuildConfig
@@ -103,7 +104,6 @@ import `in`.dragonbra.javasteam.util.NetHelpers
 import `in`.dragonbra.javasteam.util.log.LogListener
 import `in`.dragonbra.javasteam.util.log.LogManager
 import java.io.Closeable
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.Collections
@@ -111,6 +111,8 @@ import java.util.EnumSet
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
@@ -193,6 +195,15 @@ class SteamService : Service(), IChallengeUrlChanged {
     private var familyGroupMembers: ArrayList<Int> = arrayListOf()
 
     companion object {
+        /* Main File Location */
+        private val baseDir by lazy { Environment.getExternalStorageDirectory().absolutePath }
+        private val pluviaPath by lazy { Paths.get(baseDir, "Pluvia") } // Yes, this is hardcoded for now.
+        val steamPath by lazy { pluviaPath.resolve("Steam") }
+        private val depotManifestsPath by lazy { steamPath.resolve("depot_manifests.zip") }
+        private val defaultAppInstallPath by lazy { steamPath.resolve("steamapps/common") }
+        private val defaultAppStagingPath by lazy { steamPath.resolve("steamapps/staging") }
+        private val serverListPath by lazy { instance!!.cacheDir.toPath().resolve("server_list.bin") }
+
         private val PICS_CHANGE_CHECK_DELAY = 60.seconds
 
         const val MAX_SIMULTANEOUS_PICS_REQUESTS = 50
@@ -233,44 +244,6 @@ class SteamService : Service(), IChallengeUrlChanged {
             get() = instance?.steamClient?.steamID?.isValid == true
         var isWaitingForQRAuth: Boolean = false
             private set
-
-        // 'cached' variables are a hack to fix 'DiskReadViolation'
-
-        private var cachedServerListPath: String? = null
-        private val serverListPath: String
-            get() {
-                cachedServerListPath?.let { return it }
-                val value = Paths.get(instance!!.cacheDir.path, "server_list.bin").pathString
-                cachedServerListPath = value
-                return value
-            }
-
-        private var cachedDepotManifestsPath: String? = null
-        private val depotManifestsPath: String
-            get() {
-                cachedDepotManifestsPath?.let { return it }
-                val value = Paths.get(instance!!.dataDir.path, "Steam", "depot_manifests.zip").pathString
-                cachedDepotManifestsPath = value
-                return value
-            }
-
-        private var cachedDefaultAppInstallPath: String? = null
-        val defaultAppInstallPath: String
-            get() {
-                cachedDefaultAppInstallPath?.let { return it }
-                val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "common").pathString
-                cachedDefaultAppInstallPath = value
-                return value
-            }
-
-        private var cachedDefaultAppStagingPath: String? = null
-        val defaultAppStagingPath: String
-            get() {
-                cachedDefaultAppStagingPath?.let { return it }
-                val value = Paths.get(instance!!.dataDir.path, "Steam", "steamapps", "staging").pathString
-                cachedDefaultAppStagingPath = value
-                return value
-            }
 
         val userSteamId: SteamID?
             get() = instance?.steamClient?.steamID
@@ -365,7 +338,7 @@ class SteamService : Service(), IChallengeUrlChanged {
         fun getOwnedAppDlc(appId: Int): Map<Int, DepotInfo> = getAppDlc(appId).filter {
             getPkgInfoOf(it.value.dlcAppId)?.let { pkg ->
                 instance?.steamClient?.let { steamClient ->
-                    pkg.ownerAccountId.contains(steamClient.steamID.accountID.toInt())
+                    pkg.ownerAccountId.contains(steamClient.steamID!!.accountID.toInt())
                 }
             } == true
         }
@@ -386,24 +359,32 @@ class SteamService : Service(), IChallengeUrlChanged {
                 appName = getAppInfoOf(appId)?.name.orEmpty()
             }
 
-            return Paths.get(PrefManager.appInstallPath, appName).pathString
+            return defaultAppInstallPath.resolve(appName).pathString
         }
 
-        fun deleteApp(appId: Int): Boolean {
-            with(instance!!) {
-                scope.launch {
+        @OptIn(ExperimentalPathApi::class)
+        suspend fun deleteApp(appId: Int, isUninstalling: (Boolean) -> Unit) {
+            withContext(Dispatchers.Main) {
+                isUninstalling(true)
+            }
+
+            withContext(Dispatchers.IO) {
+                with(instance!!) {
                     db.withTransaction {
                         changeNumbersDao.deleteByAppId(appId)
                         fileChangeListsDao.deleteByAppId(appId)
                     }
                 }
+
+                appCache.remove(appId)
+
+                val appDirPath = getAppDirPath(appId)
+                Paths.get(appDirPath).deleteRecursively()
             }
 
-            val appDirPath = getAppDirPath(appId)
-
-            appCache.remove(appId)
-
-            return File(appDirPath).deleteRecursively()
+            withContext(Dispatchers.Main) {
+                isUninstalling(false)
+            }
         }
 
         fun downloadApp(appId: Int): DownloadInfo? {
@@ -513,8 +494,8 @@ class SteamService : Service(), IChallengeUrlChanged {
                                 ContentDownloader(instance!!.steamClient!!).downloadApp(
                                     appId = appId,
                                     depotId = depotId,
-                                    installPath = PrefManager.appInstallPath,
-                                    stagingPath = PrefManager.appStagingPath,
+                                    installPath = defaultAppInstallPath.pathString,
+                                    stagingPath = defaultAppStagingPath.pathString,
                                     branch = branch,
                                     // maxDownloads = 1,
                                     onDownloadProgress = { downloadInfo.setProgress(it, jobIndex + indexOffset) },
@@ -1062,7 +1043,7 @@ class SteamService : Service(), IChallengeUrlChanged {
         // Notification intents
         when (intent?.action) {
             NotificationHelper.ACTION_EXIT -> {
-                Timber.d("Exiting app via notification intent")
+                Timber.i("Exiting app via notification intent")
 
                 val event = AndroidEvent.EndProcess
                 PluviaApp.events.emit(event)
@@ -1077,8 +1058,8 @@ class SteamService : Service(), IChallengeUrlChanged {
             val configuration = SteamConfiguration.create {
                 it.withProtocolTypes(PROTOCOL_TYPES)
                 it.withCellID(PrefManager.cellId)
-                it.withServerListProvider(FileServerListProvider(File(serverListPath)))
-                it.withManifestProvider(FileManifestProvider(File(depotManifestsPath)))
+                it.withServerListProvider(FileServerListProvider(serverListPath))
+                it.withManifestProvider(FileManifestProvider(depotManifestsPath))
             }
 
             // create our steam client instance
@@ -1162,6 +1143,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    // TODO this gets called to fast (and too many times) when there is no WIFI connection?
     private fun connectToSteam() {
         CoroutineScope(Dispatchers.Default).launch {
             // this call errors out if run on the main thread
@@ -1211,9 +1193,6 @@ class SteamService : Service(), IChallengeUrlChanged {
         isConnected = false
         isLoggingOut = false
         isWaitingForQRAuth = false
-
-        PrefManager.appInstallPath = defaultAppInstallPath
-        PrefManager.appStagingPath = defaultAppStagingPath
 
         steamClient = null
         _steamUser = null

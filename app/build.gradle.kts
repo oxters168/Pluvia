@@ -39,8 +39,9 @@ android {
     defaultConfig {
         applicationId = "com.OxGames.Pluvia"
 
-        minSdk = 29
-        targetSdk = 34
+        minSdk = 28
+        //noinspection ExpiredTargetSdkVersion
+        targetSdk = 28
 
         versionCode = 7
         versionName = "1.3.2"
@@ -167,13 +168,13 @@ dependencies {
         }
     }
     implementation(libs.spongycastle)
+    implementation(libs.zstd.jni) { artifact { type = "aar" } }
 
     // Split Modules
     implementation(libs.bundles.google)
 
     // Winlator
     implementation(libs.bundles.winlator)
-    implementation(libs.zstd.jni) { artifact { type = "aar" } }
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))

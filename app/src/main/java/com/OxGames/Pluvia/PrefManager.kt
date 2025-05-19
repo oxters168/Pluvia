@@ -16,7 +16,6 @@ import com.OxGames.Pluvia.enums.AppFilter
 import com.OxGames.Pluvia.enums.AppTheme
 import com.OxGames.Pluvia.enums.HomeDestination
 import com.OxGames.Pluvia.enums.Orientation
-import com.OxGames.Pluvia.service.SteamService
 import com.OxGames.Pluvia.utils.application.Crypto
 import com.materialkolor.PaletteStyle
 import com.winlator.box86_64.Box86_64Preset
@@ -89,20 +88,39 @@ object PrefManager {
         getPref(stringPreferencesKey(key), defaultValue)
 
     @Suppress("SameParameterValue")
-    private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T = runBlocking {
-        dataStore.data.first()[key] ?: defaultValue
+    private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T = runBlocking(Dispatchers.IO) {
+        val result = dataStore.data.first()[key] ?: defaultValue
+
+        val blacklist = listOf(
+            CLIENT_ID.name, USER_NAME.name, ACCESS_TOKEN_ENC.name, REFRESH_TOKEN_ENC.name,
+            "access_token", "refresh_token", "password", // Legacy keys
+        )
+        if (key.name !in blacklist) {
+            Timber.i("Getting preference: ${key.name} with value: $result")
+        }
+
+        result
     }
 
     @Suppress("SameParameterValue")
     private fun <T> setPref(key: Preferences.Key<T>, value: T) {
         scope.launch {
             dataStore.edit { pref -> pref[key] = value }
+
+            val blacklist = listOf(
+                CLIENT_ID.name, USER_NAME.name, ACCESS_TOKEN_ENC.name, REFRESH_TOKEN_ENC.name,
+                "access_token", "refresh_token", "password", // Legacy keys
+            )
+            if (key.name !in blacklist) {
+                Timber.i("Setting preference: ${key.name} with value: $value")
+            }
         }
     }
 
     private fun <T> removePref(key: Preferences.Key<T>) {
         scope.launch {
             dataStore.edit { pref -> pref.remove(key) }
+            Timber.i("Removing preference: ${key.name}")
         }
     }
 
@@ -286,20 +304,6 @@ object PrefManager {
     // endregion
 
     // region Login Info
-    private val APP_INSTALL_PATH = stringPreferencesKey("app_install_path")
-    var appInstallPath: String
-        get() = getPref(APP_INSTALL_PATH, SteamService.defaultAppInstallPath)
-        set(value) {
-            setPref(APP_INSTALL_PATH, value)
-        }
-
-    private val APP_STAGING_PATH = stringPreferencesKey("app_staging_path")
-    var appStagingPath: String
-        get() = getPref(APP_STAGING_PATH, SteamService.defaultAppStagingPath)
-        set(value) {
-            setPref(APP_STAGING_PATH, value)
-        }
-
     // Special: Because null value.
     private val CLIENT_ID = longPreferencesKey("client_id")
     var clientId: Long?

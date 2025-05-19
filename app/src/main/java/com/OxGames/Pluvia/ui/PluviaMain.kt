@@ -184,12 +184,14 @@ fun PluviaMain(
 
     LaunchedEffect(lifecycleOwner) {
         if (!state.isSteamConnected) {
+            Timber.i("Starting Steam service.")
             val intent = Intent(context, SteamService::class.java)
             context.startForegroundService(intent)
         }
 
         // Go to the Home screen if we're already logged in.
         if (SteamService.isLoggedIn && state.currentScreen == PluviaScreen.LoginUser) {
+            Timber.i("Navigating to Home")
             navController.navigate(PluviaScreen.Home.route)
         }
     }

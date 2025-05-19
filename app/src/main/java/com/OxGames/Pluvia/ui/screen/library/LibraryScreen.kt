@@ -1,12 +1,30 @@
 package com.OxGames.Pluvia.ui.screen.library
 
+import android.Manifest
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
@@ -15,17 +33,23 @@ import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.OxGames.Pluvia.PrefManager
+import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.data.LibraryItem
 import com.OxGames.Pluvia.enums.AppFilter
 import com.OxGames.Pluvia.service.SteamService
@@ -33,6 +57,12 @@ import com.OxGames.Pluvia.ui.component.data.fakeAppInfo
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryDetailPane
 import com.OxGames.Pluvia.ui.screen.library.components.LibraryListPane
 import com.OxGames.Pluvia.ui.theme.PluviaTheme
+import com.OxGames.Pluvia.utils.ContainerUtils
+import com.OxGames.Pluvia.utils.FileUtils
+import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,9 +75,103 @@ fun HomeLibraryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val snackBarHost = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    /**
+     * Games Migration, to be removed in a future update.
+     */
+    val oldGamesDirectory by remember {
+        val path = Paths.get(context.dataDir.path, "Steam")
+        mutableStateOf(path)
+    }
+    var showMoveDialog by remember { mutableStateOf(false) }
+    var current by remember { mutableStateOf("") }
+    var total by remember { mutableIntStateOf(0) }
+    var moved by remember { mutableIntStateOf(0) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            val writePermissionGranted = permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] ?: false
+            val readPermissionGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
+            if (!writePermissionGranted && !readPermissionGranted) {
+                scope.launch {
+                    val result = snackBarHost.showSnackbar(
+                        message = context.getString(R.string.snack_permissions_needed),
+                        actionLabel = context.getString(R.string.settings),
+                    )
+
+                    when (result) {
+                        SnackbarResult.Dismissed -> Unit
+                        SnackbarResult.ActionPerformed -> {
+                            FileUtils.openAppSettings(context)
+                        }
+                    }
+                }
+                return@rememberLauncherForActivityResult
+            }
+
+            scope.launch {
+                showMoveDialog = true
+                FileUtils.moveGamesFromOldPath(
+                    oldGamesDirectory.pathString,
+                    SteamService.steamPath.pathString,
+                    onProgressUpdate = { currentFile, movedFiles, totalFiles ->
+                        current = currentFile
+                        moved = movedFiles
+                        total = totalFiles
+                    },
+                    onComplete = {
+                        scope.launch {
+                            ContainerUtils.migrateDefaultDrives(context)
+                            showMoveDialog = false
+                        }
+                    },
+                )
+            }
+        },
+    )
+
+    if (showMoveDialog) {
+        GameMigrationDialog(
+            currentFile = current,
+            movedFiles = moved,
+            totalFiles = total,
+        )
+    }
+    LaunchedEffect(Unit) {
+        val directoryExists = oldGamesDirectory.exists()
+
+        if (directoryExists) {
+            val result = snackBarHost.showSnackbar(
+                message = "Games directory has moved, move existing games?",
+                actionLabel = "Move",
+                withDismissAction = true,
+            )
+
+            when (result) {
+                SnackbarResult.Dismissed -> snackBarHost.showSnackbar(
+                    message = "Games in old directory won't be playable until moved.",
+                    duration = SnackbarDuration.Long,
+                )
+
+                SnackbarResult.ActionPerformed -> {
+                    permissionLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        ),
+                    )
+                }
+            }
+        }
+    }
 
     LibraryScreenContent(
         state = state,
+        snackBarHost = snackBarHost,
         listState = viewModel.listState,
         sheetState = sheetState,
         onFilterChanged = viewModel::onFilterChanged,
@@ -64,6 +188,7 @@ fun HomeLibraryScreen(
 @Composable
 private fun LibraryScreenContent(
     state: LibraryState,
+    snackBarHost: SnackbarHostState,
     listState: LazyListState,
     sheetState: SheetState,
     onFilterChanged: (AppFilter) -> Unit,
@@ -92,6 +217,7 @@ private fun LibraryScreenContent(
             AnimatedPane {
                 LibraryListPane(
                     state = state,
+                    snackBarHost = snackBarHost,
                     listState = listState,
                     sheetState = sheetState,
                     onFilterChanged = onFilterChanged,
@@ -129,9 +255,75 @@ private fun LibraryScreenContent(
     )
 }
 
+@Composable
+private fun GameMigrationDialog(
+    currentFile: String,
+    movedFiles: Int,
+    totalFiles: Int,
+) {
+    AlertDialog(
+        onDismissRequest = {
+            // We don't allow dismissal during move.
+        },
+        icon = { Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null) },
+        title = { Text(text = "Moving Files") },
+        text = {
+            val currentProgress by remember(movedFiles, totalFiles) {
+                mutableFloatStateOf(movedFiles.plus(1).toFloat() / totalFiles)
+            }
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "File ${movedFiles + 1} of $totalFiles",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = currentFile,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    progress = { currentProgress },
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "${(currentProgress * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        },
+        confirmButton = {},
+    )
+}
+
 /***********
  * PREVIEW *
  ***********/
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Composable
+private fun Preview_GameMigrationDialog() {
+    PluviaTheme {
+        GameMigrationDialog(
+            currentFile = "Pluvia.txt",
+            movedFiles = 75,
+            totalFiles = 100,
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
@@ -167,6 +359,7 @@ private fun Preview_LibraryScreenContent() {
         LibraryScreenContent(
             listState = rememberLazyListState(),
             state = state,
+            snackBarHost = SnackbarHostState(),
             sheetState = sheetState,
             onIsSearching = {},
             onSearchQuery = {},

@@ -10,6 +10,7 @@ data class LibraryState(
     val appInfoList: List<LibraryItem> = emptyList(),
     val modalBottomSheet: Boolean = false,
 
+    val isLoading: Boolean = false,
     val isSearching: Boolean = false,
     val searchQuery: String = "",
 )
