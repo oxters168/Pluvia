@@ -54,14 +54,18 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONException
 import org.json.JSONObject
@@ -119,11 +123,15 @@ class XServerViewModel @Inject constructor(
         var handled = false
         if (isGamepad) {
             handled = xServerView!!.xServer.winHandler.onKeyEvent(it.event)
+            Timber.d("Gamepad Handled: $handled")
             // handled = ExternalController.onKeyEvent(xServer.winHandler, it.event)
         }
         if (!handled && isKeyboard) {
             handled = keyboard?.onKeyEvent(it.event) == true
+            Timber.d("Keyboard Handled: $handled")
         }
+
+        Timber.d("isKeyboard: $isKeyboard, isGamepad: $isGamepad \n Handled KeyEvent in XServer: (${it.event.keyCode}) with $handled")
 
         handled
     }
@@ -195,6 +203,14 @@ class XServerViewModel @Inject constructor(
             }
         } else {
             Timber.w("Did not find existing container")
+        }
+
+        viewModelScope.launch {
+            while (isActive) {
+                _state.update { it.copy(currentTime = System.currentTimeMillis()) }
+                ensureActive()
+                delay(1.seconds)
+            }
         }
     }
 

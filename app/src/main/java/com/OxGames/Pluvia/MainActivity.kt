@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // Log.d("MainActivity$index", "dispatchKeyEvent(${event.keyCode}):\n$event")
+        // Timber.d("dispatchKeyEvent(${event.keyCode}):\n$event")
 
         var eventDispatched = PluviaApp.events.emit(AndroidEvent.KeyEvent(event)) { keyEvent ->
             keyEvent.any { it }
