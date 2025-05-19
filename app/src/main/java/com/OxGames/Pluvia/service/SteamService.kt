@@ -338,7 +338,7 @@ class SteamService : Service(), IChallengeUrlChanged {
         fun getOwnedAppDlc(appId: Int): Map<Int, DepotInfo> = getAppDlc(appId).filter {
             getPkgInfoOf(it.value.dlcAppId)?.let { pkg ->
                 instance?.steamClient?.let { steamClient ->
-                    pkg.ownerAccountId.contains(steamClient.steamID.accountID.toInt())
+                    pkg.ownerAccountId.contains(steamClient.steamID!!.accountID.toInt())
                 }
             } == true
         }
@@ -363,21 +363,28 @@ class SteamService : Service(), IChallengeUrlChanged {
         }
 
         @OptIn(ExperimentalPathApi::class)
-        fun deleteApp(appId: Int) {
-            with(instance!!) {
-                scope.launch {
+        suspend fun deleteApp(appId: Int, isUninstalling: (Boolean) -> Unit) {
+            withContext(Dispatchers.Main) {
+                isUninstalling(true)
+            }
+
+            withContext(Dispatchers.IO) {
+                with(instance!!) {
                     db.withTransaction {
                         changeNumbersDao.deleteByAppId(appId)
                         fileChangeListsDao.deleteByAppId(appId)
                     }
                 }
+
+                appCache.remove(appId)
+
+                val appDirPath = getAppDirPath(appId)
+                Paths.get(appDirPath).deleteRecursively()
             }
 
-            val appDirPath = getAppDirPath(appId)
-
-            appCache.remove(appId)
-
-            Paths.get(appDirPath).deleteRecursively()
+            withContext(Dispatchers.Main) {
+                isUninstalling(false)
+            }
         }
 
         fun downloadApp(appId: Int): DownloadInfo? {

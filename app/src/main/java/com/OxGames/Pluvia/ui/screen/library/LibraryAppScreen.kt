@@ -117,6 +117,7 @@ fun AppScreen(
     }
 
     val isDownloading: () -> Boolean = { downloadInfo != null && downloadProgress < 1f }
+    var isUninstalling by remember(appId) { mutableStateOf(false) }
 
     var loadingDialogVisible by rememberSaveable { mutableStateOf(false) }
     var loadingProgress by rememberSaveable { mutableFloatStateOf(0f) }
@@ -236,12 +237,14 @@ fun AppScreen(
     when (msgDialogState.type) {
         DialogType.CANCEL_APP_DOWNLOAD -> {
             onConfirmClick = {
-                downloadInfo?.cancel()
-                SteamService.deleteApp(appId)
-                downloadInfo = null
-                downloadProgress = 0f
-                isInstalled = SteamService.isAppInstalled(appId)
-                msgDialogState = MessageDialogState(false)
+                scope.launch {
+                    downloadInfo?.cancel()
+                    SteamService.deleteApp(appId = appId, isUninstalling = { isUninstalling = it })
+                    downloadInfo = null
+                    downloadProgress = 0f
+                    isInstalled = SteamService.isAppInstalled(appId)
+                    msgDialogState = MessageDialogState(false)
+                }
             }
             onDismissRequest = { msgDialogState = MessageDialogState(false) }
             onDismissClick = { msgDialogState = MessageDialogState(false) }
@@ -267,10 +270,12 @@ fun AppScreen(
 
         DialogType.DELETE_APP -> {
             onConfirmClick = {
-                SteamService.deleteApp(appId)
-                msgDialogState = MessageDialogState(false)
+                scope.launch {
+                    SteamService.deleteApp(appId = appId, isUninstalling = { isUninstalling = it })
+                    msgDialogState = MessageDialogState(false)
 
-                isInstalled = SteamService.isAppInstalled(appId)
+                    isInstalled = SteamService.isAppInstalled(appId)
+                }
             }
             onDismissRequest = { msgDialogState = MessageDialogState(false) }
             onDismissClick = { msgDialogState = MessageDialogState(false) }
@@ -330,6 +335,12 @@ fun AppScreen(
             showConfigDialog = false
             ContainerUtils.applyToContainer(context, appId, it)
         },
+    )
+
+    LoadingDialog(
+        visible = isUninstalling,
+        progress = -1f,
+        message = R.string.uninstalling,
     )
 
     LoadingDialog(
@@ -439,7 +450,6 @@ fun AppScreen(
                                     val sizeOnDisk = FileUtils.formatBinarySize(
                                         FileUtils.getFolderSize(SteamService.getAppDirPath(appId)),
                                     )
-                                    // TODO: show loading screen of delete progress
                                     msgDialogState = MessageDialogState(
                                         visible = true,
                                         type = DialogType.DELETE_APP,

@@ -94,6 +94,7 @@
     <string name="value">Value</string>
     <string name="width">Width</string>
     <string name="yes">Yes</string>
+    <string name="uninstalling">Uninstalling…</string>
 
     <!-- Box 86 || Box 64 -->
     <string name="box64_name_label">Preset name</string>
