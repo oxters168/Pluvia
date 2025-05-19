@@ -168,13 +168,13 @@ dependencies {
         }
     }
     implementation(libs.spongycastle)
+    implementation(libs.zstd.jni) { artifact { type = "aar" } }
 
     // Split Modules
     implementation(libs.bundles.google)
 
     // Winlator
     implementation(libs.bundles.winlator)
-    implementation(libs.zstd.jni) { artifact { type = "aar" } }
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
