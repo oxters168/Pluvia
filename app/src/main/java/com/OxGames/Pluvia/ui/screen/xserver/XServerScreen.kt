@@ -13,12 +13,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -173,6 +175,12 @@ fun XServerScreen(
                         isExitDialogOpen = true
                     }
                 },
+                onDrawerClose = {
+                    scope.launch {
+                        Timber.i("Close drawer called")
+                        drawerState.close()
+                    }
+                },
             )
         },
         content = {
@@ -271,6 +279,7 @@ private fun XServerDrawer(
     state: XServerState,
     onKeyboard: () -> Unit,
     onExit: () -> Unit,
+    onDrawerClose: () -> Unit,
 ) {
     ModalDrawerSheet {
         // Header
@@ -319,10 +328,17 @@ private fun XServerDrawer(
             onClick = onKeyboard,
         )
         NavigationDrawerItem(
-            label = { Text(text = stringResource(R.string.exit)) },
+            label = { Text(text = stringResource(R.string.xserver_drawer_exit_game)) },
             icon = { Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null) },
             selected = false,
             onClick = onExit,
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        NavigationDrawerItem(
+            label = { Text(text = stringResource(R.string.xserver_drawer_close_drawer)) },
+            icon = { Icon(imageVector = Icons.AutoMirrored.Filled.MenuOpen, contentDescription = null) },
+            selected = false,
+            onClick = onDrawerClose,
         )
     }
 }
@@ -337,6 +353,7 @@ private fun Preview_XServerDrawer() {
                 state = XServerState(gameName = "The Game"),
                 onKeyboard = {},
                 onExit = {},
+                onDrawerClose = {},
             )
         }
     }

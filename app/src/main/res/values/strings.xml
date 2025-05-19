@@ -417,6 +417,8 @@
     <!-- XServer -->
     <string name="xserver_no_game_name">your game</string>
     <string name="xserver_drawer_show_keyboard">Show Keyboard</string>
+    <string name="xserver_drawer_close_drawer">Close Drawer</string>
+    <string name="xserver_drawer_exit_game">Exit Game</string>
 
     <!-- Login -->
     <string name="login_fab_credential">Credential Sign In</string>
