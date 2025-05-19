@@ -88,6 +88,8 @@ fun XServerScreen(
     val xServerState by viewModel.state.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
+    // TODO switching between to on-screen keyboards breaks showing keyboard until the next time XServer screen is launched.
+    //      This is also be a problem between HW and On-Screen keyboards.
     // imm.showSoftInput() doesn't work
     // Compose LocalSoftwareKeyboardController doesn't work.
     @Suppress("DEPRECATION")
