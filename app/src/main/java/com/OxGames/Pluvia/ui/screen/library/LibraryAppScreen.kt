@@ -321,10 +321,15 @@ fun AppScreen(
         visible = showConfigDialog,
         title = stringResource(R.string.dialog_title_container_config, appInfo.name),
         initialConfig = containerData,
-        onDismissRequest = { showConfigDialog = false },
+        onDismiss = { showConfigDialog = false },
         onSave = {
             showConfigDialog = false
             ContainerUtils.applyToContainer(context, appId, it)
+        },
+        onReset = {
+            ContainerUtils.removeContainer(context, appId) {
+                showConfigDialog = false
+            }
         },
     )
 

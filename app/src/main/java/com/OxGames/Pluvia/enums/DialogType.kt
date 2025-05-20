@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class DialogType(val icon: ImageVector? = null) {
@@ -25,6 +26,9 @@ enum class DialogType(val icon: ImageVector? = null) {
     INSTALL_IMAGEFS,
 
     NONE,
+
+    CONTAINER_DISCARD,
+    CONTAINER_RESET(Icons.Default.RestartAlt),
 
     FRIEND_BLOCK(Icons.Default.Block),
     FRIEND_REMOVE(Icons.Default.PersonRemove),

@@ -32,7 +32,7 @@ fun SettingsGroupEmulation() {
             visible = showConfigDialog,
             title = stringResource(R.string.dialog_title_default_container_config),
             initialConfig = ContainerUtils.getDefaultContainerData(),
-            onDismissRequest = { showConfigDialog = false },
+            onDismiss = { showConfigDialog = false },
             onSave = {
                 showConfigDialog = false
                 ContainerUtils.setDefaultContainerData(it)
