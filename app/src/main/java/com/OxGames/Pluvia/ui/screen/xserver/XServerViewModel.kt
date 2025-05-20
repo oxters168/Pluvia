@@ -336,6 +336,11 @@ class XServerViewModel @Inject constructor(
             guestProgramLauncherComponent.isWoW64Mode = wow64Mode
             guestProgramLauncherComponent.guestExecutable = guestExecutable
 
+            if (container.isShowFPS) {
+                envVars.put("GALLIUM_HUD", "simple,fps")
+                envVars.put("DXVK_HUD", "fps")
+            }
+
             envVars.putAll(container.envVars)
             if (!envVars.has("WINEESYNC")) {
                 envVars.put("WINEESYNC", "1")
