@@ -83,12 +83,12 @@ fun ContainerConfigDialog(
     initialConfig: ContainerData = ContainerData(),
     onDismiss: () -> Unit,
     onSave: (ContainerData) -> Unit,
-    onReset: (ContainerData) -> Unit = {},
+    onReset: (ContainerData) -> Unit,
 ) {
     if (visible) {
         val context = LocalContext.current
 
-        var config by rememberSaveable(stateSaver = ContainerData.Saver) {
+        var config by rememberSaveable(initialConfig, stateSaver = ContainerData.Saver) {
             mutableStateOf(initialConfig)
         }
 
