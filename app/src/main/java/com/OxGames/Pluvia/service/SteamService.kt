@@ -138,6 +138,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+// TODO localize fg notification strings.
+
 @AndroidEntryPoint
 class SteamService : Service(), IChallengeUrlChanged {
 
@@ -1072,6 +1074,8 @@ class SteamService : Service(), IChallengeUrlChanged {
                 removeHandler(SteamWorkshop::class.java)
                 removeHandler(SteamScreenshots::class.java)
                 removeHandler(SteamUserStats::class.java)
+                // removeHandler(SteamMatchmaking::class.java) // TODO: These will be added soon.
+                // removeHandler(SteamAuthTicket::class.java) // TODO: These will be added soon.
             }
 
             // create the callback manager which will route callbacks to function calls
