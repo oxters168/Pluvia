@@ -285,6 +285,7 @@
     <string name="toast_settings_activate">Long click to activate</string>
 
     <!-- Snack -->
+    <string name="snack_cant_download_game">Failed to get required information to download game. Try another game.</string>
     <string name="snack_permissions_needed">Permission is needed access external storage</string>
 
     <!-- Settings -->
