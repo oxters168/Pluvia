@@ -186,6 +186,9 @@ class SteamService : Service(), IChallengeUrlChanged {
     // The current shared family group the logged in user is joined to.
     private var familyGroupMembers: ArrayList<Int> = arrayListOf()
 
+    // TODO: Database this?
+    private val appTokens: ConcurrentHashMap<Int, Long> = ConcurrentHashMap()
+
     companion object {
         /* Main File Location */
         private val baseDir by lazy { Environment.getExternalStorageDirectory().absolutePath }
@@ -1622,8 +1625,16 @@ class SteamService : Service(), IChallengeUrlChanged {
                     }
                 }
 
+                // This could be an issue. (Stalling)
+                _steamApps!!.picsGetAccessTokens(appIds = queue, packageIds = emptyList()).await().appTokens.forEach { (key, value) ->
+                    appTokens[key] = value
+                }
+
                 // Get PICS information with the app ids.
-                _steamApps!!.picsGetProductInfo(apps = queue.map { PICSRequest(id = it) }, packages = emptyList())
+                _steamApps!!.picsGetProductInfo(
+                    apps = queue.map { PICSRequest(id = it, accessToken = appTokens[it] ?: 0L) },
+                    packages = emptyList(),
+                )
             }
         }
 
