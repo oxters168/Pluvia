@@ -43,7 +43,7 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 28
 
-        versionCode = 7
+        versionCode = 8
         versionName = "1.3.2"
 
         buildConfigField("boolean", "GOLD", "false")
