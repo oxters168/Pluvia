@@ -40,7 +40,6 @@ import com.OxGames.Pluvia.service.handler.PluviaHandler
 import com.OxGames.Pluvia.utils.FileUtils
 import com.OxGames.Pluvia.utils.SteamUtils
 import com.OxGames.Pluvia.utils.generateSteamApp
-import com.OxGames.Pluvia.utils.timeChunked
 import com.google.android.play.core.ktx.bytesDownloaded
 import com.google.android.play.core.ktx.requestCancelInstall
 import com.google.android.play.core.ktx.requestInstall
@@ -123,13 +122,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
@@ -183,9 +176,6 @@ class SteamService : Service(), IChallengeUrlChanged {
     private var _loginResult: LoginResult = LoginResult.Failed
 
     private var retryAttempt = 0
-
-    private val appIdFlowSender: MutableSharedFlow<Int> = MutableSharedFlow()
-    private val appIdFlowReceiver = appIdFlowSender.asSharedFlow()
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -277,19 +267,6 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         fun getAppInfoOf(appId: Int): SteamApp? {
             return runBlocking(Dispatchers.IO) { instance?.appDao?.findApp(appId) }
-        }
-
-        fun queueAppPICSRequests(apps: List<Int>) {
-            if (apps.isEmpty()) {
-                return
-            }
-
-            instance?.let { steamInstance ->
-                steamInstance.scope.launch {
-                    val flow = flowOf(*apps.toTypedArray())
-                    steamInstance.appIdFlowSender.emitAll(flow)
-                }
-            }
         }
 
         fun getAppDownloadInfo(appId: Int): DownloadInfo? {
@@ -1324,9 +1301,6 @@ class SteamService : Service(), IChallengeUrlChanged {
                 // continuously check for pics changes
                 continuousPICSChangesChecker()
 
-                // request app pics data when needed
-                bufferedPICSGetProductInfo()
-
                 // continuously check for game names that friends are playing.
                 continuousFriendChecker()
 
@@ -1586,10 +1560,16 @@ class SteamService : Service(), IChallengeUrlChanged {
                     val app = appDao.findApp(changeData.id) ?: return@filter false
                     changeData.changeNumber != app.lastChangeNumber
                 }
-                .map { it.id }
-                .also { Timber.d("onPicsChanges: Queueing ${it.size} app requests") }
-                .also(::queueAppPICSRequests)
+                .map { PICSRequest(id = it.id) }
+                .also {
+                    if (it.isNotEmpty()) {
+                        Timber.d("onPicsChanges: Queueing ${it.size} app requests")
+                        _steamApps!!.picsGetProductInfo(apps = it, packages = emptyList())
+                    }
+                }
+        }
 
+        scope.launch {
             val pkgsWithChanges = callback.packageChanges.values
                 .filter { changeData ->
                     // only queue PICS requests for pkgs existing in the db that have changed
@@ -1599,15 +1579,22 @@ class SteamService : Service(), IChallengeUrlChanged {
             val pkgsForAccessTokens = pkgsWithChanges.filter { it.isNeedsToken }.map { it.id }
             val accessTokens = _steamApps?.picsGetAccessTokens(emptyList(), pkgsForAccessTokens)?.await()?.packageTokens ?: emptyMap()
             val picsRequest = pkgsWithChanges.map { PICSRequest(it.id, accessTokens[it.id] ?: 0) }
-            Timber.d("onPicsChanges: Queueing ${picsRequest.size} package requests")
-            _steamApps!!.picsGetProductInfo(apps = emptyList(), packages = picsRequest)
+            if (picsRequest.isNotEmpty()) {
+                Timber.d("onPicsChanges: Queueing ${picsRequest.size} package requests")
+                _steamApps!!.picsGetProductInfo(apps = emptyList(), packages = picsRequest)
+            }
         }
     }
 
     private fun onPicsProduct(callback: PICSProductInfoCallback) {
-        if (callback.packages.isNotEmpty()) {
-            Timber.i("onPicsProduct: Received PICS of ${callback.packages.size} package(s)")
+        Timber.i(
+            "onPicsProduct:" +
+                "\n\tReceived PICS of ${callback.apps.size} apps(s), " +
+                "\n\tReceived PICS of ${callback.packages.size} package(s), " +
+                "\n\tMore Responses Coming: ${callback.isResponsePending}",
+        )
 
+        if (callback.packages.isNotEmpty()) {
             scope.launch {
                 // Don't race the queue.
                 val queue = Collections.synchronizedList(mutableListOf<Int>())
@@ -1636,13 +1623,11 @@ class SteamService : Service(), IChallengeUrlChanged {
                 }
 
                 // Get PICS information with the app ids.
-                queueAppPICSRequests(queue)
+                _steamApps!!.picsGetProductInfo(apps = queue.map { PICSRequest(id = it) }, packages = emptyList())
             }
         }
 
         if (callback.apps.isNotEmpty()) {
-            Timber.i("onPicsProduct: Received PICS of ${callback.apps.size} apps(s)")
-
             scope.launch {
                 val steamApps = callback.apps.values.mapNotNull { app ->
                     val appFromDb = appDao.findApp(app.id)
@@ -1718,29 +1703,17 @@ class SteamService : Service(), IChallengeUrlChanged {
             friendDao.findFriendsInGame()
                 .also { friends -> Timber.d("Found ${friends.size} friends in game") }
                 .forEach { friend ->
-                    appDao.findApp(friend.gameAppID)?.let { app ->
+                    val app = appDao.findApp(friend.gameAppID)
+                    if (app != null) {
                         if (friend.gameName != app.name) {
                             Timber.d("Updating ${friend.name} with game ${app.name}")
                             friendDao.update(friend.copy(gameName = app.name))
                         }
-                    } ?: queueAppPICSRequests(listOf(friend.gameAppID)) // Didn't find the app, we'll get it next time.
+                    } else {
+                        // Didn't find the app, we'll get it next time.
+                        _steamApps?.picsGetProductInfo(PICSRequest(id = friend.gameAppID))
+                    }
                 }
         }
-    }
-
-    /**
-     * A buffered flow to parse so many PICS requests in a given moment.
-     */
-    private fun bufferedPICSGetProductInfo() = scope.launch {
-        appIdFlowReceiver
-            .timeChunked(MAX_SIMULTANEOUS_PICS_REQUESTS)
-            .buffer(Channel.RENDEZVOUS)
-            .collect { appIds ->
-                Timber.d("Collected ${appIds.size} app(s) to query PICS")
-                _steamApps?.picsGetProductInfo(
-                    apps = appIds.map { PICSRequest(id = it) },
-                    packages = emptyList(),
-                )
-            }
     }
 }
