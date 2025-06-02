@@ -11,7 +11,7 @@ import com.OxGames.Pluvia.data.SteamLicense
 interface SteamLicenseDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(license: List<SteamLicense>)
+    suspend fun insertAll(license: List<SteamLicense>)
 
     @Update
     suspend fun update(license: SteamLicense)
