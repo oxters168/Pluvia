@@ -162,6 +162,7 @@
     <string name="desc_qr_image">QR Image</string>
     <string name="desc_save_crash">Save crash log</string>
     <string name="desc_show_emojis">Show or hide emoticons and stickers</string>
+    <string name="desc_not_available">🚧 Not Available 🚧</string>
 
     <!-- Dialog Messages -->
     <string name="dialog_message_cancel_download">Are you sure you want to cancel the download of the app?</string>
