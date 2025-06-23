@@ -65,10 +65,13 @@ object SteamAutoCloud {
         val getPathTypePairs: (AppFileChangeList) -> List<Pair<String, String>> = { fileList ->
             fileList.pathPrefixes
                 .map {
-                    val matchResults = Regex("%\\w+%").findAll(it).map { it.value }.toList()
+                    var matchResults = Regex("%\\w+%").findAll(it).map { it.value }.toList()
 
                     Timber.i("Mapping prefix $it and found $matchResults")
 
+                    if(matchResults.size == 0){
+                        matchResults = List(1) {PathType.GameInstall.name}
+                    }
                     matchResults
                 }
                 .flatten()
@@ -81,6 +84,12 @@ object SteamAutoCloud {
 
             fileList.pathPrefixes.map { prefix ->
                 var modified = prefix
+
+                val prefixContainsPlaceholder = Regex("%\\w+%").findAll(prefix).any()
+
+                if(!prefixContainsPlaceholder){
+                    modified = Paths.get(PathType.GameInstall.name, prefix).pathString
+                }
 
                 pathTypePairs.forEach {
                     modified = modified.replace(it.first, it.second)
