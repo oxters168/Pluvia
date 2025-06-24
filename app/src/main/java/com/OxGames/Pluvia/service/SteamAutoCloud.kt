@@ -52,6 +52,7 @@ object SteamAutoCloud {
     private fun findPlaceholderWithin(aString: String): Sequence<MatchResult> {
         return Regex("%\\w+%").findAll(aString)
     }
+
     fun syncUserFiles(
         appInfo: SteamApp,
         clientId: Long,
