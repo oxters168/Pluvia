@@ -49,10 +49,9 @@ object SteamAutoCloud {
 
     private const val MAX_USER_FILE_RETRIES = 3
 
-    private fun findPlaceholderWithin (aString: String): Sequence<MatchResult> {
+    private fun findPlaceholderWithin(aString: String): Sequence<MatchResult> {
         return Regex("%\\w+%").findAll(aString)
     }
-
     fun syncUserFiles(
         appInfo: SteamApp,
         clientId: Long,
@@ -73,8 +72,8 @@ object SteamAutoCloud {
 
                     Timber.i("Mapping prefix $it and found $matchResults")
 
-                    if(matchResults.isEmpty()){
-                        matchResults = List(1) {PathType.DEFAULT.name}
+                    if (matchResults.isEmpty()) {
+                        matchResults = List(1) { PathType.DEFAULT.name }
                     }
                     matchResults
                 }
@@ -91,7 +90,7 @@ object SteamAutoCloud {
 
                 val prefixContainsNoPlaceholder = findPlaceholderWithin(prefix).none()
 
-                if(prefixContainsNoPlaceholder){
+                if (prefixContainsNoPlaceholder) {
                     modified = Paths.get(PathType.DEFAULT.name, prefix).pathString
                 }
 
@@ -173,7 +172,6 @@ object SteamAutoCloud {
                     } == true
                 }
             }
-
 
         val getLocalUserFilesAsPrefixMap: () -> Map<String, List<UserFileInfo>> = {
             appInfo.ufs.saveFilePatterns
