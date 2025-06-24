@@ -49,9 +49,8 @@ object SteamAutoCloud {
 
     private const val MAX_USER_FILE_RETRIES = 3
 
-    private fun findPlaceholderWithin(aString: String): Sequence<MatchResult> {
-        return Regex("%\\w+%").findAll(aString)
-    }
+    private fun findPlaceholderWithin(aString: String): Sequence<MatchResult> =
+        Regex("%\\w+%").findAll(aString)
 
     fun syncUserFiles(
         appInfo: SteamApp,
