@@ -86,6 +86,8 @@ enum class PathType {
         }
 
     companion object {
+        val DEFAULT = PathType.GameInstall
+
         fun from(keyValue: String?): PathType {
             return when (keyValue?.lowercase()) {
                 "%${GameInstall.name.lowercase()}%",
