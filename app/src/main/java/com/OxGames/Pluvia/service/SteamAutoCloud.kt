@@ -49,6 +49,10 @@ object SteamAutoCloud {
 
     private const val MAX_USER_FILE_RETRIES = 3
 
+    private fun findPlaceholderWithin (aString: String): Sequence<MatchResult> {
+        return Regex("%\\w+%").findAll(aString)
+    }
+
     fun syncUserFiles(
         appInfo: SteamApp,
         clientId: Long,
@@ -65,12 +69,12 @@ object SteamAutoCloud {
         val getPathTypePairs: (AppFileChangeList) -> List<Pair<String, String>> = { fileList ->
             fileList.pathPrefixes
                 .map {
-                    var matchResults = Regex("%\\w+%").findAll(it).map { it.value }.toList()
+                    var matchResults = findPlaceholderWithin(it).map { it.value }.toList()
 
                     Timber.i("Mapping prefix $it and found $matchResults")
 
-                    if(matchResults.size == 0){
-                        matchResults = List(1) {PathType.GameInstall.name}
+                    if(matchResults.isEmpty()){
+                        matchResults = List(1) {PathType.DEFAULT.name}
                     }
                     matchResults
                 }
@@ -85,10 +89,10 @@ object SteamAutoCloud {
             fileList.pathPrefixes.map { prefix ->
                 var modified = prefix
 
-                val prefixContainsPlaceholder = Regex("%\\w+%").findAll(prefix).any()
+                val prefixContainsPlaceholder = findPlaceholderWithin(prefix).any()
 
                 if(!prefixContainsPlaceholder){
-                    modified = Paths.get(PathType.GameInstall.name, prefix).pathString
+                    modified = Paths.get(PathType.DEFAULT.name, prefix).pathString
                 }
 
                 pathTypePairs.forEach {
@@ -103,7 +107,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(fileList.pathPrefixes[file.pathPrefixIndex]).pathString
             } else {
-                Paths.get("%${PathType.GameInstall.name}%").pathString
+                Paths.get("%${PathType.DEFAULT.name}%").pathString
             }
         }
 
