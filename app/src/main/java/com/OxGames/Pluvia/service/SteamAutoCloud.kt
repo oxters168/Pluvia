@@ -89,9 +89,9 @@ object SteamAutoCloud {
             fileList.pathPrefixes.map { prefix ->
                 var modified = prefix
 
-                val prefixContainsPlaceholder = findPlaceholderWithin(prefix).any()
+                val prefixContainsNoPlaceholder = findPlaceholderWithin(prefix).none()
 
-                if(!prefixContainsPlaceholder){
+                if(prefixContainsNoPlaceholder){
                     modified = Paths.get(PathType.DEFAULT.name, prefix).pathString
                 }
 
