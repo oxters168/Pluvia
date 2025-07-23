@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material3.AlertDialog
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.OxGames.Pluvia.R
+import com.OxGames.Pluvia.enums.DialogType
 import com.OxGames.Pluvia.ui.component.dialog.state.MessageDialogState
 import com.OxGames.Pluvia.ui.component.settings.SettingsCPUList
 import com.OxGames.Pluvia.ui.component.settings.SettingsCenteredLabel
@@ -79,13 +81,14 @@ fun ContainerConfigDialog(
     visible: Boolean = true,
     title: String,
     initialConfig: ContainerData = ContainerData(),
-    onDismissRequest: () -> Unit,
+    onDismiss: () -> Unit,
     onSave: (ContainerData) -> Unit,
+    onReset: (ContainerData) -> Unit,
 ) {
     if (visible) {
         val context = LocalContext.current
 
-        var config by rememberSaveable(stateSaver = ContainerData.Saver) {
+        var config by rememberSaveable(initialConfig, stateSaver = ContainerData.Saver) {
             mutableStateOf(initialConfig)
         }
 
@@ -143,8 +146,8 @@ fun ContainerConfigDialog(
             mutableIntStateOf(if (index >= 0) index else 0)
         }
 
-        var dismissDialogState by rememberSaveable(stateSaver = MessageDialogState.Saver) {
-            mutableStateOf(MessageDialogState(visible = false))
+        var msgDialogState by rememberSaveable(stateSaver = MessageDialogState.Saver) {
+            mutableStateOf(MessageDialogState(false))
         }
         var showEnvVarCreateDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -165,27 +168,58 @@ fun ContainerConfigDialog(
 
         val onDismissCheck: () -> Unit = {
             if (initialConfig != config) {
-                dismissDialogState = MessageDialogState(
+                msgDialogState = MessageDialogState(
                     visible = true,
+                    type = DialogType.CONTAINER_DISCARD,
                     title = R.string.dialog_title_unsaved_changes,
                     message = context.getString(R.string.dialog_message_unsaved_changes),
                     confirmBtnText = R.string.discard,
                     dismissBtnText = R.string.cancel,
                 )
             } else {
-                onDismissRequest()
+                onDismiss()
+            }
+        }
+
+        val onDismissRequest: (() -> Unit)?
+        val onDismissClick: (() -> Unit)?
+        val onConfirmClick: (() -> Unit)?
+        when (msgDialogState.type) {
+            DialogType.CONTAINER_DISCARD -> {
+                onConfirmClick = {
+                    onDismiss()
+                    msgDialogState = MessageDialogState(visible = false)
+                }
+                onDismissRequest = { msgDialogState = MessageDialogState(visible = false) }
+                onDismissClick = { msgDialogState = MessageDialogState(visible = false) }
+            }
+
+            DialogType.CONTAINER_RESET -> {
+                onConfirmClick = {
+                    onReset(config)
+                    msgDialogState = MessageDialogState(visible = false)
+                }
+                onDismissRequest = { msgDialogState = MessageDialogState(visible = false) }
+                onDismissClick = { msgDialogState = MessageDialogState(visible = false) }
+            }
+
+            else -> {
+                onDismissRequest = null
+                onDismissClick = null
+                onConfirmClick = null
             }
         }
 
         MessageDialog(
-            visible = dismissDialogState.visible,
-            title = dismissDialogState.title,
-            message = dismissDialogState.message,
-            confirmBtnText = dismissDialogState.confirmBtnText,
-            dismissBtnText = dismissDialogState.dismissBtnText,
-            onDismissRequest = { dismissDialogState = MessageDialogState(visible = false) },
-            onDismissClick = { dismissDialogState = MessageDialogState(visible = false) },
-            onConfirmClick = onDismissRequest,
+            visible = msgDialogState.visible,
+            onDismissRequest = onDismissRequest,
+            onConfirmClick = onConfirmClick,
+            confirmBtnText = msgDialogState.confirmBtnText,
+            onDismissClick = onDismissClick,
+            dismissBtnText = msgDialogState.dismissBtnText,
+            icon = msgDialogState.type.icon,
+            title = msgDialogState.title,
+            message = msgDialogState.message,
         )
 
         if (showEnvVarCreateDialog) {
@@ -294,6 +328,19 @@ fun ContainerConfigDialog(
                                 )
                             },
                             actions = {
+                                IconButton(
+                                    onClick = {
+                                        msgDialogState = MessageDialogState(
+                                            visible = true,
+                                            type = DialogType.CONTAINER_RESET,
+                                            title = R.string.dialog_title_reset_container,
+                                            message = context.getString(R.string.dialog_message_reset_container, title),
+                                            confirmBtnText = R.string.reset,
+                                            dismissBtnText = R.string.cancel,
+                                        )
+                                    },
+                                    content = { Icon(Icons.Default.RestartAlt, null) },
+                                )
                                 IconButton(
                                     onClick = { onSave(config) },
                                     content = { Icon(Icons.Default.Save, null) },

@@ -297,4 +297,16 @@ object ContainerUtils {
             container
         }
     }
+
+    fun removeContainer(context: Context, appId: Int, onFinished: () -> Unit) {
+        val containerId = getContainerId(appId)
+
+        val containerManager = ContainerManager(context)
+        return if (containerManager.hasContainer(containerId)) {
+            val container = containerManager.getContainerById(containerId)
+            containerManager.removeContainerAsync(container) { onFinished() }
+        } else {
+            throw Exception("Container does not exist for game $appId")
+        }
+    }
 }

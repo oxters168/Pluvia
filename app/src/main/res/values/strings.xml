@@ -95,6 +95,7 @@
     <string name="width">Width</string>
     <string name="yes">Yes</string>
     <string name="uninstalling">Uninstalling…</string>
+    <string name="reset">Reset</string>
 
     <!-- Box 86 || Box 64 -->
     <string name="box64_name_label">Preset name</string>
@@ -182,6 +183,7 @@
     <string name="dialog_message_sync_terminated">App session suspended</string>
     <string name="dialog_message_tip">Thank you for using Pluvia, please consider supporting us by tipping whatever amount is comfortable to you.</string>
     <string name="dialog_message_unsaved_changes">Are you sure you\'d like to discard your changes?</string>
+    <string name="dialog_message_reset_container">Are you sure you want to reset %1$s?\nThis will reset all values to default settings.</string>
     <string name="dialog_message_libraries">
         JavaSteam - github.com/Longi94/JavaSteam\n
         Winlator - github.com/brunodev85/winlator\n
@@ -241,6 +243,7 @@
     <string name="dialog_title_palette_style">Palette Style</string>
     <string name="dialog_title_pending_upload">Pending Upload</string>
     <string name="dialog_title_recent_crash">Recent Crash</string>
+    <string name="dialog_title_reset_container">Reset Container</string>
     <string name="dialog_title_start_screen">Start Screen</string>
     <string name="dialog_title_sync_conflict">Save Conflict</string>
     <string name="dialog_title_sync_error">Sync Error</string>
