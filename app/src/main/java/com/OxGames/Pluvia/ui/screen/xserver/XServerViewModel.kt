@@ -342,12 +342,6 @@ class XServerViewModel @Inject constructor(
             }
 
             envVars.putAll(container.envVars)
-            if (!envVars.has("WINEESYNC")) {
-                envVars.put("WINEESYNC", "1")
-            }
-            if (state.value.graphicsDriver == "virgl") {
-                envVars.put("WINEESYNC", "0")
-            }
 
             // Timber.d("3 Container drives: ${container.drives}")
             val bindingPaths = mutableListOf<String>()
