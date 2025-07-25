@@ -149,7 +149,7 @@ private fun DownloadsScreenPane(
                 ) {
                     Text(
                         modifier = Modifier.padding(24.dp),
-                        text = "\uD83D\uDEA7 Not Available \uD83D\uDEA7",
+                        text = stringResource(R.string.desc_not_available),
                     )
                 }
             },

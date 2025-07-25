@@ -1,6 +1,5 @@
 package com.OxGames.Pluvia
 
-import android.os.StrictMode
 import androidx.navigation.NavController
 import com.OxGames.Pluvia.events.EventDispatcher
 import com.OxGames.Pluvia.utils.application.CrashHandler
@@ -18,19 +17,19 @@ class PluviaApp : SplitCompatApplication() {
         super.onCreate()
 
         if (BuildConfig.DEBUG) {
-            StrictMode.setVmPolicy(
-                StrictMode.VmPolicy.Builder()
-                    .detectLeakedClosableObjects() // Detect when Closeable objects are not properly closed
-                    .penaltyLog() // Log violations to logcat
-                    .build(),
-            )
-
-            StrictMode.setThreadPolicy(
-                StrictMode.ThreadPolicy.Builder()
-                    .detectAll() // Detect all violations (disk reads/writes, network operations, etc.)
-                    .penaltyLog() // Log violations to logcat
-                    .build(),
-            )
+            // StrictMode.setVmPolicy(
+            //     StrictMode.VmPolicy.Builder()
+            //         .detectLeakedClosableObjects() // Detect when Closeable objects are not properly closed
+            //         .penaltyLog() // Log violations to logcat
+            //         .build(),
+            // )
+            //
+            // StrictMode.setThreadPolicy(
+            //     StrictMode.ThreadPolicy.Builder()
+            //         .detectAll() // Detect all violations (disk reads/writes, network operations, etc.)
+            //         .penaltyLog() // Log violations to logcat
+            //         .build(),
+            // )
 
             Timber.plant(Timber.DebugTree())
         } else {

@@ -105,6 +105,9 @@ fun AppScreen(
     val scope = rememberCoroutineScope()
     val snackBarHost = remember { SnackbarHostState() }
 
+    val appInfo by remember(appId) {
+        mutableStateOf(SteamService.getAppInfoOf(appId)!!)
+    }
     var downloadInfo by remember(appId) {
         mutableStateOf(SteamService.getAppDownloadInfo(appId))
     }
@@ -114,16 +117,15 @@ fun AppScreen(
     var isInstalled by remember(appId) {
         mutableStateOf(SteamService.isAppInstalled(appId))
     }
+    val isValidToDownload by remember(appId) {
+        mutableStateOf(appInfo.branches.isNotEmpty() && appInfo.depots.isNotEmpty())
+    }
 
     val isDownloading: () -> Boolean = { downloadInfo != null && downloadProgress < 1f }
     var isUninstalling by remember(appId) { mutableStateOf(false) }
 
     var loadingDialogVisible by rememberSaveable { mutableStateOf(false) }
     var loadingProgress by rememberSaveable { mutableFloatStateOf(0f) }
-
-    val appInfo by remember(appId) {
-        mutableStateOf(SteamService.getAppInfoOf(appId)!!)
-    }
 
     var msgDialogState by rememberSaveable(stateSaver = MessageDialogState.Saver) {
         mutableStateOf(MessageDialogState(false))
@@ -158,6 +160,17 @@ fun AppScreen(
 
     LaunchedEffect(appId) {
         Timber.d("Selected app $appId")
+
+        snackBarHost.currentSnackbarData?.dismiss()
+
+        if (!isValidToDownload) {
+            scope.launch {
+                snackBarHost.showSnackbar(
+                    message = context.getString(R.string.snack_cant_download_game),
+                    actionLabel = context.getString(R.string.ok),
+                )
+            }
+        }
     }
 
     val windowWidth = currentWindowAdaptiveInfo().windowSizeClass.windowWidthSizeClass
@@ -369,6 +382,7 @@ fun AppScreen(
             modifier = Modifier.padding(paddingValues),
             appInfo = appInfo,
             isInstalled = isInstalled,
+            isValidToDownload = isValidToDownload,
             isDownloading = isDownloading(),
             downloadProgress = downloadProgress,
             onDownloadBtnClick = {
@@ -470,6 +484,7 @@ private fun AppScreenContent(
     modifier: Modifier = Modifier,
     appInfo: SteamApp,
     isInstalled: Boolean,
+    isValidToDownload: Boolean,
     isDownloading: Boolean,
     downloadProgress: Float,
     onDownloadBtnClick: () -> Unit,
@@ -550,6 +565,7 @@ private fun AppScreenContent(
             FilledTonalButton(
                 modifier = Modifier.width(96.dp), // Fixed width to stop button jumping.
                 onClick = onDownloadBtnClick,
+                enabled = isValidToDownload,
                 content = {
                     val text = if (isInstalled) {
                         stringResource(R.string.play)
@@ -641,6 +657,7 @@ private fun Preview_AppScreen() {
             AppScreenContent(
                 appInfo = fakeAppInfo(1),
                 isInstalled = false,
+                isValidToDownload = true,
                 isDownloading = isDownloading,
                 downloadProgress = .50f,
                 onDownloadBtnClick = { isDownloading = !isDownloading },
