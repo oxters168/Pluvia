@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
+import com.OxGames.Pluvia.PrefManager
 import com.OxGames.Pluvia.R
 import com.OxGames.Pluvia.ui.component.dialog.Box64PresetsDialog
 import com.OxGames.Pluvia.ui.component.dialog.ContainerConfigDialog
@@ -32,10 +33,14 @@ fun SettingsGroupEmulation() {
             visible = showConfigDialog,
             title = stringResource(R.string.dialog_title_default_container_config),
             initialConfig = ContainerUtils.getDefaultContainerData(),
-            onDismissRequest = { showConfigDialog = false },
+            onDismiss = { showConfigDialog = false },
             onSave = {
                 showConfigDialog = false
                 ContainerUtils.setDefaultContainerData(it)
+            },
+            onReset = {
+                PrefManager.resetDefaultContainer()
+                showConfigDialog = false
             },
         )
 

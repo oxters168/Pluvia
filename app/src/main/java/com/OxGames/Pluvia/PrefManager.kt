@@ -124,6 +124,34 @@ object PrefManager {
         }
     }
 
+    // Yeah!
+    fun resetDefaultContainer() {
+        removePref(SCREEN_SIZE)
+        removePref(ENV_VARS)
+        removePref(GRAPHICS_DRIVER)
+        removePref(DXWRAPPER)
+        removePref(DXWRAPPER_CONFIG)
+        removePref(AUDIO_DRIVER)
+        removePref(WIN_COMPONENTS)
+        removePref(DRIVES)
+        removePref(SHOW_FPS)
+        removePref(CPU_LIST)
+        removePref(CPU_LIST_WOW64)
+        removePref(WOW64_MODE)
+        removePref(STARTUP_SELECTION)
+        removePref(BOX_86_VERSION)
+        removePref(BOX_64_VERSION)
+        removePref(BOX86_PRESET)
+        removePref(BOX64_PRESET)
+        removePref(LAUNCH_OPTIONS)
+        removePref(CSMT)
+        removePref(VIDEO_PCI_DEVICE_ID)
+        removePref(OFFSCREEN_RENDERING_MODE)
+        removePref(STRICT_SHADER_MATH)
+        removePref(VIDEO_MEMORY_SIZE)
+        removePref(MOUSE_WARP_OVERRIDE)
+    }
+
     // region PICS
     private val LAST_PICS_CHANGE_NUMBER = intPreferencesKey("last_pics_change_number")
     var lastPICSChangeNumber: Int

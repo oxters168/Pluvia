@@ -336,10 +336,12 @@ class XServerViewModel @Inject constructor(
             guestProgramLauncherComponent.isWoW64Mode = wow64Mode
             guestProgramLauncherComponent.guestExecutable = guestExecutable
 
-            envVars.putAll(container.envVars)
-            if (!envVars.has("WINEESYNC")) {
-                envVars.put("WINEESYNC", "1")
+            if (container.isShowFPS) {
+                envVars.put("GALLIUM_HUD", "simple,fps")
+                envVars.put("DXVK_HUD", "fps")
             }
+
+            envVars.putAll(container.envVars)
 
             // Timber.d("3 Container drives: ${container.drives}")
             val bindingPaths = mutableListOf<String>()
