@@ -88,12 +88,6 @@ object SteamAutoCloud {
             fileList.pathPrefixes.map { prefix ->
                 var modified = prefix
 
-                val prefixContainsNoPlaceholder = findPlaceholderWithin(prefix).none()
-
-                if (prefixContainsNoPlaceholder) {
-                    modified = Paths.get(PathType.DEFAULT.name, prefix).pathString
-                }
-
                 pathTypePairs.forEach {
                     modified = modified.replace(it.first, it.second)
                 }
@@ -106,7 +100,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(fileList.pathPrefixes[file.pathPrefixIndex]).pathString
             } else {
-                Paths.get("%${PathType.DEFAULT.name}%").pathString
+                ""
             }
         }
 
@@ -120,7 +114,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(convertedPrefixes[file.pathPrefixIndex], file.filename)
             } else {
-                Paths.get(getAppDirPath(appInfo.id), file.filename)
+                Paths.get(prefixToPath(PathType.DEFAULT.name), file.filename)
             }
         }
 
