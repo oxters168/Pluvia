@@ -49,6 +49,9 @@ object SteamAutoCloud {
 
     private const val MAX_USER_FILE_RETRIES = 3
 
+    private fun findPlaceholderWithin(aString: String): Sequence<MatchResult> =
+        Regex("%\\w+%").findAll(aString)
+
     fun syncUserFiles(
         appInfo: SteamApp,
         clientId: Long,
@@ -65,10 +68,13 @@ object SteamAutoCloud {
         val getPathTypePairs: (AppFileChangeList) -> List<Pair<String, String>> = { fileList ->
             fileList.pathPrefixes
                 .map {
-                    val matchResults = Regex("%\\w+%").findAll(it).map { it.value }.toList()
+                    var matchResults = findPlaceholderWithin(it).map { it.value }.toList()
 
                     Timber.i("Mapping prefix $it and found $matchResults")
 
+                    if (matchResults.isEmpty()) {
+                        matchResults = List(1) { PathType.DEFAULT.name }
+                    }
                     matchResults
                 }
                 .flatten()
@@ -94,7 +100,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(fileList.pathPrefixes[file.pathPrefixIndex]).pathString
             } else {
-                Paths.get("%${PathType.GameInstall.name}%").pathString
+                ""
             }
         }
 
@@ -108,7 +114,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(convertedPrefixes[file.pathPrefixIndex], file.filename)
             } else {
-                Paths.get(getAppDirPath(appInfo.id), file.filename)
+                Paths.get(prefixToPath(PathType.DEFAULT.name), file.filename)
             }
         }
 
@@ -161,31 +167,6 @@ object SteamAutoCloud {
                 }
             }
 
-        // val hasHashConflictsOrRemoteMissingFiles: (Map<String, List<UserFileInfo>>, AppFileChangeList) -> Boolean =
-        //     { localUserFiles, fileList ->
-        //         localUserFiles.values.any {
-        //             it.any { localUserFile ->
-        //                 fileList.files.firstOrNull { cloudFile ->
-        //                     val cloudFilePath = getFilePrefixPath(cloudFile, fileList)
-        //
-        //                     val localFilePath = Paths.get(
-        //                         localUserFile.prefix,
-        //                         localUserFile.filename,
-        //                     ).pathString
-        //
-        //                     Timber.i("Comparing $cloudFilePath and $localFilePath")
-        //
-        //                     cloudFilePath == localFilePath
-        //                 }?.let {
-        //                     Timber.i("Comparing SHA of ${getFilePrefixPath(it, fileList)} and ${localUserFile.prefixPath}")
-        //                     Timber.i("[${it.shaFile.joinToString(", ")}]\n[${localUserFile.sha.joinToString(", ")}]")
-        //
-        //                     it.shaFile.contentEquals(localUserFile.sha)
-        //                 } != true
-        //             }
-        //         }
-        //     }
-
         val getLocalUserFilesAsPrefixMap: () -> Map<String, List<UserFileInfo>> = {
             appInfo.ufs.saveFilePatterns
                 .filter { userFile -> userFile.root.isWindows }
@@ -232,23 +213,10 @@ object SteamAutoCloud {
             "$scheme${urlHost}$urlPath"
         }
 
-        // val prootTimestampToDate: (Long) -> Date = { originalTimestamp ->
-        //     val androidTimestamp = System.currentTimeMillis()
-        //     val prootTimestamp = getProotTime(steamInstance)
-        //     val timeDifference = androidTimestamp - prootTimestamp
-        //     val adjustedTimestamp = originalTimestamp + timeDifference
-        //
-        //     Timber.i("Android: $androidTimestamp, PRoot: $prootTimestamp, $originalTimestamp -> $adjustedTimestamp")
-        //
-        //     Date(adjustedTimestamp)
-        // }
-
         val downloadFiles: (AppFileChangeList, CoroutineScope) -> Deferred<UserFilesDownloadResult> = { fileList, parentScope ->
             parentScope.async {
                 var filesDownloaded = 0
                 var bytesDownloaded = 0L
-
-                // val convertedPrefixes = convertPrefixes(fileList)
 
                 fileList.files.forEach { file ->
                     val prefixedPath = getFilePrefixPath(file, fileList)

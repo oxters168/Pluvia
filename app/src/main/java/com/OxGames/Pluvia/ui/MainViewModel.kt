@@ -198,7 +198,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             SteamService.notifyRunningProcesses()
             SteamService.closeApp(appId) { prefix ->
-                PathType.from(prefix).toAbsPath(context, appId)
+                PathType.from(prefix).toAbsPath(context, appId, SteamService.userSteamId!!.accountID)
             }.await()
         }
     }
