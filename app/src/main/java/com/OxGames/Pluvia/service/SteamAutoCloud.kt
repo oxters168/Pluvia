@@ -10,7 +10,6 @@ import com.OxGames.Pluvia.enums.PathType
 import com.OxGames.Pluvia.enums.SaveLocation
 import com.OxGames.Pluvia.enums.SyncResult
 import com.OxGames.Pluvia.service.SteamService.Companion.FileChanges
-import com.OxGames.Pluvia.service.SteamService.Companion.getAppDirPath
 import com.OxGames.Pluvia.utils.FileUtils
 import com.OxGames.Pluvia.utils.SteamUtils
 import `in`.dragonbra.javasteam.enums.EResult
