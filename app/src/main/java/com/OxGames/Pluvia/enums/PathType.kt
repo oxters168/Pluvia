@@ -34,7 +34,7 @@ enum class PathType {
             SteamUserData -> Paths.get(
                 ImageFs.find(context).rootDir.absolutePath,
                 ImageFs.WINEPREFIX,
-                "/drive_c/Program Files (x86)/Steam/userdata/${accountId}/${appId}/remote",
+                "/drive_c/Program Files (x86)/Steam/userdata/$accountId/$appId/remote",
             ).toString()
             WinMyDocuments -> Paths.get(
                 ImageFs.find(context).rootDir.absolutePath,
