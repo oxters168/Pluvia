@@ -91,6 +91,12 @@ object SteamAutoCloud {
                     modified = modified.replace(it.first, it.second)
                 }
 
+                // if the prefix has not been modified then there were no placeholders in it
+                // so we need to set it to point to the default path
+                if (modified == prefix) {
+                    modified = Paths.get(prefixToPath(PathType.DEFAULT.name), modified).toString()
+                }
+
                 modified
             }
         }
@@ -113,6 +119,7 @@ object SteamAutoCloud {
             if (file.pathPrefixIndex < fileList.pathPrefixes.size) {
                 Paths.get(convertedPrefixes[file.pathPrefixIndex], file.filename)
             } else {
+                // if the file does not reference any prefix then we need to set it to the default path
                 Paths.get(prefixToPath(PathType.DEFAULT.name), file.filename)
             }
         }
