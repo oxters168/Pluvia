@@ -161,12 +161,13 @@ dependencies {
     val localBuild = false // Change to 'true' needed when building JavaSteam manually
     if (localBuild) {
         implementation(files("../../../IntelliJ/JavaSteam/build/libs/javasteam-1.6.1-SNAPSHOT.jar"))
-        implementation(libs.bundles.steamkit.dev)
     } else {
         implementation(libs.steamkit) {
             isChanging = version?.contains("SNAPSHOT") ?: false
         }
     }
+
+    implementation(libs.bundles.steamkit.deps)
     implementation(libs.spongycastle)
     implementation(libs.zstd.jni) { artifact { type = "aar" } }
 
