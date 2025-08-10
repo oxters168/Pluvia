@@ -514,7 +514,7 @@ fun preLaunchApp(
 
         // sync save files and check no pending remote operations are running
         val prefixToPath: (String) -> String = { prefix ->
-            PathType.from(prefix).toAbsPath(context, appId)
+            PathType.from(prefix).toAbsPath(context, appId, SteamService.userSteamId!!.accountID)
         }
         val postSyncInfo = SteamService.beginLaunchApp(
             appId = appId,

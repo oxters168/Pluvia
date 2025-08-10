@@ -132,7 +132,7 @@ compose = [
 winlator = [
     "apache-compress",
 ]
-steamkit-dev = [
+steamkit-deps = [
     "commons-io",
     "commons-lang3",
     "commons-validator",
