@@ -94,6 +94,8 @@
     <string name="value">Valore</string>
     <string name="width">Width</string>
     <string name="yes">Yes</string>
+    <string name="uninstalling">Disinstallazione…</string>
+
 
     <!-- Box 86 || Box 64 -->
     <string name="box64_name_label">Nome del Preset</string>
@@ -161,6 +163,7 @@
     <string name="desc_qr_image">Immagine QR</string>
     <string name="desc_save_crash">Salva il log dell\'errore</string>
     <string name="desc_show_emojis">Mostra o nascondi le emoticon e gli sticker</string>
+    <string name="desc_not_available">🚧 Non disponibile 🚧</string>
 
     <!-- Dialog Messages -->
     <string name="dialog_message_cancel_download">Sei sicuro di voler annullare il download dell\'app?</string>
@@ -198,8 +201,8 @@
         Ci dispiace per l\'inconveniente!\n\n
         Sarebbe utile sapere del problema recente che hai riscontrato.\n\n
         Puoi visualizzare ed esportare il registro dei crash più recente nelle impostazioni dell\'app\n\n
-        e allegarlo come un problema su Github nel repository del progetto.\n\n
-        Il link al repository Github è anche nelle impostazioni!</string>
+        e allegarlo come un problema su Github nella repository del progetto.\n\n
+        Il link alla repository GitHub è anche nelle impostazioni!</string>
     <string name="dialog_message_sync_conflict">
         C\'è un nuovo salvataggio remoto e un nuovo salvataggio locale,
         quale vuoi mantenere?\n\n
@@ -285,6 +288,7 @@
     <string name="toast_settings_activate">Tieni premuto per attivare</string>
 
     <!-- Snack -->
+    <string name="snack_cant_download_game">Impossibile ottenere le informazioni necessarie per scaricare il gioco. Prova un altro gioco.</string>
     <string name="snack_permissions_needed">È necessario il permesso per accedere alla memoria esterna</string>
 
     <!-- Settings -->
@@ -315,7 +319,7 @@
     <string name="settings_reset_image_cache_subtitle">Rimuove tutte le immagini caricate.</string>
     <string name="settings_reset_image_cache_title">Cancella Cache Immagini</string>
     <string name="settings_save_logcat_subtitle">Salva uno snapshot del logcat solo per il PID di questa app</string>
-    <string name="settings_save_logcat_title">Save logcat</string>
+    <string name="settings_save_logcat_title">Salva il logcat</string>
     <string name="settings_show_libraries_subtitle">Vedi quali tecnologie rendono possibile Pluvia</string>
     <string name="settings_show_libraries_title">Librerie Utilizzate</string>
     <string name="settings_show_privacy_subtitle">Apre un link alla politica sulla privacy di Pluvia</string>
@@ -420,6 +424,9 @@
 
     <!-- XServer -->
     <string name="xserver_no_game_name">il tuo gioco</string>
+    <string name="xserver_drawer_show_keyboard">Mostra Tastiera</string>
+    <string name="xserver_drawer_close_drawer">Chiudi il menù a scomparsa</string>
+    <string name="xserver_drawer_exit_game">Esci dal gioco</string>
 
     <!-- Login -->
     <string name="login_fab_credential">Accedi con le credenziali</string>
