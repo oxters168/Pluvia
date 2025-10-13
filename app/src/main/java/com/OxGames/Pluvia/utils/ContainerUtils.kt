@@ -40,18 +40,19 @@ object ContainerUtils {
         }.toMap()
     }
 
-    suspend fun migrateDefaultDrives(context: Context) = withContext(Dispatchers.IO) {
-        ContainerManager(context).containers.forEach { container ->
-            container.drives = "" // Clear it out
-
-            val defaultDrives = PrefManager.drives
-            val appDirPath = SteamService.getAppDirPath(container.id)
-            val drive = Container.getNextAvailableDriveLetter(defaultDrives)
-
-            container.drives = "$defaultDrives$drive:$appDirPath"
-
-            container.saveData()
-        }
+    suspend fun migrateDefaultDrives(context: Context): Unit = withContext(Dispatchers.IO) {
+        TODO("Re Implement")
+//        ContainerManager(context).containers.forEach { container ->
+//            container.drives = "" // Clear it out
+//
+//            val defaultDrives = PrefManager.drives
+//            val appDirPath = SteamService.getAppDirPath(container.id)
+//            val drive = Container.getNextAvailableDriveLetter(defaultDrives)
+//
+//            container.drives = "$defaultDrives$drive:$appDirPath"
+//
+//            container.saveData()
+//        }
     }
 
     fun getDefaultContainerData(): ContainerData {
@@ -247,55 +248,56 @@ object ContainerUtils {
     }
 
     fun getOrCreateContainer(context: Context, appId: Int): Container {
-        val containerId = getContainerId(appId)
-
-        val containerManager = ContainerManager(context)
-        return if (containerManager.hasContainer(containerId)) {
-            containerManager.getContainerById(containerId)
-        } else {
-            // set up container drives to include app
-            val defaultDrives = PrefManager.drives
-            val appDirPath = SteamService.getAppDirPath(appId)
-            val drive: Char = Container.getNextAvailableDriveLetter(defaultDrives)
-            val drives = "$defaultDrives$drive:$appDirPath"
-            Timber.i("Prepared container drives: $drives")
-
-            val data = JSONObject()
-            data.put("name", "container_$containerId")
-            val container = containerManager.createContainerFuture(containerId, data).get()
-
-            val containerData = ContainerData(
-                screenSize = PrefManager.screenSize,
-                envVars = PrefManager.envVars,
-                cpuList = PrefManager.cpuList,
-                cpuListWoW64 = PrefManager.cpuListWoW64,
-                graphicsDriver = PrefManager.graphicsDriver,
-                dxwrapper = PrefManager.dxWrapper,
-                dxwrapperConfig = PrefManager.dxWrapperConfig,
-                audioDriver = PrefManager.audioDriver,
-                wincomponents = PrefManager.winComponents,
-                drives = drives,
-                showFPS = PrefManager.showFps,
-                wow64Mode = PrefManager.wow64Mode,
-                startupSelection = PrefManager.startupSelection.toByte(),
-                box86Version = PrefManager.box86Version,
-                box64Version = PrefManager.box64Version,
-                box86Preset = PrefManager.box86Preset,
-                box64Preset = PrefManager.box64Preset,
-                desktopTheme = WineThemeManager.DEFAULT_DESKTOP_THEME,
-                launchParams = PrefManager.launchParams,
-
-                csmt = PrefManager.csmt,
-                videoPciDeviceID = PrefManager.videoPciDeviceID,
-                offScreenRenderingMode = PrefManager.offScreenRenderingMode,
-                strictShaderMath = PrefManager.strictShaderMath,
-                videoMemorySize = PrefManager.videoMemorySize,
-                mouseWarpOverride = PrefManager.mouseWarpOverride,
-            )
-            applyToContainer(context, container, containerData)
-
-            container
-        }
+        TODO("Re Implement")
+//        val containerId = getContainerId(appId)
+//
+//        val containerManager = ContainerManager(context)
+//        return if (containerManager.hasContainer(containerId)) {
+//            containerManager.getContainerById(containerId)
+//        } else {
+//            // set up container drives to include app
+//            val defaultDrives = PrefManager.drives
+//            val appDirPath = SteamService.getAppDirPath(appId)
+//            val drive: Char = Container.getNextAvailableDriveLetter(defaultDrives)
+//            val drives = "$defaultDrives$drive:$appDirPath"
+//            Timber.i("Prepared container drives: $drives")
+//
+//            val data = JSONObject()
+//            data.put("name", "container_$containerId")
+//            val container = containerManager.createContainerFuture(containerId, data).get()
+//
+//            val containerData = ContainerData(
+//                screenSize = PrefManager.screenSize,
+//                envVars = PrefManager.envVars,
+//                cpuList = PrefManager.cpuList,
+//                cpuListWoW64 = PrefManager.cpuListWoW64,
+//                graphicsDriver = PrefManager.graphicsDriver,
+//                dxwrapper = PrefManager.dxWrapper,
+//                dxwrapperConfig = PrefManager.dxWrapperConfig,
+//                audioDriver = PrefManager.audioDriver,
+//                wincomponents = PrefManager.winComponents,
+//                drives = drives,
+//                showFPS = PrefManager.showFps,
+//                wow64Mode = PrefManager.wow64Mode,
+//                startupSelection = PrefManager.startupSelection.toByte(),
+//                box86Version = PrefManager.box86Version,
+//                box64Version = PrefManager.box64Version,
+//                box86Preset = PrefManager.box86Preset,
+//                box64Preset = PrefManager.box64Preset,
+//                desktopTheme = WineThemeManager.DEFAULT_DESKTOP_THEME,
+//                launchParams = PrefManager.launchParams,
+//
+//                csmt = PrefManager.csmt,
+//                videoPciDeviceID = PrefManager.videoPciDeviceID,
+//                offScreenRenderingMode = PrefManager.offScreenRenderingMode,
+//                strictShaderMath = PrefManager.strictShaderMath,
+//                videoMemorySize = PrefManager.videoMemorySize,
+//                mouseWarpOverride = PrefManager.mouseWarpOverride,
+//            )
+//            applyToContainer(context, container, containerData)
+//
+//            container
+//        }
     }
 
     fun removeContainer(context: Context, appId: Int, onFinished: () -> Unit) {

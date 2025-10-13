@@ -431,30 +431,31 @@ class XServerViewModel @Inject constructor(
         bootToContainer: Boolean,
         appLaunchInfo: LaunchInfo?,
     ): String {
-        val tempDir = File(container.rootDir, ".wine/drive_c/windows/temp")
-        FileUtils.clear(tempDir)
-
-        val args = if (bootToContainer || appLaunchInfo == null) {
-            "\"wfm.exe\""
-        } else {
-            val appDirPath = SteamService.getAppDirPath(appId)
-            val drives = container.drives
-            val driveIndex = drives.indexOf(appDirPath)
-            // greater than 1 since there is the drive character and the colon before the app dir path
-            val drive = if (driveIndex > 1) {
-                drives[driveIndex - 2]
-            } else {
-                Timber.e("Could not locate game drive")
-                'D'
-            }
-
-            "/dir $drive:/${appLaunchInfo.workingDir} \"${appLaunchInfo.executable}" +
-                "${if (container.launchParams.isNotBlank()) " " + container.launchParams.trim() else ""}\""
-        }
-
-        Timber.i("WineStartCommand: $args")
-
-        return "winhandler.exe $args"
+        TODO("Re Implement")
+//        val tempDir = File(container.rootDir, ".wine/drive_c/windows/temp")
+//        FileUtils.clear(tempDir)
+//
+//        val args = if (bootToContainer || appLaunchInfo == null) {
+//            "\"wfm.exe\""
+//        } else {
+//            val appDirPath = SteamService.getAppDirPath(appId)
+//            val drives = container.drives
+//            val driveIndex = drives.indexOf(appDirPath)
+//            // greater than 1 since there is the drive character and the colon before the app dir path
+//            val drive = if (driveIndex > 1) {
+//                drives[driveIndex - 2]
+//            } else {
+//                Timber.e("Could not locate game drive")
+//                'D'
+//            }
+//
+//            "/dir $drive:/${appLaunchInfo.workingDir} \"${appLaunchInfo.executable}" +
+//                "${if (container.launchParams.isNotBlank()) " " + container.launchParams.trim() else ""}\""
+//        }
+//
+//        Timber.i("WineStartCommand: $args")
+//
+//        return "winhandler.exe $args"
     }
 
     suspend fun exit() {

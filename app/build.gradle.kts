@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -20,7 +21,7 @@ val keystoreProperties: Properties? = if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.OxGames.Pluvia"
-    compileSdk = 35
+    compileSdk = 36
 
     // https://developer.android.com/ndk/downloads
     ndkVersion = "22.1.7171670"
@@ -108,8 +109,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
     }
 
     buildFeatures {
@@ -137,7 +140,7 @@ android {
     dynamicFeatures += setOf(":ubuntufs")
 
     kotlinter {
-        ignoreFormatFailures  = false
+        ignoreFormatFailures = false
     }
 
     // cmake on release builds a proot that fails to process ld-2.31.so
@@ -160,9 +163,13 @@ dependencies {
     // JavaSteam
     val localBuild = false // Change to 'true' needed when building JavaSteam manually
     if (localBuild) {
-        implementation(files("../../../IntelliJ/JavaSteam/build/libs/javasteam-1.6.1-SNAPSHOT.jar"))
+        implementation(files("../../../IntelliJ/JavaSteam/build/libs/javasteam-1.8.0-SNAPSHOT.jar"))
+        implementation(files("../../../IntelliJ/JavaSteam/build/libs/javasteam-depotdownloader/javasteam-depotdownloader-1.8.0-SNAPSHOT.jar"))
     } else {
         implementation(libs.steamkit) {
+            isChanging = version?.contains("SNAPSHOT") ?: false
+        }
+        implementation(libs.steamkit.downloader) {
             isChanging = version?.contains("SNAPSHOT") ?: false
         }
     }

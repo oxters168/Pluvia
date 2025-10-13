@@ -66,8 +66,6 @@ import `in`.dragonbra.javasteam.steam.authentication.AuthenticationException
 import `in`.dragonbra.javasteam.steam.authentication.IAuthenticator
 import `in`.dragonbra.javasteam.steam.authentication.IChallengeUrlChanged
 import `in`.dragonbra.javasteam.steam.authentication.QrAuthSession
-import `in`.dragonbra.javasteam.steam.contentdownloader.ContentDownloader
-import `in`.dragonbra.javasteam.steam.contentdownloader.FileManifestProvider
 import `in`.dragonbra.javasteam.steam.discovery.FileServerListProvider
 import `in`.dragonbra.javasteam.steam.discovery.ServerQuality
 import `in`.dragonbra.javasteam.steam.handlers.steamapps.GamePlayedInfo
@@ -199,9 +197,8 @@ class SteamService : Service(), IChallengeUrlChanged {
         private val baseDir by lazy { Environment.getExternalStorageDirectory().absolutePath }
         private val pluviaPath by lazy { Paths.get(baseDir, "Pluvia") } // Yes, this is hardcoded for now.
         val steamPath by lazy { pluviaPath.resolve("Steam") }
-        private val depotManifestsPath by lazy { steamPath.resolve("depot_manifests.zip") }
-        private val defaultAppInstallPath by lazy { steamPath.resolve("steamapps/common") }
-        private val defaultAppStagingPath by lazy { steamPath.resolve("steamapps/staging") }
+        // private val defaultAppInstallPath by lazy { steamPath.resolve("steamapps/common") }
+        // private val defaultAppStagingPath by lazy { steamPath.resolve("steamapps/staging") }
         private val serverListPath by lazy { instance!!.cacheDir.toPath().resolve("server_list.bin") }
 
         private val PICS_CHANGE_CHECK_DELAY = 60.seconds
@@ -226,7 +223,7 @@ class SteamService : Service(), IChallengeUrlChanged {
 
         private var instance: SteamService? = null
 
-        private val downloadJobs = ConcurrentHashMap<Int, DownloadInfo>()
+        // private val downloadJobs = ConcurrentHashMap<Int, DownloadInfo>()
 
         private var syncInProgress: Boolean = false
 
@@ -290,44 +287,44 @@ class SteamService : Service(), IChallengeUrlChanged {
             }
         }
 
-        fun getAppDownloadInfo(appId: Int): DownloadInfo? {
-            return downloadJobs[appId]
-        }
+//        fun getAppDownloadInfo(appId: Int): DownloadInfo? {
+//            return downloadJobs[appId]
+//        }
 
-        fun isAppInstalled(appId: Int): Boolean {
-            val appDownloadInfo = getAppDownloadInfo(appId)
-            val isNotDownloading = appDownloadInfo == null || appDownloadInfo.getProgress() >= 1f
-
-            if (!isNotDownloading) {
-                return false
-            }
-
-            appCache[appId]?.let { cacheEntry ->
-                if (cacheEntry.second) {
-                    return true
-                }
-
-                val isNowInstalled = runBlocking(Dispatchers.IO) {
-                    Files.exists(Paths.get(cacheEntry.first))
-                }
-
-                if (isNowInstalled) {
-                    appCache[appId] = Pair(cacheEntry.first, true)
-                }
-
-                return isNowInstalled
-            }
-
-            val path = getAppDirPath(appId)
-
-            val isInstalled = runBlocking(Dispatchers.IO) {
-                Files.exists(Paths.get(path))
-            }
-
-            appCache[appId] = Pair(path, isInstalled)
-
-            return isInstalled
-        }
+//        fun isAppInstalled(appId: Int): Boolean {
+//            val appDownloadInfo = getAppDownloadInfo(appId)
+//            val isNotDownloading = appDownloadInfo == null || appDownloadInfo.getProgress() >= 1f
+//
+//            if (!isNotDownloading) {
+//                return false
+//            }
+//
+//            appCache[appId]?.let { cacheEntry ->
+//                if (cacheEntry.second) {
+//                    return true
+//                }
+//
+//                val isNowInstalled = runBlocking(Dispatchers.IO) {
+//                    Files.exists(Paths.get(cacheEntry.first))
+//                }
+//
+//                if (isNowInstalled) {
+//                    appCache[appId] = Pair(cacheEntry.first, true)
+//                }
+//
+//                return isNowInstalled
+//            }
+//
+//            val path = getAppDirPath(appId)
+//
+//            val isInstalled = runBlocking(Dispatchers.IO) {
+//                Files.exists(Paths.get(path))
+//            }
+//
+//            appCache[appId] = Pair(path, isInstalled)
+//
+//            return isInstalled
+//        }
 
         fun getAppDlc(appId: Int): Map<Int, DepotInfo> {
             return getAppInfoOf(appId)?.let {
@@ -352,47 +349,47 @@ class SteamService : Service(), IChallengeUrlChanged {
                 (depot.dlcAppId == INVALID_APP_ID || getOwnedAppDlc(appId).containsKey(depot.depotId))
         }.orEmpty()
 
-        fun getAppDirPath(appId: Int): String {
-            var appName = getAppInfoOf(appId)?.config?.installDir.orEmpty()
+//        fun getAppDirPath(appId: Int): String {
+//            var appName = getAppInfoOf(appId)?.config?.installDir.orEmpty()
+//
+//            if (appName.isEmpty()) {
+//                appName = getAppInfoOf(appId)?.name.orEmpty()
+//            }
+//
+//            return defaultAppInstallPath.resolve(appName).pathString
+//        }
 
-            if (appName.isEmpty()) {
-                appName = getAppInfoOf(appId)?.name.orEmpty()
-            }
+//        @OptIn(ExperimentalPathApi::class)
+//        suspend fun deleteApp(appId: Int, isUninstalling: (Boolean) -> Unit) {
+//            withContext(Dispatchers.Main) {
+//                isUninstalling(true)
+//            }
+//
+//            withContext(Dispatchers.IO) {
+//                with(instance!!) {
+//                    db.withTransaction {
+//                        changeNumbersDao.deleteByAppId(appId)
+//                        fileChangeListsDao.deleteByAppId(appId)
+//                    }
+//                }
+//
+//                appCache.remove(appId)
+//
+//                val appDirPath = getAppDirPath(appId)
+//                Paths.get(appDirPath).deleteRecursively()
+//            }
+//
+//            withContext(Dispatchers.Main) {
+//                isUninstalling(false)
+//            }
+//        }
 
-            return defaultAppInstallPath.resolve(appName).pathString
-        }
-
-        @OptIn(ExperimentalPathApi::class)
-        suspend fun deleteApp(appId: Int, isUninstalling: (Boolean) -> Unit) {
-            withContext(Dispatchers.Main) {
-                isUninstalling(true)
-            }
-
-            withContext(Dispatchers.IO) {
-                with(instance!!) {
-                    db.withTransaction {
-                        changeNumbersDao.deleteByAppId(appId)
-                        fileChangeListsDao.deleteByAppId(appId)
-                    }
-                }
-
-                appCache.remove(appId)
-
-                val appDirPath = getAppDirPath(appId)
-                Paths.get(appDirPath).deleteRecursively()
-            }
-
-            withContext(Dispatchers.Main) {
-                isUninstalling(false)
-            }
-        }
-
-        fun downloadApp(appId: Int): DownloadInfo? {
-            return getAppInfoOf(appId)?.let { appInfo ->
-                Timber.i("App contains ${appInfo.depots.size} depot(s): ${appInfo.depots.keys}")
-                downloadApp(appId, getDownloadableDepots(appId).keys.toList(), "public")
-            }
-        }
+//        fun downloadApp(appId: Int): DownloadInfo? {
+//            return getAppInfoOf(appId)?.let { appInfo ->
+//                Timber.i("App contains ${appInfo.depots.size} depot(s): ${appInfo.depots.keys}")
+//                downloadApp(appId, getDownloadableDepots(appId).keys.toList(), "public")
+//            }
+//        }
 
         fun isImageFsInstalled(context: Context): Boolean {
             return ImageFs.find(context).rootDir.exists()
@@ -462,59 +459,59 @@ class SteamService : Service(), IChallengeUrlChanged {
             }
         }
 
-        fun downloadApp(appId: Int, depotIds: List<Int>, branch: String): DownloadInfo? {
-            if (downloadJobs.contains(appId)) {
-                Timber.w("Could not start new download job for $appId since one already exists")
-                return getAppDownloadInfo(appId)
-            }
-
-            if (depotIds.isEmpty()) {
-                Timber.w("No depots to download for $appId")
-                return null
-            }
-
-            Timber.i("Found ${depotIds.size} depot(s) to download: $depotIds")
-
-            val needsImageFsDownload = !ImageFs.find(instance!!).rootDir.exists() &&
-                !FileUtils.assetExists(instance!!.assets, "imagefs.txz")
-            val indexOffset = if (needsImageFsDownload) 1 else 0
-
-            val downloadInfo = DownloadInfo(depotIds.size + indexOffset).also { downloadInfo ->
-                downloadInfo.setDownloadJob(
-                    CoroutineScope(Dispatchers.IO).launch {
-                        // TODO: change downloads to be one item/depot per job and connect them to the game requesting to download them
-                        try {
-                            downloadImageFs(
-                                onDownloadProgress = { downloadInfo.setProgress(it, 0) },
-                                parentScope = this,
-                            ).await()
-
-                            depotIds.forEachIndexed { jobIndex, depotId ->
-                                // TODO: download shared install depots to a common location
-                                ContentDownloader(instance!!.steamClient!!).downloadApp(
-                                    appId = appId,
-                                    depotId = depotId,
-                                    installPath = defaultAppInstallPath.pathString,
-                                    stagingPath = defaultAppStagingPath.pathString,
-                                    branch = branch,
-                                    // maxDownloads = 1,
-                                    onDownloadProgress = { downloadInfo.setProgress(it, jobIndex + indexOffset) },
-                                    parentScope = coroutineContext.job as CoroutineScope,
-                                ).await()
-                            }
-                        } catch (e: Exception) {
-                            Timber.e(e, "Download failed")
-                        }
-
-                        downloadJobs.remove(appId)
-                    },
-                )
-            }
-
-            downloadJobs[appId] = downloadInfo
-
-            return downloadInfo
-        }
+//        fun downloadApp(appId: Int, depotIds: List<Int>, branch: String): DownloadInfo? {
+//            if (downloadJobs.contains(appId)) {
+//                Timber.w("Could not start new download job for $appId since one already exists")
+//                return getAppDownloadInfo(appId)
+//            }
+//
+//            if (depotIds.isEmpty()) {
+//                Timber.w("No depots to download for $appId")
+//                return null
+//            }
+//
+//            Timber.i("Found ${depotIds.size} depot(s) to download: $depotIds")
+//
+//            val needsImageFsDownload = !ImageFs.find(instance!!).rootDir.exists() &&
+//                !FileUtils.assetExists(instance!!.assets, "imagefs.txz")
+//            val indexOffset = if (needsImageFsDownload) 1 else 0
+//
+//            val downloadInfo = DownloadInfo(depotIds.size + indexOffset).also { downloadInfo ->
+//                downloadInfo.setDownloadJob(
+//                    CoroutineScope(Dispatchers.IO).launch {
+//                        // TODO: change downloads to be one item/depot per job and connect them to the game requesting to download them
+//                        try {
+//                            downloadImageFs(
+//                                onDownloadProgress = { downloadInfo.setProgress(it, 0) },
+//                                parentScope = this,
+//                            ).await()
+//
+//                            depotIds.forEachIndexed { jobIndex, depotId ->
+//                                // TODO: download shared install depots to a common location
+//                                ContentDownloader(instance!!.steamClient!!).downloadApp(
+//                                    appId = appId,
+//                                    depotId = depotId,
+//                                    installPath = defaultAppInstallPath.pathString,
+//                                    stagingPath = defaultAppStagingPath.pathString,
+//                                    branch = branch,
+//                                    // maxDownloads = 1,
+//                                    onDownloadProgress = { downloadInfo.setProgress(it, jobIndex + indexOffset) },
+//                                    parentScope = coroutineContext.job as CoroutineScope,
+//                                ).await()
+//                            }
+//                        } catch (e: Exception) {
+//                            Timber.e(e, "Download failed")
+//                        }
+//
+//                        downloadJobs.remove(appId)
+//                    },
+//                )
+//            }
+//
+//            downloadJobs[appId] = downloadInfo
+//
+//            return downloadInfo
+//        }
 
         fun getWindowsLaunchInfos(appId: Int): List<LaunchInfo> {
             return getAppInfoOf(appId)?.let { appInfo ->
@@ -1059,7 +1056,6 @@ class SteamService : Service(), IChallengeUrlChanged {
                 it.withProtocolTypes(PROTOCOL_TYPES)
                 it.withCellID(PrefManager.cellId)
                 it.withServerListProvider(FileServerListProvider(serverListPath))
-                it.withManifestProvider(FileManifestProvider(depotManifestsPath))
             }
 
             // create our steam client instance

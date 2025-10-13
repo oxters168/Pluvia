@@ -33,10 +33,10 @@ fun KeyValue.generateSteamApp(): SteamApp {
         id = this["appid"].asInteger(INVALID_APP_ID),
         depots = this["depots"].children
             .filter { currentDepot ->
-                currentDepot.name.toIntOrNull() != null
+                currentDepot.name?.toIntOrNull() != null
             }
             .associate { currentDepot ->
-                val depotId = currentDepot.name.toInt()
+                val depotId = currentDepot.name!!.toInt()
 
                 val manifests = currentDepot["manifests"].children.generateManifest()
 
@@ -56,8 +56,8 @@ fun KeyValue.generateSteamApp(): SteamApp {
                 )
             },
         branches = this["depots"]["branches"].children.associate {
-            it.name to BranchInfo(
-                name = it.name,
+            it.name!! to BranchInfo(
+                name = it.name!!,
                 buildId = it["buildid"].asLong(),
                 pwdRequired = it["pwdrequired"].asBoolean(),
                 timeUpdated = Date(it["timeupdated"].asLong() * 1000L),
@@ -156,8 +156,8 @@ fun KeyValue.generateSteamApp(): SteamApp {
 }
 
 private fun List<KeyValue>.generateManifest(): Map<String, ManifestInfo> = associate { manifest ->
-    manifest.name to ManifestInfo(
-        name = manifest.name,
+    manifest.name!! to ManifestInfo(
+        name = manifest.name!!,
         gid = manifest["gid"].asLong(),
         size = manifest["size"].asLong(),
         download = manifest["download"].asLong(),
@@ -167,7 +167,7 @@ private fun List<KeyValue>.generateManifest(): Map<String, ManifestInfo> = assoc
 private fun List<KeyValue>.toLangImgMap(): Map<Language, String> = mapNotNull { kv ->
     Language.from(kv.name)
         .takeIf { it != Language.unknown }
-        ?.to(kv.value)
+        ?.to(kv.value!!)
 }.toMap()
 
 @Suppress("unused")

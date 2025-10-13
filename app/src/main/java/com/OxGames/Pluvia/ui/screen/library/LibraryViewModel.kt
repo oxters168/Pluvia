@@ -75,7 +75,7 @@ class LibraryViewModel @Inject constructor(
     // TODO: include other sort types
     fun onFilterChanged(value: AppFilter) {
         _state.update { currentState ->
-            val updatedFilter = currentState.appInfoSortType.clone() as EnumSet<AppFilter>
+            val updatedFilter = currentState.appInfoSortType.clone()
 
             if (updatedFilter.contains(value)) {
                 updatedFilter.remove(value)
@@ -113,8 +113,8 @@ class LibraryViewModel @Inject constructor(
                     familyMembersList.any { app.ownerAccountId.contains(it) } &&
                         currentFilter.any { app.type == it } &&
                         (filters.contains(AppFilter.SHARED) || app.ownerAccountId.contains(userAccountId)) &&
-                        (query.isEmpty() || app.name.contains(query, ignoreCase = true)) &&
-                        (!filters.contains(AppFilter.INSTALLED) || SteamService.isAppInstalled(app.id))
+                        (query.isEmpty() || app.name.contains(query, ignoreCase = true)) /* &&
+                        (!filters.contains(AppFilter.INSTALLED) || SteamService.isAppInstalled(app.id)) */ // TODO("Re Implement")
                 }
                 .mapIndexed { idx, item ->
                     LibraryItem(
