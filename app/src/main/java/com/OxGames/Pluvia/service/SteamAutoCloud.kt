@@ -40,6 +40,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import timber.log.Timber
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * [Steam Auto Cloud](https://partner.steamgames.com/doc/features/cloud#steam_auto-cloud)
@@ -253,7 +254,7 @@ object SteamAutoCloud {
 
                         val httpClient = steamInstance.steamClient!!.configuration.httpClient
 
-                        val response = withTimeout(SteamService.requestTimeout) {
+                        val response = withTimeout(10.seconds) {
                             httpClient.newCall(request).execute()
                         }
 
@@ -421,7 +422,7 @@ object SteamAutoCloud {
 
                             Timber.i("Sending request to ${request.url} using\n$request")
 
-                            withTimeout(SteamService.requestTimeout) {
+                            withTimeout(10.seconds) {
                                 val response = httpClient.newCall(request).execute()
 
                                 if (!response.isSuccessful) {

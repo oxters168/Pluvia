@@ -166,11 +166,11 @@ dependencies {
         implementation(files("../../../IntelliJ/JavaSteam/build/libs/javasteam-1.8.0-SNAPSHOT.jar"))
         implementation(files("../../../IntelliJ/JavaSteam/build/libs/javasteam-depotdownloader/javasteam-depotdownloader-1.8.0-SNAPSHOT.jar"))
     } else {
-        implementation(libs.steamkit) {
-            isChanging = version?.contains("SNAPSHOT") ?: false
+        implementation(libs.javasteam) {
+            isChanging = true // version?.contains("SNAPSHOT") ?: false
         }
-        implementation(libs.steamkit.downloader) {
-            isChanging = version?.contains("SNAPSHOT") ?: false
+        implementation(libs.javasteam.downloader) {
+            isChanging = true // version?.contains("SNAPSHOT") ?: false
         }
     }
 

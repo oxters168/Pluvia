@@ -28,7 +28,7 @@ room-runtime = "2.8.2" # https://mvnrepository.com/artifact/androidx.room/room-r
 runner = "1.7.0" # https://mvnrepository.com/artifact/androidx.test/runner
 settings = "2.13.0" # https://github.com/alorma/Compose-Settings/releases
 spongycastle = "1.58.0.0" # https://mvnrepository.com/artifact/com.madgag.spongycastle/prov
-steamkit = "1.8.0-SNAPSHOT" # https://mvnrepository.com/artifact/in.dragonbra/javasteam
+javasteam = "1.8.0-SNAPSHOT" # https://mvnrepository.com/artifact/in.dragonbra/javasteam
 timber = "5.0.1" # https://mvnrepository.com/artifact/com.jakewharton.timber/timber
 zstd-jni = "1.5.7-5" # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
 zxing = "3.5.3" # https://mvnrepository.com/artifact/com.google.zxing/core
@@ -67,8 +67,8 @@ material-kolor = { group = "com.materialkolor", name = "material-kolor", version
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation-compose" }
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 spongycastle = { group = "com.madgag.spongycastle", name = "prov", version.ref = "spongycastle" }
-steamkit = { group = "in.dragonbra", name = "javasteam", version.ref = "steamkit" }
-steamkit-downloader = { group = "in.dragonbra", name = "javasteam-depotdownloader", version.ref = "steamkit" }
+javasteam = { group = "in.dragonbra", name = "javasteam", version.ref = "javasteam" }
+javasteam-downloader = { group = "in.dragonbra", name = "javasteam-depotdownloader", version.ref = "javasteam" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 xz = { module = "org.tukaani:xz", version = "1.10" } # https://mvnrepository.com/artifact/org.tukaani/xz
 zstd-jni = { group = "com.github.luben", name = "zstd-jni", version.ref = "zstd-jni" }

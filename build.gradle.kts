@@ -12,6 +12,6 @@ plugins {
 }
 
 configurations.configureEach {
-    resolutionStrategy.cacheChangingModulesFor(0, TimeUnit.SECONDS)
-    resolutionStrategy.cacheDynamicVersionsFor(0, TimeUnit.SECONDS)
+    resolutionStrategy.cacheChangingModulesFor(1, TimeUnit.MINUTES)
+    resolutionStrategy.cacheDynamicVersionsFor(1, TimeUnit.MINUTES)
 }
