@@ -1,9 +1,12 @@
+## Project Status
+
+Development of Pluvia has been at a standstill. And with people still joining communities outside of the github repo (Discord, Reddit, etc) with questions or issues going unanswered, I feel like its best to steer questions back here for the lastest information about the project and its future. 
+
+Fow now, please check out [Game Native](https://github.com/utkarshdalal/GameNative) which started out as a fork of Pluvia, but now is something much greater than we've ever anticipated for an emulation app. 
+
 <h1>
   <img src="https://github.com/user-attachments/assets/dd0419dc-476e-448f-ab9c-2e26928dcf69">
   Pluvia
-  <a href="https://discord.gg/3tcEdhMG3e" target="_blank">
-      <img src="https://img.shields.io/discord/1334544589419188274.svg?label=&logo=discord&logoColor=ffffff&color=5865F2&labelColor=404EED">
-  </a>
   <a href="https://ko-fi.com/pluvia_client" target="_blank">
       <img src="https://img.shields.io/badge/Ko--fi-Support-%23FF5E5B?logo=ko-fi">
   </a>
